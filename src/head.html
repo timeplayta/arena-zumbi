@@ -1,0 +1,557 @@
+<title>Arena Zumbi</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Teko:wght@500;600;700&family=Barlow:wght@400;500;600&display=swap">
+<style>
+/* Layout: cena 3D em tela cheia. Menu com trilho de abas à esquerda e painel à direita; HUD nas bordas.
+   Cor forte única: o âmbar das lâmpadas da arena. Jogo escuro por escolha: tema único. */
+:root {
+  --bg: #07090d; --fg: #e9edf2; --muted: #8b95a5; --line: #232a36;
+  --amber: #ffb24a; --amber-soft: rgba(255, 178, 74, 0.1); --danger: #ff4a3d; --ok: #4ddc84;
+  --surface: rgba(11, 15, 22, 0.86); --surface-2: #141a24;
+  --font-display: "Teko", "Arial Narrow", Impact, sans-serif;
+  --font-body: "Barlow", system-ui, -apple-system, "Segoe UI", sans-serif;
+  color-scheme: dark;
+}
+[hidden] { display: none !important; }
+html, body { height: 100%; }
+body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--font-body); overflow: hidden; -webkit-user-select: none; user-select: none; }
+button { font-family: inherit; color: inherit; }
+#stage { position: relative; width: 100%; height: 100%; background: var(--bg); overflow: hidden; }
+#view { display: block; width: 100%; height: 100%; transition: filter 0.4s; }
+#view.low { filter: saturate(0.55) contrast(1.08); }
+#fx-vig { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse at center, transparent 55%, rgba(0, 0, 0, 0.55)); }
+#fx-hurt, #fx-low { position: absolute; inset: 0; pointer-events: none; opacity: 0; }
+#fx-hurt { box-shadow: inset 0 0 160px 40px var(--danger); }
+#fx-low { box-shadow: inset 0 0 120px 10px #8a1010; }
+#scope { position: absolute; inset: 0; pointer-events: none; opacity: 0; background: radial-gradient(circle at center, transparent 0, transparent 31vmin, #000 31.4vmin); }
+#scope::before, #scope::after { content: ""; position: absolute; left: 50%; top: 50%; background: rgba(0, 0, 0, 0.85); transform: translate(-50%, -50%); }
+#scope::before { width: 62vmin; height: 1px; }
+#scope::after { width: 1px; height: 62vmin; }
+
+/* ---------- HUD ---------- */
+.hud { position: absolute; inset: 0; pointer-events: none; padding-block: 14px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-rows: auto 1fr auto;
+  font-family: var(--font-display); text-shadow: 0 2px 6px rgba(0, 0, 0, 0.8); }
+.stats { grid-column: 1; grid-row: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.wave { font-size: clamp(34px, 5vw, 52px); font-weight: 700; letter-spacing: 0.04em; line-height: 1; }
+.stat { font-size: clamp(18px, 2.4vw, 24px); font-weight: 500; letter-spacing: 0.05em; color: #cfd6e0; font-variant-numeric: tabular-nums; }
+.stat b { color: var(--fg); font-weight: 600; }
+.radar-box { grid-column: 2; grid-row: 1; justify-self: end; }
+#radar { width: clamp(96px, 14vw, 150px); height: clamp(96px, 14vw, 150px); display: block; background: rgba(0, 0, 0, 0.4); border: 1px solid var(--line); }
+.vital { grid-column: 1; grid-row: 3; align-self: end; width: min(280px, 100%); display: flex; flex-direction: column; gap: 6px; }
+.vital .lbl { font-size: 22px; font-weight: 600; letter-spacing: 0.08em; color: var(--muted); display: flex; justify-content: space-between; font-variant-numeric: tabular-nums; }
+.vital .lbl b { color: var(--fg); font-size: 30px; }
+.bar { height: 14px; background: rgba(0, 0, 0, 0.55); border: 1px solid var(--line); }
+.bar.thin { height: 6px; }
+#hpfill, #stfill { height: 100%; width: 100%; transform-origin: left; background: var(--ok); }
+#stfill { background: #6fb7ff; }
+.ammo { grid-column: 2; grid-row: 3; align-self: end; justify-self: end; text-align: right; line-height: 0.9; font-variant-numeric: tabular-nums; }
+.ammo .wname { font-size: 26px; font-weight: 600; letter-spacing: 0.1em; color: var(--amber); }
+.ammo .wmode { font-size: 17px; letter-spacing: 0.16em; color: var(--muted); margin-bottom: 4px; }
+#mag { font-size: clamp(54px, 8vw, 84px); font-weight: 700; }
+#reserve { font-size: clamp(24px, 3.4vw, 34px); font-weight: 500; color: var(--muted); margin-left: 6px; }
+.slots { display: flex; gap: 8px; justify-content: flex-end; margin-top: 6px; font-size: 17px; letter-spacing: 0.08em; }
+.slots span { padding: 0 8px; border: 1px solid var(--line); color: var(--muted); background: rgba(0, 0, 0, 0.45); }
+.slots span.on { color: #1a1205; background: var(--amber); border-color: var(--amber); }
+
+#cross { position: absolute; left: 50%; top: 50%; }
+.xh { width: 0; height: 0; --gap: 6px; --c: #ffffffd9; --s: 1; }
+.xh i { position: absolute; background: var(--c); box-shadow: 0 0 3px rgba(0, 0, 0, 0.7); }
+.xh i:nth-child(1) { width: calc(9px * var(--s)); height: 2px; left: calc(-1 * var(--gap) - 9px * var(--s)); top: -1px; }
+.xh i:nth-child(2) { width: calc(9px * var(--s)); height: 2px; left: var(--gap); top: -1px; }
+.xh i:nth-child(3) { width: 2px; height: calc(9px * var(--s)); top: calc(-1 * var(--gap) - 9px * var(--s)); left: -1px; }
+.xh i:nth-child(4) { width: 2px; height: calc(9px * var(--s)); top: var(--gap); left: -1px; }
+.xh i:nth-child(5) { width: 2px; height: 2px; left: -1px; top: -1px; }
+.xh.st-dot i:nth-child(-n+4), .xh.st-circle i:nth-child(-n+4) { display: none; }
+.xh.st-tcross i:nth-child(3) { display: none; }
+.xh.st-circle::after { content: ""; position: absolute; width: calc(var(--gap) * 2); height: calc(var(--gap) * 2); left: calc(-1 * var(--gap)); top: calc(-1 * var(--gap)); border: 2px solid var(--c); border-radius: 50%; box-shadow: 0 0 3px rgba(0, 0, 0, 0.7); }
+.xh.scoped { opacity: 0; }
+
+#dmgdir { position: absolute; left: 50%; top: 50%; width: 0; height: 0; opacity: 0; }
+#dmgdir i { position: absolute; left: -70px; top: -190px; width: 140px; height: 60px; background: radial-gradient(ellipse at 50% 100%, rgba(255, 40, 30, 0.9), transparent 70%); }
+#feed { position: absolute; left: 0; right: 0; bottom: 150px; display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 24px; letter-spacing: 0.08em; }
+#feed div { animation: feedout 1.8s forwards; color: var(--amber); }
+#feed div.head { color: #ffe34a; }
+#feed div.hp { color: var(--ok); }
+#feed div.am { color: #ffd060; }
+#feed div.dim { color: var(--muted); }
+@keyframes feedout { 0% { opacity: 0; transform: translateY(8px); } 10% { opacity: 1; transform: none; } 75% { opacity: 1; } 100% { opacity: 0; } }
+#banner { position: absolute; left: 0; right: 0; top: 22%; text-align: center; opacity: 0; }
+#banner .big { font-size: clamp(48px, 9vw, 96px); font-weight: 700; letter-spacing: 0.06em; color: var(--danger); line-height: 1; }
+#banner .sub { font-size: clamp(20px, 3vw, 28px); letter-spacing: 0.1em; color: var(--fg); }
+#msg { position: absolute; left: 0; right: 0; top: calc(50% + 70px); text-align: center; font-size: 30px; letter-spacing: 0.1em; font-weight: 600; color: var(--amber); }
+#hint { position: absolute; left: 0; right: 0; bottom: 96px; text-align: center; font-family: var(--font-body); font-size: 15px; color: #d4dae3; padding-inline: 16px; }
+
+/* ---------- cartões (pausa, morte) ---------- */
+.overlay { position: absolute; inset: 0; display: grid; place-items: center; overflow-y: auto;
+  background: radial-gradient(ellipse at center, rgba(7, 9, 13, 0.72), rgba(7, 9, 13, 0.95)); padding-block: 24px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.card { width: min(640px, 100%); min-width: 0; }
+.kicker { font-family: var(--font-display); font-size: 20px; letter-spacing: 0.22em; color: var(--muted); text-transform: uppercase; }
+h1 { margin: 0; font-family: var(--font-display); font-weight: 700; line-height: 0.88; letter-spacing: 0.02em; text-transform: uppercase; color: var(--amber); text-wrap: balance; font-size: clamp(56px, 12vw, 110px); }
+.lead { margin: 14px 0 20px; font-size: 18px; line-height: 1.45; max-width: 46ch; color: #cfd6e0; }
+.row { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 16px; }
+button.play { font-family: var(--font-display); font-weight: 700; font-size: 32px; letter-spacing: 0.12em; text-transform: uppercase;
+  background: var(--amber); color: #1a1205; border: 0; padding: 6px 34px 4px; cursor: pointer; border-radius: 3px; }
+button.play:hover { background: #ffc46f; }
+button.ghost { font-family: var(--font-display); font-weight: 600; font-size: 24px; letter-spacing: 0.1em; text-transform: uppercase;
+  background: transparent; border: 1px solid #3a4352; padding: 5px 24px 3px; cursor: pointer; border-radius: 3px; }
+button.ghost:hover { border-color: var(--amber); color: var(--amber); }
+button:focus-visible, input:focus-visible { outline: 3px solid var(--fg); outline-offset: 2px; }
+kbd { flex: none; font-family: var(--font-display); font-size: 18px; font-weight: 600; letter-spacing: 0.04em; padding: 0 9px; min-width: 22px; text-align: center; line-height: 26px; border: 1px solid #3a4352; border-bottom-width: 3px; border-radius: 4px; background: #11151c; color: var(--fg); display: inline-block; }
+#dead h1 { color: var(--danger); }
+.final { display: flex; flex-wrap: wrap; gap: 8px 30px; margin: 16px 0 14px; font-family: var(--font-display); font-size: 30px; letter-spacing: 0.06em; font-variant-numeric: tabular-nums; }
+.final span { color: var(--muted); font-size: 18px; display: block; letter-spacing: 0.14em; line-height: 1; }
+#newrec { color: var(--amber); font-family: var(--font-display); font-size: 28px; letter-spacing: 0.1em; margin-bottom: 10px; }
+
+/* ---------- menu ---------- */
+#menu { position: absolute; inset: 0; display: grid; grid-template-columns: minmax(190px, 270px) minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) auto; gap: 0 32px;
+  padding-block: 22px; padding-left: max(24px, env(safe-area-inset-left, 0px)); padding-right: max(24px, env(safe-area-inset-right, 0px));
+  background: linear-gradient(90deg, rgba(5, 7, 11, 0.94) 0, rgba(5, 7, 11, 0.7) 40%, rgba(5, 7, 11, 0.4) 100%); }
+.m-side { grid-row: 1 / span 2; display: flex; flex-direction: column; gap: 22px; min-width: 0; }
+.brand h1 { font-size: clamp(44px, 5.4vw, 76px); overflow-wrap: anywhere; }
+.brand .kicker { margin-bottom: 4px; }
+#nav { display: flex; flex-direction: column; gap: 2px; }
+#nav button { text-align: left; background: none; border: 0; border-left: 3px solid transparent; cursor: pointer;
+  font-family: var(--font-display); font-weight: 600; font-size: 28px; letter-spacing: 0.1em; text-transform: uppercase; padding: 2px 14px 0; color: var(--muted); }
+#nav button:hover { color: var(--fg); }
+#nav button.on { color: var(--amber); border-left-color: var(--amber); background: linear-gradient(90deg, var(--amber-soft), transparent); }
+.m-main { overflow-y: auto; min-width: 0; padding-right: 6px; }
+.panel { display: flex; flex-direction: column; gap: 22px; max-width: 980px; }
+.panel h2 { margin: 0; font-family: var(--font-display); font-size: 38px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; line-height: 1; }
+.sec { background: var(--surface); border: 1px solid var(--line); padding: 16px 18px; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.sec h3 { margin: 0; font-family: var(--font-display); font-size: 20px; font-weight: 600; letter-spacing: 0.18em; color: var(--muted); text-transform: uppercase; }
+.sec p { margin: 0; font-size: 15px; line-height: 1.5; color: #cfd6e0; max-width: 70ch; }
+.opts { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; }
+.opt, .wcard, .chip, .tab { text-align: left; background: var(--surface-2); border: 1px solid var(--line); padding: 10px 12px; cursor: pointer; display: flex; flex-direction: column; gap: 2px; min-width: 0; border-radius: 2px; }
+.opt b, .wcard b, .chip b, .tab b { font-family: var(--font-display); font-size: 24px; font-weight: 600; letter-spacing: 0.06em; line-height: 1.05; text-transform: uppercase; }
+.opt span, .wcard span, .chip span, .tab span { font-size: 13px; color: var(--muted); line-height: 1.35; }
+.opt:hover, .wcard:hover, .chip:hover, .tab:hover { border-color: #46506a; }
+.opt.on, .wcard.on, .chip.on, .tab.on { border-color: var(--amber); background: var(--amber-soft); }
+.wcard em { font-style: normal; font-size: 12px; letter-spacing: 0.1em; color: var(--amber); text-transform: uppercase; }
+.field { display: flex; flex-direction: column; gap: 6px; }
+.field label, .rng label { font-size: 14px; color: var(--muted); }
+input[type="text"], input[type="password"], input[type="number"] { background: var(--surface-2); border: 1px solid var(--line); color: var(--fg); font: 500 18px var(--font-body); padding: 8px 12px; width: min(320px, 100%); border-radius: 2px; -webkit-user-select: text; user-select: text; }
+.who { display: flex; flex-direction: column; gap: 4px; padding: 8px 10px; border: 1px solid var(--line); background: var(--surface); font-family: var(--font-display); letter-spacing: 0.08em; min-width: 0; }
+.who b { font-size: 24px; font-weight: 600; line-height: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.who span { font-size: 17px; color: var(--muted); } .who .coin { color: var(--amber); font-size: 22px; }
+.coin::before { content: "◉ "; }
+.bal { flex-direction: row; align-items: center; justify-content: space-between; gap: 18px; flex-wrap: wrap; }
+.bal > div { font-family: var(--font-display); font-size: 20px; letter-spacing: 0.14em; color: var(--muted); text-transform: uppercase; }
+.bal b { color: var(--amber); font-size: 44px; margin-left: 10px; letter-spacing: 0.04em; }
+.shop { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 10px; }
+.si { background: var(--surface-2); border: 1px solid var(--line); padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; border-radius: 2px; min-width: 0; }
+.si.own { border-color: #2f6b45; } .si.eq { border-color: var(--amber); background: var(--amber-soft); }
+.si b { font-family: var(--font-display); font-size: 24px; font-weight: 600; letter-spacing: 0.06em; line-height: 1.05; text-transform: uppercase; }
+.si .d { font-size: 13px; color: var(--muted); line-height: 1.4; flex: 1; }
+.si .meta { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-family: var(--font-display); letter-spacing: 0.08em; font-size: 18px; color: var(--muted); }
+.pips { display: flex; gap: 4px; } .pips i { width: 16px; height: 6px; background: #0b0f16; border: 1px solid var(--line); } .pips i.on { background: var(--amber); border-color: var(--amber); }
+.si .sw3 { height: 26px; border: 1px solid var(--line); border-radius: 2px; }
+button.buy { font-family: var(--font-display); font-weight: 600; font-size: 20px; letter-spacing: 0.1em; text-transform: uppercase; background: var(--amber); color: #1a1205; border: 0; padding: 4px 14px 2px; cursor: pointer; border-radius: 2px; white-space: nowrap; }
+button.buy:hover { background: #ffc46f; } button.buy[disabled] { background: #2a3140; color: #7b8698; cursor: not-allowed; }
+button.buy.alt { background: transparent; color: var(--fg); border: 1px solid #3a4352; } button.buy.alt:hover { border-color: var(--amber); color: var(--amber); }
+.stk { font-family: var(--font-display); letter-spacing: 0.08em; font-size: 18px; color: var(--ok); }
+#gate { z-index: 40; background: radial-gradient(ellipse at center, rgba(7, 9, 13, 0.9), rgba(3, 4, 6, 0.98)); }
+#gate .card { width: min(420px, 100%); display: flex; flex-direction: column; gap: 14px; }
+#gate h1 { font-size: clamp(54px, 14vw, 88px); }
+#gate .lead { margin: 0 0 4px; font-size: 15px; }
+#gate input { width: 100%; box-sizing: border-box; }
+#gate .err { font-size: 14px; }
+.warn { font-size: 12px; color: var(--muted); line-height: 1.4; margin: 0; }
+#stage .ar { display: none; } #stage .ar.show { display: block; }
+#arfill { height: 100%; width: 100%; transform-origin: left; background: #8fb4d8; }
+.rng { display: grid; grid-template-columns: minmax(130px, 220px) minmax(100px, 1fr) 52px; gap: 12px; align-items: center; }
+.rng input { width: 100%; accent-color: var(--amber); }
+.rng output { font-family: var(--font-display); font-size: 22px; text-align: right; font-variant-numeric: tabular-nums; }
+.tog { display: flex; align-items: center; justify-content: space-between; gap: 12px; background: var(--surface-2); border: 1px solid var(--line); padding: 8px 12px; cursor: pointer; text-align: left; width: 100%; border-radius: 2px; }
+.tog span { font-size: 15px; }
+.tog i { flex: none; font-style: normal; font-family: var(--font-display); font-size: 18px; letter-spacing: 0.1em; padding: 0 12px; line-height: 24px; border: 1px solid #3a4352; color: var(--muted); }
+.tog.on i { background: var(--amber); border-color: var(--amber); color: #1a1205; }
+.swatches { display: flex; flex-wrap: wrap; gap: 10px; }
+.sw { width: 74px; display: flex; flex-direction: column; gap: 5px; align-items: center; background: none; border: 0; padding: 0; cursor: pointer; }
+.sw i { display: block; width: 100%; height: 34px; border: 2px solid var(--line); border-radius: 2px; }
+.sw span { font-size: 12px; color: var(--muted); }
+.sw.on i { border-color: var(--amber); box-shadow: 0 0 0 2px #07090d, 0 0 0 4px var(--amber); }
+.sw.on span { color: var(--fg); }
+.tabs2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.arsenal { display: grid; grid-template-columns: minmax(180px, 250px) minmax(0, 1fr); gap: 16px; }
+.wlist { display: flex; flex-direction: column; gap: 8px; }
+.wdetail { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.pvbox { position: relative; height: clamp(190px, 28vh, 270px); background: radial-gradient(ellipse at 50% 60%, #1a2230, #0b0f16 70%); border: 1px solid var(--line); }
+#pvc { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+#winfo h4 { margin: 0; font-family: var(--font-display); font-size: 34px; letter-spacing: 0.06em; text-transform: uppercase; line-height: 1; color: var(--amber); }
+#winfo .cls { font-size: 13px; letter-spacing: 0.16em; color: var(--muted); text-transform: uppercase; }
+#winfo p { margin: 6px 0 0; font-size: 14px; line-height: 1.45; color: #cfd6e0; max-width: 60ch; }
+.bars { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 6px 22px; }
+.brow { display: grid; grid-template-columns: 82px minmax(0, 1fr) 30px; gap: 10px; align-items: center; font-size: 13px; color: var(--muted); }
+.brow .tr { height: 6px; background: #0b0f16; border: 1px solid var(--line); }
+.brow .tr i { display: block; height: 100%; background: var(--amber); }
+.brow b { font-family: var(--font-display); font-size: 18px; color: var(--fg); text-align: right; }
+.wtiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; margin-top: 10px; }
+.wtile { background: var(--surface-2); border: 1px solid var(--line); padding: 7px 10px; border-radius: 2px; display: flex; flex-direction: column; gap: 2px; }
+.wtile span { font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+.wtile b { font-family: var(--font-display); font-size: 22px; font-weight: 600; color: var(--fg); line-height: 1.1; }
+.wtile b small { font-size: 13px; color: var(--muted); font-family: var(--font-body, inherit); font-weight: 400; margin-left: 3px; }
+.wchart svg { display: block; width: 100%; height: auto; background: #0b0f16; border: 1px solid var(--line); }
+.wchart text { font-family: var(--font-body, sans-serif); font-size: 10px; fill: #8c97a8; }
+.wchart .lg { display: flex; gap: 16px; font-size: 12px; color: var(--muted); margin: 6px 0 0; flex-wrap: wrap; }
+.wchart .lg i { display: inline-block; width: 18px; height: 3px; vertical-align: middle; margin-right: 6px; }
+table.ttk { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 10px; }
+table.ttk th { text-align: left; font-weight: 500; color: var(--muted); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; padding: 3px 8px 3px 0; border-bottom: 1px solid var(--line); }
+table.ttk td { padding: 4px 8px 4px 0; border-bottom: 1px solid #151b25; font-variant-numeric: tabular-nums; }
+table.ttk td.k { color: var(--muted); }
+.wnote { font-size: 12px; color: var(--muted); margin: 8px 0 0; line-height: 1.4; }
+.recwrap { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px; align-items: start; }
+@media (max-width: 640px) { .recwrap { grid-template-columns: minmax(0, 1fr); } }
+#boss { position: absolute; top: 16px; left: 50%; transform: translateX(-50%); width: min(520px, 62vw); text-align: center; pointer-events: none; }
+#boss .bname { font-family: var(--font-display); font-size: 22px; letter-spacing: 0.3em; color: #ff6ad8; text-shadow: 0 2px 6px #000; line-height: 1; margin-bottom: 4px; }
+#boss .bbar { height: 12px; background: rgba(10, 6, 14, 0.8); border: 1px solid #7a2a6a; padding: 2px; }
+#boss .bbar div { height: 100%; transform-origin: left; background: linear-gradient(90deg, #c01890, #ff4ad0); transition: transform 0.12s linear; }
+#boss[data-k="tank"] .bname { color: #c4de62; } #boss[data-k="tank"] .bbar { border-color: #5d6f2a; } #boss[data-k="tank"] .bbar div { background: linear-gradient(90deg, #6d8a24, #b9dc4a); }
+#boss[data-k="wraith"] .bname { color: #8ff6ff; } #boss[data-k="wraith"] .bbar { border-color: #2a7f8f; } #boss[data-k="wraith"] .bbar div { background: linear-gradient(90deg, #1b8aa0, #7ff0ff); }
+@media (max-width: 760px) { #boss { top: 62px; width: 56vw; } #boss .bname { font-size: 16px; } }
+.chips { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 8px; }
+.chip b { font-size: 20px; }
+.xprev { height: 90px; display: grid; place-items: center; background: radial-gradient(ellipse at center, #232c3a, #0d1118); border: 1px solid var(--line); position: relative; }
+#cross2 { position: relative; width: 0; height: 0; }
+table.sc { width: 100%; border-collapse: collapse; font-size: 15px; }
+table.sc th { text-align: left; font-family: var(--font-display); font-weight: 600; font-size: 17px; letter-spacing: 0.14em; color: var(--muted); padding: 4px 8px; border-bottom: 1px solid var(--line); text-transform: uppercase; }
+table.sc td { padding: 7px 8px; border-bottom: 1px solid #151b25; font-variant-numeric: tabular-nums; }
+table.sc td:first-child { font-family: var(--font-display); font-size: 22px; color: var(--amber); }
+.keysgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 10px 26px; }
+.keysgrid div { display: flex; align-items: center; gap: 10px; font-size: 15px; color: #cfd6e0; min-width: 0; }
+.keysgrid span { min-width: 0; }
+.m-dock { grid-column: 2; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 24px; padding-top: 14px; margin-top: 14px; border-top: 1px solid var(--line); }
+.m-dock .sum { font-family: var(--font-display); font-size: 24px; letter-spacing: 0.08em; text-transform: uppercase; color: #cfd6e0; min-width: 0; }
+.m-dock .sum small { display: block; font-size: 14px; letter-spacing: 0.16em; color: var(--muted); }
+.err { color: var(--danger); font-weight: 600; margin: 0; }
+
+@media (max-width: 860px) {
+  #menu { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr) auto; gap: 10px; padding-inline: max(14px, env(safe-area-inset-left, 0px)); }
+  .m-side { grid-row: auto; flex-direction: row; align-items: flex-end; gap: 16px; }
+  .brand h1 { font-size: 52px; }
+  .brand .kicker { display: none; }
+  #nav { flex-direction: row; overflow-x: auto; flex: 1; min-width: 0; }
+  #nav button { font-size: 22px; padding: 2px 10px 0; border-left: 0; border-bottom: 3px solid transparent; white-space: nowrap; }
+  #nav button.on { border-bottom-color: var(--amber); background: none; }
+  .m-dock { grid-column: 1; }
+  .arsenal { grid-template-columns: minmax(0, 1fr); }
+  .wlist { flex-direction: row; overflow-x: auto; }
+  .wlist .wcard { min-width: 150px; }
+  .rng { grid-template-columns: minmax(0, 1fr) 52px; }
+  .rng label { grid-column: 1 / span 2; }
+}
+@media (max-width: 520px) {
+  .vital .lbl { font-size: 18px; } .vital .lbl b { font-size: 24px; } #hint { display: none; }
+  .m-side { flex-direction: column; align-items: stretch; gap: 6px; }
+  .brand h1 { font-size: 40px; } .brand h1 br { display: none; }
+  #nav { flex-wrap: wrap; overflow: visible; gap: 2px 4px; }
+  #nav button { font-size: 19px; padding: 2px 8px 0; }
+  .opts { grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); }
+  .opt b { font-size: 19px; }
+}
+@media (prefers-reduced-motion: reduce) { #feed div { animation-duration: 0.01s; } }
+/* ---------- controles de toque (celular) ---------- */
+#touch { position: absolute; inset: 0; z-index: 5; touch-action: none; --bs: 1; --ba: 0.7; --u: calc(var(--bs) * 1px);
+  --sr: max(16px, env(safe-area-inset-right, 0px)); --sl: max(16px, env(safe-area-inset-left, 0px)); }
+#touch .tb { position: absolute; display: grid; place-items: center; padding: 0; border-radius: 50%; touch-action: none; cursor: pointer;
+  width: calc(58 * var(--u)); height: calc(58 * var(--u)); opacity: var(--ba);
+  background: rgba(12, 16, 23, 0.62); border: 2px solid rgba(233, 237, 242, 0.55); color: #e9edf2;
+  font-family: var(--font-display); font-size: calc(18 * var(--u)); letter-spacing: 0.08em; }
+#touch .tb svg { width: 50%; height: 50%; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+#touch .tb.on { background: rgba(255, 178, 74, 0.38); border-color: var(--amber); color: #fff1dc; }
+#touch .tb.press { transform: scale(0.9); background: rgba(255, 178, 74, 0.5); }
+#touch .fire { width: calc(96 * var(--u)); height: calc(96 * var(--u)); right: var(--sr); bottom: 26px; border-width: 3px; border-color: rgba(255, 90, 70, 0.8); background: rgba(120, 20, 14, 0.45); }
+#touch .ads { right: calc(var(--sr) + 108 * var(--u)); bottom: 30px; }
+#touch .rl { right: calc(var(--sr) + 92 * var(--u)); bottom: calc(26px + 92 * var(--u)); }
+#touch .sw { right: calc(var(--sr) + 18 * var(--u)); bottom: calc(26px + 110 * var(--u)); }
+#touch .ml { right: calc(var(--sr) + 178 * var(--u)); bottom: 30px; }
+#touch .cr { right: calc(var(--sr) + 164 * var(--u)); bottom: calc(26px + 80 * var(--u)); }
+#touch .md { right: calc(var(--sr) + 246 * var(--u)); bottom: 34px; width: calc(50 * var(--u)); height: calc(50 * var(--u)); font-size: calc(16 * var(--u)); }
+#touch .ttop { position: absolute; top: 10px; left: 50%; transform: translateX(-50%); display: flex; gap: 14px; }
+#touch .ttop .tb { position: static; width: calc(46 * var(--u)); height: calc(46 * var(--u)); }
+#stick { position: absolute; left: 0; top: 0; width: calc(132 * var(--u)); height: calc(132 * var(--u)); margin: calc(-66 * var(--u)) 0 0 calc(-66 * var(--u));
+  border-radius: 50%; border: 2px solid rgba(233, 237, 242, 0.45); background: radial-gradient(circle, rgba(12, 16, 23, 0.25), rgba(12, 16, 23, 0.55)); opacity: 0; pointer-events: none; }
+#stick.show { opacity: var(--ba); }
+#stick.run { border-color: var(--amber); }
+#knob { position: absolute; left: 50%; top: 50%; width: calc(56 * var(--u)); height: calc(56 * var(--u)); margin: calc(-28 * var(--u)) 0 0 calc(-28 * var(--u));
+  border-radius: 50%; background: rgba(233, 237, 242, 0.75); box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5); }
+#stick.run #knob { background: var(--amber); }
+#tzone { position: absolute; left: var(--sl); bottom: 24px; width: min(40vw, 260px); height: min(40vh, 200px); border: 1px dashed rgba(233, 237, 242, 0.18); border-radius: 18px; pointer-events: none;
+  display: grid; place-items: center; font-family: var(--font-display); font-size: 18px; letter-spacing: 0.14em; color: rgba(233, 237, 242, 0.35); }
+#rotate { display: none; position: absolute; left: 50%; top: 66px; transform: translateX(-50%); background: rgba(12, 16, 23, 0.85); border: 1px solid var(--amber);
+  padding: 6px 14px; font-size: 14px; color: var(--fg); white-space: nowrap; pointer-events: none; }
+@media (orientation: portrait) { #rotate { display: block; } }
+#fps { position: absolute; left: 50%; top: 8px; transform: translateX(-50%); font-size: 16px; letter-spacing: 0.1em; color: var(--muted); }
+#stage.touchmode #fps { top: 64px; }
+/* HUD reorganizado no modo toque: munição no alto, vida embaixo no meio */
+#stage.touchmode #hint { bottom: auto; top: calc(50% + 34px); left: 14%; right: 34%; font-size: 13px; }
+#stage.touchmode .ammo { position: absolute; grid-area: auto; top: 14px; right: calc(max(16px, env(safe-area-inset-right, 0px)) + clamp(96px, 14vw, 150px) + 14px); }
+#stage.touchmode #mag { font-size: clamp(38px, 6vw, 60px); }
+#stage.touchmode .ammo .wname { font-size: 20px; }
+#stage.touchmode .vital { position: absolute; grid-area: auto; left: 40%; bottom: 10px; transform: translateX(-50%); width: min(210px, 26vw); }
+#stage.touchmode #feed { bottom: 96px; }
+@media (max-height: 520px) {
+  .wave { font-size: 30px; } .stat { font-size: 16px; }
+  #radar { width: 86px; height: 86px; }
+  #stage.touchmode .ammo { right: calc(max(16px, env(safe-area-inset-right, 0px)) + 100px); }
+  .vital .lbl { font-size: 16px; } .vital .lbl b { font-size: 22px; }
+  #menu { padding-block: 10px; gap: 6px; }
+  .brand h1 { font-size: 34px; } .m-side { gap: 10px; }
+  #nav button { font-size: 18px; }
+  .panel { gap: 12px; } .panel h2 { font-size: 26px; }
+  .sec { padding: 10px 12px; gap: 8px; }
+  .opt b, .wcard b, .tab b { font-size: 19px; }
+  .m-dock { padding-top: 8px; margin-top: 6px; }
+  .m-dock .sum { font-size: 18px; }
+  button.play { font-size: 26px; padding: 4px 24px 2px; }
+  .pvbox { height: 150px; }
+}
+
+</style>
+
+<div id="stage">
+  <canvas id="view"></canvas>
+  <div id="fx-vig"></div>
+  <div id="fx-low"></div>
+  <div id="fx-hurt"></div>
+  <div id="scope"></div>
+
+  <div class="hud" id="hud" hidden>
+    <div class="stats">
+      <div class="wave" id="wave">ONDA 1</div>
+      <div class="stat">Zumbis <b id="zleft">0</b></div>
+      <div class="stat">Pontos <b id="score">0</b> &nbsp;·&nbsp; Abates <b id="kills">0</b></div>
+      <div class="stat">Moedas <b id="runCoins">0</b></div>
+    </div>
+    <div class="radar-box"><canvas id="radar" width="300" height="300"></canvas></div>
+    <div class="vital">
+      <div class="lbl"><span>VIDA</span><b id="hpnum">100</b></div>
+      <div class="bar"><div id="hpfill"></div></div>
+      <div class="bar thin ar" id="arbar" title="Armadura"><div id="arfill"></div></div>
+      <div class="bar thin" title="Fôlego"><div id="stfill"></div></div>
+    </div>
+    <div class="ammo">
+      <div class="wname" id="wname">AX-4</div>
+      <div class="wmode" id="wmode">AUTO</div>
+      <div><span id="mag">30</span><span id="reserve">/ 120</span></div>
+      <div class="slots"><span id="s0">1</span><span id="s1">2</span></div>
+    </div>
+    <div id="cross" class="xh st-cross"><i></i><i></i><i></i><i></i><i></i></div>
+    <div id="dmgdir"><i></i></div>
+    <div id="feed"></div>
+    <div id="banner"><div class="big" id="bannerBig"></div><div class="sub" id="bannerSub"></div></div>
+    <div id="msg"></div>
+    <div id="boss" hidden><div class="bname" id="bossName">GIGANTE</div><div class="bbar"><div id="bossfill"></div></div></div>
+    <div id="fps" hidden></div>
+    <div id="hint">WASD mover · Mouse mirar · Clique atirar · Botão direito mirar · R recarregar · 1/2 ou roda trocar arma · C agachar · V faca · B modo de tiro · Shift correr · F lanterna · Esc pausar</div>
+  </div>
+
+
+  <div id="touch" hidden>
+    <div id="tzone">ANDAR</div>
+    <div id="stick"><i id="knob"></i></div>
+    <button type="button" class="tb fire" data-act="fire" aria-label="Atirar"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="7"/><path d="M12 2v5M12 17v5M2 12h5M17 12h5"/></svg></button>
+    <button type="button" class="tb ads" data-act="ads" aria-label="Mirar"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/></svg></button>
+    <button type="button" class="tb rl" data-act="reload" aria-label="Recarregar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.3-5.6"/><path d="M20 4v5h-5"/></svg></button>
+    <button type="button" class="tb sw" data-act="swap" aria-label="Trocar arma"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h14l-4-4M20 16H6l4 4"/></svg></button>
+    <button type="button" class="tb ml" data-act="melee" aria-label="Faca"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20l9-9M13 11l6-7 1 1-6 8z"/><path d="M6 15l3 3"/></svg></button>
+    <button type="button" class="tb cr" data-act="crouch" aria-label="Agachar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/><path d="M5 19h14"/></svg></button>
+    <button type="button" class="tb md" data-act="mode" aria-label="Modo de tiro">MODO</button>
+    <div class="ttop">
+      <button type="button" class="tb" data-act="torch" aria-label="Lanterna"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3h6v5l-2 3v10h-2V11L9 8z"/></svg></button>
+      <button type="button" class="tb" data-act="pause" aria-label="Pausar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5v14M15 5v14"/></svg></button>
+    </div>
+    <div id="rotate">Gire o celular para jogar na horizontal</div>
+  </div>
+  <div id="menu">
+    <div class="m-side">
+      <div class="brand"><div class="kicker">Tiro em primeira pessoa · 3D</div><h1>Arena <br>Zumbi</h1></div>
+      <nav id="nav" aria-label="Menu principal">
+        <button type="button" data-tab="mission" class="on">Missão</button>
+        <button type="button" data-tab="arsenal">Arsenal</button>
+        <button type="button" data-tab="store">Loja</button>
+        <button type="button" data-tab="custom">Personalizar</button>
+        <button type="button" data-tab="settings">Ajustes</button>
+        <button type="button" data-tab="scores">Recordes</button>
+        <button type="button" data-tab="controls">Controles</button>
+      </nav>
+      <div class="who" id="who" hidden></div>
+    </div>
+
+    <div class="m-main">
+      <section class="panel" data-panel="mission">
+        <h2>Missão</h2>
+        <div class="sec"><h3>Sobrevivente</h3>
+          <div class="field"><label for="pname">Nome no placar de recordes</label><input type="text" id="pname" maxlength="14" autocomplete="off"></div>
+        </div>
+        <div class="sec"><h3>Dificuldade</h3><div class="opts" id="optDiff"></div></div>
+        <div class="sec"><h3>Ambiente</h3><div class="opts" id="optEnv"></div></div>
+        <div class="sec"><h3>Briefing</h3><p>Você está preso numa arena fechada. As ondas de zumbis só aumentam: corredores a partir da onda 3, brutos blindados a partir da onda 5 e, nas dificuldades Veterano e Pesadelo, gigantes de mais de 3 metros com muita vida. Mire na cabeça, use as caixas como cobertura e escolha com cuidado o que leva no Arsenal.</p>
+          <p><b>Níveis extremos.</b> No <b>Extremo</b> e no <b>Apocalipse</b> entram três zumbis lendários: o <b>Colosso Blindado</b> (gigante de armadura de guerra com escudo de choque; o escudo para os tiros de frente, então flanqueie ou espere ele se cansar depois da investida), o <b>Mestre da Katana</b> (velho ágil que saca, esquiva de tiros e golpeia em combo) e, só no Apocalipse, o <b>Espectro</b>: invisível e imune até se materializar para erguer uma espada gigante e rachar o chão. As rachaduras queimam e te atrasam por 10 segundos. Ganhe moedas e gaste na Loja.</p></div>
+      </section>
+
+      <section class="panel" data-panel="arsenal" hidden>
+        <h2>Arsenal</h2>
+        <div class="tabs2" id="slotTabs"></div>
+        <div class="arsenal">
+          <div class="wlist" id="wlist"></div>
+          <div class="wdetail">
+            <div class="pvbox"><canvas id="pvc"></canvas></div>
+            <div id="winfo"></div>
+            <div class="bars" id="wbars"></div>
+            <div class="sec"><h3>Alcance e dano por distância</h3><div id="wrange"></div></div>
+            <div class="sec"><h3>Recuo</h3><div id="wrecoil"></div></div>
+            <div class="sec"><h3>Acessórios</h3><div class="chips" id="watt"></div></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel" data-panel="store" hidden>
+        <h2>Loja</h2>
+        <div class="sec bal"><div>Suas moedas <b id="storeCoins">0</b></div><p>Você ganha moedas em toda partida: abates, ondas vencidas, headshots e zumbis especiais. Dificuldades mais altas pagam mais. Tudo que você compra fica salvo neste aparelho.</p></div>
+        <div class="sec"><h3>Melhorias permanentes</h3><div class="shop" id="shopUp"></div></div>
+        <div class="sec"><h3>Itens de uma partida</h3><div class="shop" id="shopCons"></div></div>
+        <div class="sec"><h3>Armas de fogo</h3><div class="shop" id="shopGuns"></div></div>
+        <div class="sec"><h3>Armas brancas (tecla V)</h3><div class="shop" id="shopMelee"></div></div>
+        <div class="sec"><h3>Acabamentos de arma</h3><div class="shop" id="shopSkins"></div></div>
+      </section>
+
+      <section class="panel" data-panel="custom" hidden>
+        <h2>Personalizar</h2>
+        <div class="sec"><h3>Acabamento das armas</h3><div class="swatches" id="swCamo"></div></div>
+        <div class="sec"><h3>Mira</h3>
+          <div class="xprev"><div id="cross2" class="xh st-cross"><i></i><i></i><i></i><i></i><i></i></div></div>
+          <div class="opts" id="optCross"></div>
+          <div class="swatches" id="swCross"></div>
+          <div class="rng"><label for="rCrossSize">Tamanho da mira</label><input type="range" id="rCrossSize" min="5" max="25" data-range="crossSize"><output id="oCrossSize"></output></div>
+        </div>
+      </section>
+
+      <section class="panel" data-panel="settings" hidden>
+        <h2>Ajustes</h2>
+        <div class="sec"><h3>Gráficos</h3>
+          <div class="field"><label>Qualidade (predefinição)</label><div class="opts" id="optQuality"></div></div>
+          <div class="field"><label>Sombras</label><div class="opts" id="optShadows"></div></div>
+          <div class="rng"><label for="rRes">Resolução</label><input type="range" id="rRes" min="40" max="100" step="5" data-range="res"><output id="oRes"></output></div>
+          <div class="field"><label>Partículas (sangue, fumaça, faíscas)</label><div class="opts" id="optFx"></div></div>
+          <div class="field"><label>Limite de quadros por segundo</label><div class="opts" id="optFps"></div></div>
+          <div class="rng"><label for="rFov">Campo de visão</label><input type="range" id="rFov" min="70" max="110" data-range="fov"><output id="oFov"></output></div>
+          <button type="button" class="tog" data-toggle="gore"><span>Sangue e efeitos de impacto</span><i></i></button>
+          <button type="button" class="tog" data-toggle="rainFx"><span>Chuva visível (ambiente Tempestade)</span><i></i></button>
+          <button type="button" class="tog" data-toggle="bob"><span>Balanço da câmera ao andar</span><i></i></button>
+          <button type="button" class="tog" data-toggle="showFps"><span>Mostrar FPS na tela</span><i></i></button>
+        </div>
+        <div class="sec"><h3>Som</h3>
+          <button type="button" class="tog" data-toggle="muted" data-invert="1"><span>Som</span><i></i></button>
+          <div class="rng"><label for="rVol">Volume geral</label><input type="range" id="rVol" min="0" max="100" data-range="vol"><output id="oVol"></output></div>
+          <div class="rng"><label for="rSfx">Tiros e efeitos</label><input type="range" id="rSfx" min="0" max="100" data-range="volSfx"><output id="oSfx"></output></div>
+          <div class="rng"><label for="rVoice">Gemidos dos zumbis</label><input type="range" id="rVoice" min="0" max="100" data-range="volVoice"><output id="oVoice"></output></div>
+          <div class="rng"><label for="rAmb">Ambiente (vento, chuva, trovões)</label><input type="range" id="rAmb" min="0" max="100" data-range="volAmb"><output id="oAmb"></output></div>
+        </div>
+        <div class="sec"><h3>Celular e toque</h3>
+          <div class="field"><label>Controles de toque na tela</label><div class="opts" id="optTouch"></div></div>
+          <div class="rng"><label for="rTsens">Sensibilidade do toque</label><input type="range" id="rTsens" min="3" max="30" data-range="touchSens"><output id="oTsens"></output></div>
+          <div class="rng"><label for="rBsize">Tamanho dos botões</label><input type="range" id="rBsize" min="70" max="140" step="5" data-range="btnSize"><output id="oBsize"></output></div>
+          <div class="rng"><label for="rBalpha">Opacidade dos botões</label><input type="range" id="rBalpha" min="25" max="100" step="5" data-range="btnAlpha"><output id="oBalpha"></output></div>
+          <button type="button" class="tog" data-toggle="autoFire"><span>Tiro automático quando a mira passa num zumbi</span><i></i></button>
+          <button type="button" class="tog" data-toggle="vibrate"><span>Vibrar ao levar dano</span><i></i></button>
+          <button type="button" class="tog" data-toggle="fullscreen"><span>Tela cheia ao começar</span><i></i></button>
+        </div>
+        <div class="sec"><h3>Mouse e teclado</h3>
+          <div class="rng"><label for="rSens">Sensibilidade do mouse</label><input type="range" id="rSens" min="3" max="30" data-range="sens"><output id="oSens"></output></div>
+          <div class="rng"><label for="rAds">Sensibilidade ao mirar</label><input type="range" id="rAds" min="30" max="120" data-range="adsSens"><output id="oAds"></output></div>
+          <button type="button" class="tog" data-toggle="invertY"><span>Inverter eixo vertical</span><i></i></button>
+        </div>
+        <div class="sec"><h3>Interface</h3>
+          <button type="button" class="tog" data-toggle="radar"><span>Mostrar radar</span><i></i></button>
+          <button type="button" class="tog" data-toggle="hints"><span>Mostrar dicas de controle no início</span><i></i></button>
+        </div>
+        <div><button type="button" class="ghost" id="btnReset">Restaurar padrões</button></div>
+      </section>
+
+      <section class="panel" data-panel="scores" hidden>
+        <h2>Recordes</h2>
+        <div class="sec" id="scoreBox"></div>
+      </section>
+
+      <section class="panel" data-panel="controls" hidden>
+        <h2>Controles</h2>
+        <div class="sec"><h3>Celular</h3>
+          <div class="keysgrid">
+            <div><kbd>Lado esquerdo</kbd><span>Arraste para andar. Empurre até o fim para correr</span></div>
+            <div><kbd>Lado direito</kbd><span>Arraste para olhar em volta</span></div>
+            <div><kbd>●</kbd><span>Atirar (segure e arraste para mirar junto)</span></div>
+            <div><kbd>◎</kbd><span>Mirar com zoom (toque liga/desliga)</span></div>
+            <div><kbd>↻</kbd><span>Recarregar · <b>⇄</b> trocar arma · <b>✕</b> faca</span></div>
+            <div><kbd>▼</kbd><span>Agachar · <b>Ⅱ</b> pausar · <b>☀</b> lanterna</span></div>
+          </div>
+        </div>
+        <div class="sec"><h3>Teclado e mouse</h3>
+          <div class="keysgrid">
+            <div><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd><span>Mover</span></div>
+            <div><kbd>Mouse</kbd><span>Mirar (ou setas do teclado)</span></div>
+            <div><kbd>Clique</kbd><span>Atirar</span></div>
+            <div><kbd>Botão direito</kbd><span>Mirar com zoom</span></div>
+            <div><kbd>R</kbd><span>Recarregar</span></div>
+            <div><kbd>1</kbd><kbd>2</kbd><span>Trocar de arma (também a roda do mouse ou Q)</span></div>
+            <div><kbd>Shift</kbd><span>Correr (gasta fôlego). Com o Falcão mirando: prender a respiração</span></div>
+            <div><kbd>C</kbd><span>Agachar: mais precisão, menos velocidade</span></div>
+            <div><kbd>V</kbd><span>Golpe de faca</span></div>
+            <div><kbd>B</kbd><span>Alternar modo de tiro (auto / semi / rajada), quando a arma permite</span></div>
+            <div><kbd>F</kbd><span>Lanterna</span></div>
+            <div><kbd>M</kbd><span>Som liga/desliga</span></div>
+            <div><kbd>Esc</kbd><span>Pausar</span></div>
+          </div>
+        </div>
+        <div class="sec"><h3>Dicas</h3><p>Tiro na cabeça multiplica o dano. Tiros nas pernas diminuem o dano, mas deixam o zumbi lento. A escopeta perde força rápido com a distância, e o Falcão atravessa vários zumbis em linha. Os zumbis largam vida (verde) e munição (amarelo). Se o mouse não travar na tela, use as setas do teclado para olhar.</p></div>
+      </section>
+    </div>
+
+    <div class="m-dock">
+      <div class="sum" id="sum"></div>
+      <div class="row"><button class="play" id="btnPlay" type="button">Jogar</button></div>
+    </div>
+  </div>
+
+  <div class="overlay" id="gate">
+    <form class="card" id="gateForm" autocomplete="off" novalidate>
+      <div class="kicker">Bem-vindo</div>
+      <h1 id="gateTitle">Arena Zumbi</h1>
+      <p class="lead">Diga seu nome e sua idade para entrar.</p>
+      <div class="field"><label for="gName">Nome</label><input type="text" id="gName" maxlength="14" autocomplete="off" autocapitalize="words" spellcheck="false"></div>
+      <div class="field"><label for="gAge">Idade</label><input type="number" id="gAge" min="5" max="99" inputmode="numeric" autocomplete="off"></div>
+      <p class="err" id="gErr" role="alert" hidden></p>
+      <p class="warn">Este jogo tem violência, sangue e criaturas assustadoras. Jogue com atenção ao seu bem-estar e faça pausas.</p>
+      <div class="row"><button class="play" type="submit">Entrar</button></div>
+    </form>
+  </div>
+
+  <div class="overlay" id="pause" hidden>
+    <div class="card">
+      <div class="kicker">Jogo pausado</div>
+      <h1>Pausa</h1>
+      <p class="lead">Clique para voltar à arena.</p>
+      <div class="row"><button class="play" id="btnResume" type="button">Continuar</button><button class="ghost" id="btnToMenu1" type="button">Menu principal</button></div>
+    </div>
+  </div>
+
+  <div class="overlay" id="dead" hidden>
+    <div class="card">
+      <div class="kicker">Fim de jogo</div>
+      <h1>Você morreu</h1>
+      <div class="final">
+        <div><span>ONDA</span><b id="fWave">0</b></div><div><span>PONTOS</span><b id="fScore">0</b></div>
+        <div><span>ABATES</span><b id="fKills">0</b></div><div><span>HEADSHOTS</span><b id="fHead">0</b></div>
+        <div><span>PRECISÃO</span><b id="fAcc">0%</b></div><div><span>TEMPO</span><b id="fTime">0:00</b></div>
+        <div><span>MOEDAS GANHAS</span><b id="fCoins">0</b></div>
+      </div>
+      <div id="newrec" hidden>Novo recorde!</div>
+      <p class="warn" id="fCoinsNote"></p>
+      <p class="lead"><kbd>R</kbd> ou <kbd>Espaço</kbd> para recomeçar.</p>
+      <div class="row"><button class="play" id="btnRestart" type="button">Jogar de novo</button><button class="ghost" id="btnToMenu2" type="button">Menu principal</button></div>
+    </div>
+  </div>
+</div>
