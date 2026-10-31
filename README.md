@@ -7,3 +7,8 @@ FPS 3D de zumbis que roda no navegador (uma página só, Three.js r128).
 
 ## Publicar no Render (site estático)
 New > Static Site > escolha este repositório > Build Command vazio > Publish Directory `.`
+
+## Versão para Windows (sem navegador)
+
+Baixe `windows/Arena-Zumbi-Windows.zip`, descompacte e abra `Arena Zumbi.exe`.
+Funciona sem internet. F11 alterna tela cheia; Ctrl+Q fecha.
