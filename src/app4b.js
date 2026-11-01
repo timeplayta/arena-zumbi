@@ -66,6 +66,7 @@
     const o = JSON.parse(localStorage.getItem(PROFILE_KEY) || "null");
     if (o && typeof o.name === "string") { profile.name = o.name.slice(0, 14); profile.age = int(o.age, 0, 99); }
   } catch (e) {}
+  if (profile.name) giftJuan100k();                                        // já logado como Juan: recebe na hora
   function updateWho() {
     const w = $("who");
     if (!profile.name) { w.hidden = true; return; }
@@ -85,6 +86,13 @@
   $("gName").value = profile.name; $("gAge").value = profile.age ? String(profile.age) : "";
   setTimeout(() => { try { ($("gName").value ? $("gAge") : $("gName")).focus(); } catch (e) {} }, 60);
   function gateError(msg) { gErr.textContent = msg; gErr.hidden = false; }
+  // presente único de 100.000 moedas para o perfil "Juan" (vale ao entrar ou se já estiver logado)
+  function giftJuan100k() {
+    if (String(profile.name || "").trim().toLowerCase() !== "juan" || wallet.own.g_juan100k) return false;
+    wallet.own.g_juan100k = true; wallet.coins = Math.min(9999999, wallet.coins + 100000); saveWallet(); updateWho();
+    setTimeout(() => { try { feedLine("+100.000 MOEDAS DE PRESENTE", true); } catch (e) {} }, 1500);
+    return true;
+  }
   gateForm.addEventListener("submit", (e) => {
     e.preventDefault();
     const name = $("gName").value.replace(/\s+/g, " ").trim(), ageRaw = $("gAge").value.trim(), age = Number(ageRaw);
@@ -95,6 +103,7 @@
     if (name.toLowerCase() === "juan" && age === 98 && !wallet.own.g_juan50k) {
       wallet.own.g_juan50k = true; wallet.coins = Math.min(9999999, wallet.coins + 50000); saveWallet();
     }
+    giftJuan100k();
     try { localStorage.setItem(PROFILE_KEY, JSON.stringify(profile)); } catch (err) {}
     saveSettings();
     gErr.hidden = true;

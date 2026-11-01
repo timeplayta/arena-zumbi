@@ -1,5 +1,8 @@
 # Novidades — Arena Zumbi
 
+## Presente para o Juan (01/11/2026)
+- 100.000 moedas de presente para o perfil Juan (uma vez só).
+
 ## Atualização automática (01/11/2026)
 - Ao abrir, o .exe e o app de Android procuram versão nova e se atualizam sozinhos (baixa só o jogo, cerca de 1,5 MB).
 - Depois de atualizar, o jogo mostra as novidades da versão.
