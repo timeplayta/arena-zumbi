@@ -1,5 +1,9 @@
 # Novidades — Arena Zumbi
 
+## Personagens do co-op (01/11/2026)
+- Aliados remodelados: capacete, rosto, colete tático, mochila, botas e fuzil detalhado.
+- Camisa em 4 cores (vermelha, azul, verde, amarela), sorteadas a cada sala. A cor aparece também na lista do time.
+
 ## Dois endereços (01/11/2026)
 - Servidor online: arena-zumbi.playes.workers.dev. Jogo: play.arena-zumbi.play.
 - O jogo e o servidor online agora ficam em projetos separados do Cloudflare. Veja o README.

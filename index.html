@@ -7484,7 +7484,8 @@ const Logic = (function () {
   //  CO-OP ONLINE — cliente: sala, mensagens, aliados na cena e lobby.
   //  O anfitrião roda o mundo (Game com enableCoop("host")); convidados mandam posição/tiros e recebem snapshots.
   // =====================================================================================================
-  const ALLY_COLORS = [0x3d8bff, 0x39c46a, 0xe6b422, 0xc45ad8];
+  const SHIRTS = [0xd8412f, 0x2f7bd8, 0x39b35a, 0xe8b82a];                // vermelha, azul, verde, amarela
+  const colorHex = (n) => "#" + n.toString(16).padStart(6, "0");
   const allyViews = new Map();
   function allyTag(name) {
     const cv = document.createElement("canvas"); cv.width = 256; cv.height = 64;
@@ -7495,24 +7496,68 @@ const Logic = (function () {
     sp.scale.set(1.5, 0.375, 1); sp.position.y = 2.1; sp.renderOrder = 10;
     return sp;
   }
-  function makeAlly(idx, name) {
-    const col = ALLY_COLORS[idx % ALLY_COLORS.length];
-    const mat = (c, r) => new THREE.MeshStandardMaterial({ color: c, roughness: r === undefined ? 0.8 : r });
-    const mVest = mat(col), mCloth = mat(0x2b3138), mSkin = mat(0xc9916b, 0.9), mHelm = mat(0x1f2a24), mGun = mat(0x15171a, 0.5);
+  function makeAlly(shirt, name) {
+    const col = new THREE.Color(shirt), dark = col.clone().multiplyScalar(0.62);
+    const M = (c, r, m) => new THREE.MeshStandardMaterial({ color: c, roughness: r === undefined ? 0.85 : r, metalness: m || 0 });
+    const mShirt = M(col), mShirtD = M(dark), mPants = M(0x3a3f47), mBoot = M(0x17181a, 0.9), mSkin = M(0xd0a07c, 0.9), mHair = M(0x2a1d14), mVest = M(0x2d3328), mVestD = M(0x22271e);
+    const mHelm = M(0x3b4636, 0.6), mPack = M(0x4a4a34), mGun = M(0x15171a, 0.45, 0.4), mGunL = M(0x30343a, 0.5, 0.3), mEye = new THREE.MeshBasicMaterial({ color: 0x0b0b0b });
     const root = new THREE.Group(), body = new THREE.Group(); root.add(body);
     const box = (w, h, d, m, x, y, z, p) => { const o = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); o.position.set(x, y, z); (p || body).add(o); return o; };
+    const cyl = (rt, rb, h, m, x, y, z, p, seg) => { const o = new THREE.Mesh(new THREE.CylinderGeometry(rt, rb, h, seg || 10), m); o.position.set(x, y, z); (p || body).add(o); return o; };
+    const sph = (r, m, x, y, z, p, sx, sy, sz) => { const o = new THREE.Mesh(new THREE.SphereGeometry(r, 14, 10), m); o.position.set(x, y, z); o.scale.set(sx || 1, sy || 1, sz || 1); (p || body).add(o); return o; };
+    const limb = (a, b, r0, r1, m, p) => {                                  // cilindro entre dois pontos
+      const A = new THREE.Vector3(a[0], a[1], a[2]), B = new THREE.Vector3(b[0], b[1], b[2]), d = B.clone().sub(A), L = d.length();
+      const o = new THREE.Mesh(new THREE.CylinderGeometry(r1, r0, L, 9), m); o.position.copy(A.clone().add(B).multiplyScalar(0.5));
+      o.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), d.normalize()); (p || body).add(o); return o;
+    };
+    // pernas (pivô no quadril, para balançar ao andar)
     const legs = [];
-    for (const sx of [-0.11, 0.11]) { const lg = new THREE.Group(); lg.position.set(sx, 0.86, 0); body.add(lg); box(0.17, 0.86, 0.2, mCloth, 0, -0.43, 0, lg); legs.push(lg); }
-    box(0.5, 0.62, 0.28, mVest, 0, 1.18, 0);
-    box(0.44, 0.2, 0.26, mCloth, 0, 0.9, 0);
-    const head = new THREE.Mesh(new THREE.SphereGeometry(0.135, 12, 10), mSkin); head.position.set(0, 1.64, 0); body.add(head);
-    const helm = new THREE.Mesh(new THREE.SphereGeometry(0.16, 12, 8, 0, Math.PI * 2, 0, Math.PI / 2), mHelm); helm.position.set(0, 1.66, 0); body.add(helm);
-    const aim = new THREE.Group(); aim.position.set(0, 1.38, -0.12); body.add(aim);
-    box(0.06, 0.1, 0.62, mGun, 0.1, -0.02, -0.34, aim);
-    box(0.05, 0.05, 0.16, mGun, 0.1, -0.02, -0.7, aim);
-    box(0.09, 0.09, 0.4, mSkin, -0.14, -0.04, -0.2, aim); box(0.09, 0.09, 0.3, mSkin, 0.18, -0.08, -0.12, aim);
-    const flash = new THREE.Mesh(new THREE.SphereGeometry(0.1, 8, 6), new THREE.MeshBasicMaterial({ color: 0xffd36a })); flash.position.set(0.1, -0.02, -0.82); flash.visible = false; aim.add(flash);
-    const tag = allyTag(name || "Aliado"); root.add(tag);
+    for (const sx of [-0.1, 0.1]) {
+      const lg = new THREE.Group(); lg.position.set(sx, 0.9, 0); body.add(lg); legs.push(lg);
+      cyl(0.085, 0.07, 0.78, mPants, 0, -0.42, 0, lg);
+      box(0.13, 0.1, 0.05, mVestD, 0, -0.5, -0.07, lg);                    // joelheira
+      box(0.15, 0.14, 0.27, mBoot, 0, -0.83, -0.04, lg);
+      box(0.15, 0.04, 0.29, M(0x0d0d0e), 0, -0.9, -0.04, lg);
+    }
+    box(0.4, 0.09, 0.25, M(0x1a1a1a), 0, 0.93, 0);                         // cinto
+    box(0.42, 0.1, 0.26, mPants, 0, 0.86, 0);
+    // tronco: camisa colorida + colete tático
+    box(0.44, 0.34, 0.25, mShirt, 0, 1.12, 0);
+    box(0.4, 0.18, 0.24, mShirt, 0, 0.98, 0);
+    box(0.46, 0.3, 0.29, mVest, 0, 1.17, 0);
+    box(0.34, 0.07, 0.3, mVestD, 0, 1.34, 0);
+    for (const px of [-0.12, 0, 0.12]) box(0.1, 0.12, 0.06, mVestD, px, 1.07, -0.16);   // bolsos
+    box(0.3, 0.1, 0.05, mVestD, 0, 1.24, -0.16);
+    box(0.34, 0.4, 0.14, mPack, 0, 1.17, 0.2); box(0.3, 0.1, 0.16, mVestD, 0, 1.4, 0.2);   // mochila
+    // ombros e mangas (cor da camisa)
+    sph(0.075, mShirt, -0.26, 1.34, 0); sph(0.075, mShirt, 0.26, 1.34, 0);
+    // pescoço e cabeça
+    cyl(0.055, 0.06, 0.1, mSkin, 0, 1.43, 0);
+    const head = new THREE.Group(); head.position.set(0, 1.58, -0.01); body.add(head);
+    sph(0.115, mSkin, 0, 0, 0, head, 0.95, 1.12, 1.0);
+    box(0.03, 0.02, 0.01, mEye, -0.045, 0.02, -0.108, head); box(0.03, 0.02, 0.01, mEye, 0.045, 0.02, -0.108, head);
+    box(0.04, 0.03, 0.02, M(0xc08e6c), 0, -0.01, -0.113, head);
+    box(0.06, 0.012, 0.01, M(0x7a3b30), 0, -0.05, -0.108, head);
+    const hair = sph(0.118, mHair, 0, 0.02, 0.03, head, 0.97, 1.0, 1.0);
+    const helm = new THREE.Mesh(new THREE.SphereGeometry(0.145, 16, 10, 0, Math.PI * 2, 0, Math.PI * 0.55), mHelm); helm.position.set(0, 0.035, 0); head.add(helm);
+    cyl(0.16, 0.16, 0.015, mHelm, 0, 0.055, -0.01, head, 18).scale.set(1, 1, 1.1);   // aba
+    box(0.012, 0.09, 0.012, mVestD, -0.11, -0.04, -0.02, head); box(0.012, 0.09, 0.012, mVestD, 0.11, -0.04, -0.02, head);   // jugular
+    // arma + braços (o grupo "aim" inclina com o olhar)
+    const aim = new THREE.Group(); aim.position.set(0.02, 1.3, -0.12); body.add(aim);
+    box(0.06, 0.1, 0.34, mGun, 0, 0, -0.18, aim);                          // receptor
+    box(0.055, 0.07, 0.3, mGunL, 0, 0.005, -0.5, aim);                     // guarda-mão
+    cyl(0.011, 0.011, 0.22, mGun, 0, 0.01, -0.76, aim, 8).rotation.x = Math.PI / 2;   // cano
+    cyl(0.017, 0.017, 0.05, mGun, 0, 0.01, -0.88, aim, 8).rotation.x = Math.PI / 2;
+    box(0.05, 0.06, 0.2, mGun, 0, -0.01, 0.1, aim);                        // coronha
+    box(0.05, 0.14, 0.1, mGun, 0, -0.1, 0.0, aim).rotation.x = 0.35;       // empunhadura
+    box(0.045, 0.17, 0.07, mGunL, 0, -0.14, -0.26, aim).rotation.x = -0.18; // carregador
+    box(0.05, 0.05, 0.12, mGun, 0, 0.075, -0.2, aim);                      // mira
+    const flash = new THREE.Mesh(new THREE.SphereGeometry(0.09, 8, 6), new THREE.MeshBasicMaterial({ color: 0xffd36a })); flash.position.set(0, 0.01, -0.95); flash.visible = false; aim.add(flash);
+    // braço direito (no punho) e esquerdo (na guarda-mão)
+    const sh = [[0.26, 1.34, 0], [-0.26, 1.34, 0]];
+    limb(sh[0], [0.2, 1.17, -0.15], 0.062, 0.052, mShirt); limb([0.2, 1.17, -0.15], [0.05, 1.2, -0.3], 0.05, 0.042, mSkin); sph(0.045, mSkin, 0.05, 1.2, -0.3);
+    limb(sh[1], [-0.22, 1.2, -0.2], 0.062, 0.052, mShirt); limb([-0.22, 1.2, -0.2], [-0.02, 1.3, -0.52], 0.05, 0.042, mSkin); sph(0.045, mSkin, -0.02, 1.3, -0.52);
+    const tag = allyTag(name || "Aliado"); tag.position.y = 2.0; root.add(tag);
     scene.add(root);
     return { root, body, legs, aim, flash, tag, name, step: 0 };
   }
@@ -7522,8 +7567,8 @@ const Logic = (function () {
       seen.add(o.id);
       let v = allyViews.get(o.id);
       const nm = o.name || Coop.nameOf(o.id);
-      if (!v || v.name !== nm) { if (v) { scene.remove(v.root); } v = makeAlly(Coop.slotOf(o.id), nm); allyViews.set(o.id, v); }
-      v.root.position.set(o.x, 0, -o.y); v.root.rotation.y = o.yaw;
+      if (!v || v.name !== nm) { if (v) { scene.remove(v.root); } v = makeAlly(Coop.shirtOf(o.id), nm); allyViews.set(o.id, v); }
+      v.root.position.set(o.x, 0, -o.y); v.root.rotation.y = o.yaw; v.body.position.x = 0;
       v.aim.rotation.x = clamp(o.pitch || 0, -1, 1);
       v.step += (o.mv ? 8 : 0) * dt; const sw = o.mv && o.alive ? Math.sin(v.step) * 0.6 : 0;
       v.legs[0].rotation.x = sw; v.legs[1].rotation.x = -sw;
@@ -7539,7 +7584,7 @@ const Logic = (function () {
   function clearAllies() { for (const v of allyViews.values()) scene.remove(v.root); allyViews.clear(); }
 
   const Coop = (() => {
-    const st = { ws: null, id: null, host: false, code: "", status: "off", msg: "", players: [], started: false, diff: "normal", starting: false, over: false, name: "" };
+    const st = { ws: null, id: null, host: false, code: "", status: "off", msg: "", players: [], stamp: "0", started: false, diff: "normal", starting: false, over: false, name: "" };
     const lobby = {};                       // anfitrião: id -> { name, info, full }
     let acc = 0, sAcc = 0, sentZ = new Set(), sentP = new Set(), pingT = 0, game0 = null;
     const WORLD = /^(wave|giant|elite|kill|clear|wall|hit|rshot|ally_down|tank_|sam_|wraith_)/;
@@ -7558,6 +7603,11 @@ const Logic = (function () {
     function send(o, to) { if (!st.ws || st.ws.readyState !== 1) return; if (to) o.to = to; try { st.ws.send(JSON.stringify(o)); } catch (e) {} }
     const connected = () => !!st.ws && st.status === "on";
     function nameOf(id) { const p = st.players.find((q) => q.id === id); return p ? p.name : id === "p1" ? "Anfitrião" : "Jogador"; }
+    function shirtOf(id) {                                                  // cada jogador tem uma das 4 cores; a ordem é sorteada por sala
+      let h = 2166136261; for (const c of st.code + "|" + st.stamp) h = Math.imul(h ^ c.charCodeAt(0), 16777619) >>> 0;
+      const p = [0, 1, 2, 3]; for (let i = 3; i > 0; i--) { h = Math.imul(h ^ (h >>> 15), 2246822507) >>> 0; const j = h % (i + 1); [p[i], p[j]] = [p[j], p[i]]; }
+      return SHIRTS[p[(Number(String(id).slice(1)) - 1 || 0) % 4]];
+    }
     function slotOf(id) { const i = st.players.findIndex((q) => q.id === id); return i < 0 ? Number(String(id).slice(1)) - 1 || 0 : i; }
     function renderLobby() {
       const e = $("coopPlayers"); if (!e) return;
@@ -7565,7 +7615,7 @@ const Logic = (function () {
       $("coopOff").hidden = on; $("coopOn").hidden = !on;
       if (on) {
         $("coopRoom").textContent = st.label || st.code;
-        e.innerHTML = st.players.map((p, i) => '<div class="coop-p"><i style="background:#' + ALLY_COLORS[i % 4].toString(16).padStart(6, "0") + '"></i><b>' + p.name.replace(/[<>&]/g, "") + "</b>" + (p.id === "p1" ? "<span>anfitrião</span>" : "") + (p.id === st.id ? "<span>você</span>" : "") + "</div>").join("");
+        e.innerHTML = st.players.map((p, i) => '<div class="coop-p"><i style="background:' + colorHex(shirtOf(p.id)) + '"></i><b>' + p.name.replace(/[<>&]/g, "") + "</b>" + (p.id === "p1" ? "<span>anfitrião</span>" : "") + (p.id === st.id ? "<span>você</span>" : "") + "</div>").join("");
         $("coopHint").textContent = st.host ? (st.started ? "Partida em andamento. Quem entrar agora cai direto no jogo." : "Quando todos entrarem, clique em Jogar (embaixo) para começar.") : (st.started ? "Partida em andamento." : "Aguardando o anfitrião iniciar a partida.");
       }
       const pb = $("btnPlay"); if (pb) pb.textContent = on && !st.host ? "Aguardando anfitrião" : on ? "Jogar em co-op" : "Jogar";
@@ -7573,7 +7623,7 @@ const Logic = (function () {
     function lobbyList() { return Object.keys(lobby).map((id) => ({ id, name: lobby[id].name })); }
     function hostLobby() {
       st.players = [{ id: "p1", name: st.name || "Anfitrião" }].concat(lobbyList());
-      send({ t: "lobby", players: st.players, started: st.started, diff: st.diff }); renderLobby();
+      send({ t: "lobby", players: st.players, started: st.started, diff: st.diff, stamp: st.stamp }); renderLobby();
     }
     async function open(role, label, pass) {
       leave(true);
@@ -7602,7 +7652,7 @@ const Logic = (function () {
       switch (m.t) {
         case "welcome":
           st.id = m.id; st.status = "on"; setMsg(st.host ? "Sala criada. Passe o nome (e a senha) aos amigos." : "Você entrou na sala.", "ok");
-          if (st.host) { st.started = false; hostLobby(); } else { send({ t: "hello", name: st.name }); renderLobby(); }
+          if (st.host) { st.started = false; st.stamp = Math.random().toString(36).slice(2, 8); hostLobby(); } else { send({ t: "hello", name: st.name }); renderLobby(); }
           break;
         case "error": setMsg(m.m || "Erro.", "err"); st.status = "error"; break;
         case "closed": setMsg("O anfitrião saiu da sala.", "err"); endMatchForGuest(); leave(true); break;
@@ -7618,7 +7668,7 @@ const Logic = (function () {
         case "shot": if (st.host && game && game.coop) game.remoteShot(m.from, m); break;
         case "melee": if (st.host && game && game.coop) game.remoteMelee(m.from); break;
         // --- convidado ---
-        case "lobby": st.players = m.players || []; st.started = !!m.started; st.diff = m.diff || st.diff; renderLobby(); break;
+        case "lobby": st.players = m.players || []; st.stamp = m.stamp || st.stamp; st.started = !!m.started; st.diff = m.diff || st.diff; renderLobby(); break;
         case "start": st.diff = m.diff || "normal"; st.started = true; st.over = false;
           if (state === "menu" || state === "dead") { st.starting = true; try { startGame(); } finally { st.starting = false; } }
           renderLobby(); break;
@@ -7703,9 +7753,9 @@ const Logic = (function () {
     function hud(g) {
       const e = $("team"); if (!e) return;
       if (!active() || !g.others.length) { if (teamKey) { teamKey = ""; e.innerHTML = ""; } return; }
-      const rows = g.others.map((o) => [o.name || nameOf(o.id), Math.max(0, Math.round(o.hp)), o.maxHp || 100, o.alive, slotOf(o.id)]);
+      const rows = g.others.map((o) => [o.name || nameOf(o.id), Math.max(0, Math.round(o.hp)), o.maxHp || 100, o.alive, slotOf(o.id), o.id]);
       const k = JSON.stringify(rows); if (k === teamKey) return; teamKey = k;
-      e.innerHTML = rows.map((r) => '<div class="tm' + (r[3] ? "" : " down") + '"><i style="background:#' + ALLY_COLORS[r[4] % 4].toString(16).padStart(6, "0") + '"></i><b>' + String(r[0]).replace(/[<>&]/g, "") + '</b><u><s style="width:' + Math.round(100 * clamp(r[1] / r[2], 0, 1)) + '%"></s></u></div>').join("");
+      e.innerHTML = rows.map((r) => '<div class="tm' + (r[3] ? "" : " down") + '"><i style="background:' + colorHex(shirtOf(r[5])) + '"></i><b>' + String(r[0]).replace(/[<>&]/g, "") + '</b><u><s style="width:' + Math.round(100 * clamp(r[1] / r[2], 0, 1)) + '%"></s></u></div>').join("");
     }
     // ---------------- UI do lobby ----------------
     function bindUI() {
@@ -7718,7 +7768,7 @@ const Logic = (function () {
       for (const id of ["coopName", "coopPass"]) $(id).addEventListener("keydown", (e) => { e.stopPropagation(); if (e.key === "Enter") go("guest"); });
       renderLobby();
     }
-    return { st, active, ended, attach, afterUpdate, hostStartBroadcast, sendInfo, hud, onToMenu, bindUI, nameOf, slotOf, connected, leave, isHost: () => st.host, inRoom: () => connected(), toast: (m) => setMsg(m, "err"), lobby };
+    return { st, active, ended, attach, afterUpdate, hostStartBroadcast, sendInfo, hud, onToMenu, bindUI, nameOf, slotOf, shirtOf, connected, leave, isHost: () => st.host, inRoom: () => connected(), toast: (m) => setMsg(m, "err"), lobby };
   })();
 
   // ======================================================================
