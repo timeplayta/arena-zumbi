@@ -1,5 +1,10 @@
 {
   "name": "arena-zumbi-play",
   "compatibility_date": "2025-01-01",
-  "assets": { "directory": "./public" }
+  "assets": { "directory": "./public" },
+  // este projeto já publicou o servidor online por engano; v2 remove a classe Room para o deploy passar
+  "migrations": [
+    { "tag": "v1", "new_sqlite_classes": ["Room"] },
+    { "tag": "v2", "deleted_classes": ["Room"] }
+  ]
 }
