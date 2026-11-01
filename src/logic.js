@@ -682,8 +682,9 @@ const Logic = (function () {
         else { this.kills += 1; if (E) this.bonus += Math.round(E.coins * D.coin); if (head) this.headshots += 1; }
         this.events.push(["kill", z.x, z.y, head, pts, z.brute, z.headGone, z.giant, z.kind]);
         if (z.puppet) {                                            // infecção: infectado abatido solta 2 kits médicos e 2 caixas de munição por jogador da sala
-          for (const q of this.infPlayers()) if (q.team === "h") for (let i = 0; i < 2; i++) for (const k of ["health", "ammo"]) {   // cada humano vê e pega só os seus 2 + 2
-            const pk = new Pickup(k, z.x, z.y, this.rnd); pk.gz = z.gz || 0; pk.own = q.id; this.pickups.push(pk);
+          for (const q of this.infPlayers()) if (q.team === "h") for (const k of ["health", "ammo"]) {   // cada humano vê e pega só os seus: no máximo 2 + 2 no chão
+            const tem = this.pickups.filter((p) => p.own === q.id && p.kind === k).length;
+            for (let i = tem; i < 2; i++) { const pk = new Pickup(k, z.x, z.y, this.rnd); pk.gz = z.gz || 0; pk.own = q.id; this.pickups.push(pk); }
           }
         }
         else if (z.giant || E) {                                    // gigantes e especiais soltam um tesouro
