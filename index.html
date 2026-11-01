@@ -7750,12 +7750,20 @@ const Logic = (function () {
     function swipe() { act = side ? "light_miss2" : "light_miss1"; side ^= 1; actT = 0; }
     function update(g, dt) {
       const on = g.team === "z" && g.alive;
-      if (!Z) { if (!on) return; Z = buildZArms(THREE, ZARMS_DATA, { colors: { 0: 0x1e1416, 1: 0x9a1b22 } }); Z.root.position.set(0, -0.02, 0); camera.add(Z.root); }
-      Z.root.visible = on; if (!on) return;
+      if (!Z) {
+        if (!on) return;
+        Z = buildZArms(THREE, ZARMS_DATA, { colors: { 0: 0x1e1416, 1: 0x9a1b22 } });
+        Z.fov = new THREE.Group(); Z.fov.add(Z.root); camera.add(Z.fov);
+      }
+      Z.fov.visible = on; if (!on) return;
+      // o modelo foi feito para FOV de arma ~54°; a câmera do jogo é mais aberta e mostrava o corte dos braços.
+      // Comprime X/Y na proporção certa: a imagem fica igual à de uma câmera de 54°.
+      const k = Math.tan((camera.fov * Math.PI) / 360) / Math.tan((54 * Math.PI) / 360);
+      Z.fov.scale.set(k, k, 1);
       idleT += dt;
       if (act) { actT += dt; if (actT >= Z.dur(act)) act = ""; else { Z.pose(act, actT, false); return; } }
       Z.pose("idle1", idleT, true);
-      Z.root.position.y = -0.02 + (g.moving ? Math.sin(g.bob * 0.9) * 0.008 : 0);
+      Z.root.position.y = g.moving ? Math.sin(g.bob * 0.9) * 0.006 : 0;
     }
     return { swipe, update };
   })();
