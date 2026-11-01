@@ -2008,7 +2008,7 @@ const Logic = (function () {
     // som
     muted: false, volSfx: 100, volVoice: 100, volAmb: 70,
     // gráficos
-    shadows: "torch", res: 100, fx: "med", rainFx: true, fpsCap: "0", showFps: false,
+    shadows: "torch", res: 100, fx: "med", rainFx: true, sharp1: false, fpsCap: "0", showFps: false,
     // celular / toque
     touch: "auto", touchSens: 12, btnSize: 100, btnAlpha: 70, autoFire: true, vibrate: true, fullscreen: true,
   };
@@ -2037,7 +2037,8 @@ const Logic = (function () {
     return top.indexOf(rec) === 0 && rec.score > 0;
   }
   loadSettings();
-  if (!hadSaved && IS_TOUCH) Object.assign(S, { quality: "low", shadows: "off", res: 75, fx: "low", fov: 80 });   // celular: começa leve
+  if (!hadSaved && IS_TOUCH) Object.assign(S, { quality: "low", shadows: "off", res: 100, fx: "low", fov: 80 });   // celular: começa leve
+  if (IS_TOUCH && !S.sharp1) { S.sharp1 = true; if (S.res < 100) S.res = 100; try { localStorage.setItem(STORE, JSON.stringify(S)); } catch (e) {} }   // corrige imagem borrada de versões antigas
   const touchOn = () => S.touch === "on" || (S.touch === "auto" && IS_TOUCH);
 
   const CAMOS = {
@@ -2166,7 +2167,8 @@ const Logic = (function () {
   moon.shadow.bias = -0.0008;
   function applyQuality() {
     const q = QUALITY[S.quality] || QUALITY.med;
-    renderer.setPixelRatio(Math.max(0.4, Math.min(window.devicePixelRatio || 1, q.pr) * clamp(S.res, 40, 100) / 100));
+    const pr = IS_TOUCH ? Math.max(q.pr, 1.75) : q.pr;                       // celular: telas 2x-3x ficavam borradas com 1x
+    renderer.setPixelRatio(Math.max(0.4, Math.min(window.devicePixelRatio || 1, pr) * clamp(S.res, 40, 100) / 100));
     const ts = S.shadows !== "off", ms = S.shadows === "full";
     if (torch.castShadow !== ts || moon.castShadow !== ms) {
       torch.castShadow = ts; moon.castShadow = ms;
@@ -7286,7 +7288,7 @@ const Logic = (function () {
   $("btnReset").addEventListener("click", () => {
     const keep = S.name;
     Object.assign(S, JSON.parse(JSON.stringify(DEFAULTS))); S.name = keep;
-    if (IS_TOUCH) Object.assign(S, { quality: "low", shadows: "off", res: 75, fx: "low", fov: 80 });
+    if (IS_TOUCH) Object.assign(S, { quality: "low", shadows: "off", res: 100, fx: "low", fov: 80 });
     saveSettings(); applyQuality(); applyEnv(); applySound(); applyTouchUI(); vmKey = ""; renderAll(); if (ui.tab === "arsenal") renderArsenal();
   });
 

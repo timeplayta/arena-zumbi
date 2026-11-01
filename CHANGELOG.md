@@ -1,5 +1,8 @@
 # Novidades — Arena Zumbi
 
+## Celular mais nítido (01/11/2026)
+- A imagem no celular era desenhada em resolução baixa e ficava borrada. Agora usa até 1,75x a densidade da tela.
+
 ## Personagens do co-op (01/11/2026)
 - Aliados remodelados: capacete, rosto, colete tático, mochila, botas e fuzil detalhado.
 - Camisa em 4 cores (vermelha, azul, verde, amarela), sorteadas a cada sala. A cor aparece também na lista do time.

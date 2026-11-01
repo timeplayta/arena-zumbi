@@ -210,6 +210,6 @@
   $("btnReset").addEventListener("click", () => {
     const keep = S.name;
     Object.assign(S, JSON.parse(JSON.stringify(DEFAULTS))); S.name = keep;
-    if (IS_TOUCH) Object.assign(S, { quality: "low", shadows: "off", res: 75, fx: "low", fov: 80 });
+    if (IS_TOUCH) Object.assign(S, { quality: "low", shadows: "off", res: 100, fx: "low", fov: 80 });
     saveSettings(); applyQuality(); applyEnv(); applySound(); applyTouchUI(); vmKey = ""; renderAll(); if (ui.tab === "arsenal") renderArsenal();
   });
