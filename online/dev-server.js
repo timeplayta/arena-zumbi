@@ -1,7 +1,7 @@
 // Servidor local para testar o co-op sem Cloudflare:  node online/dev-server.js [porta] [pasta-do-jogo]
 // Faz o mesmo que worker.js (salas, host/convidados) e serve o index.html. Sem dependências.
 const http = require("http"), crypto = require("crypto"), fs = require("fs"), path = require("path");
-const PORT = Number(process.argv[2]) || 8787, DIR = path.resolve(process.argv[3] || path.join(__dirname, "..", "public"));
+const PORT = Number(process.argv[2]) || 8787, DIR = path.resolve(process.argv[3] || path.join(__dirname, "..", "game", "public"));
 const MAX = 4, rooms = new Map();
 const frame = (s) => { const b = Buffer.from(s), n = b.length; let h;
   if (n < 126) h = Buffer.from([0x81, n]); else if (n < 65536) { h = Buffer.alloc(4); h[0] = 0x81; h[1] = 126; h.writeUInt16BE(n, 2); } else { h = Buffer.alloc(10); h[0] = 0x81; h[1] = 127; h.writeBigUInt64BE(BigInt(n), 2); }

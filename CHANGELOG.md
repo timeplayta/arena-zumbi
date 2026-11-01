@@ -1,5 +1,8 @@
 # Novidades — Arena Zumbi
 
+## Dois endereços (01/11/2026)
+- O jogo e o servidor online agora ficam em projetos separados do Cloudflare. Veja o README.
+
 ## Ajustes (31/10/2026)
 - Acentos corrigidos (o texto aparecia como "VocÃª", "MISSÃ£O").
 - HUD do celular reorganizado: munição, aviso de onda, dica e botão MODO.

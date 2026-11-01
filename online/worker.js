@@ -60,6 +60,6 @@ export default {
     const url = new URL(request.url);
     const m = url.pathname.match(/^\/ws\/([A-Za-z0-9]{3,16})$/);
     if (m) return env.ROOMS.get(env.ROOMS.idFromName(m[1].toUpperCase())).fetch(request);
-    return env.ASSETS.fetch(request);
+    return new Response("Arena Zumbi - servidor online", { headers: { "content-type": "text/plain; charset=utf-8" } });
   },
 };

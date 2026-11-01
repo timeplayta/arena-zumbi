@@ -1,5 +1,5 @@
 #!/bin/sh
-# Junta src/ em index.html e public/index.html (jogo inteiro numa página só).
+# Junta src/ em index.html e game/public/index.html (jogo inteiro numa página só).
 cd "$(dirname "$0")/src"
 {
   cat head.html
@@ -8,4 +8,4 @@ cd "$(dirname "$0")/src"
   cat logic.js app1.js app1b.js zhand.js app2.js zhead.js zhair.js zbody.js zanat.js app2b.js zview.js zelite.js app3.js app4.js app4b.js znet.js app5.js
   echo '</script>'
 } > ../index.html
-mkdir -p ../public && cp ../index.html ../public/index.html
+mkdir -p ../game/public && cp ../index.html ../game/public/index.html

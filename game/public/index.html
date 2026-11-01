@@ -7544,9 +7544,9 @@ const Logic = (function () {
     let acc = 0, sAcc = 0, sentZ = new Set(), sentP = new Set(), pingT = 0, game0 = null;
     const WORLD = /^(wave|giant|elite|kill|clear|wall|hit|rshot|ally_down|tank_|sam_|wraith_)/;
     const setMsg = (m, cls) => { st.msg = m; const e = $("coopStatus"); if (e) { e.textContent = m; e.className = "coop-status " + (cls || ""); } };
-    const DEFAULT_SERVER = "arena-zumbi.sistemasparasaude.workers.dev";       // usado no .exe e fora do endereço do Worker
+    const DEFAULT_SERVER = "arena-zumbi.sistemasparasaude.workers.dev";       // servidor online (salas co-op); o jogo pode ficar em outro endereço
     function serverHost() {
-      if (/^https?:$/.test(location.protocol) && !/claude|anthropic/i.test(location.hostname)) return location.host;
+      if (/^https?:$/.test(location.protocol) && /^(localhost|127\.|192\.168\.|10\.)/.test(location.hostname)) return location.host;   // teste local (online/dev-server.js)
       return DEFAULT_SERVER;
     }
     const roomKey = (n) => String(n || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 16);

@@ -13,14 +13,21 @@ New > Static Site > escolha este repositório > Build Command vazio > Publish Di
 Baixe `windows/Arena-Zumbi-Windows.zip`, descompacte e abra `Arena Zumbi.exe`.
 Funciona sem internet. F11 alterna tela cheia; Ctrl+Q fecha.
 
-## Co-op online (Cloudflare)
+## Dois endereços no Cloudflare
+
+| Projeto | O que faz | Pasta raiz | Endereço |
+|---|---|---|---|
+| `arena-zumbi` | Servidor online (salas co-op; depois contas e placares) | `/` | arena-zumbi.sistemasparasaude.workers.dev |
+| `arena-zumbi-play` | O jogo (site estático) | `game` | arena-zumbi-play.sistemasparasaude.workers.dev |
+
+Em cada projeto: Workers & Pages > Create > Import a repository > este repositório.
+No `arena-zumbi-play`, em Root directory, escreva `game`. Deploy command: `npx wrangler deploy`. Sem build command.
+
+O endereço do servidor online fica em `DEFAULT_SERVER` (`src/znet.js`).
+
+## Co-op online
 
 Até 4 jogadores. O anfitrião roda a partida; o Cloudflare só repassa mensagens (Worker + Durable Object).
+Aba "Co-op online" > nome da sala (e senha, se quiser) > Criar sala. Os outros escrevem o mesmo nome e senha > Entrar na sala. O anfitrião clica em Jogar.
 
-**Publicar:** Cloudflare > Workers & Pages > Create > Import a repository > este repositório.
-Deploy command: `npx wrangler deploy`. Sem build command. O jogo e o co-op ficam no mesmo endereço `*.workers.dev`.
-
-**Jogar:** aba "Co-op online" > escreva o nome da sala (e senha, se quiser) > Criar sala. Os outros escrevem o mesmo nome e senha > Entrar na sala. O anfitrião clica em Jogar.
-No `.exe` o endereço do servidor já vem embutido (`DEFAULT_SERVER` em `src/znet.js`).
-
-**Testar local:** `node online/dev-server.js` e abra http://localhost:8787
+Teste local: `node online/dev-server.js` e abra http://localhost:8787
