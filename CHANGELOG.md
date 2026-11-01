@@ -1,5 +1,10 @@
 # Novidades — Arena Zumbi
 
+## Teclas configuráveis no PC (01/11/2026)
+- Controles > Teclado: clique na tecla de uma ação e aperte a nova. Tecla repetida troca de lugar com a outra ação. Esc cancela.
+- 15 ações: andar (4), correr, agachar, recarregar, arma 1, arma 2, trocar arma, faca, modo de tiro, lanterna, som, pausar.
+- "Restaurar teclas padrão" volta tudo. A dica de teclas na tela usa as teclas escolhidas.
+
 ## Botão de tiro automático no celular (01/11/2026)
 - Novo botão AUTO no topo do HUD de toque: liga/desliga o tiro automático. Riscado = desligado. Só aparece no celular.
 

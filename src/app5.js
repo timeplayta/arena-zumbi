@@ -155,7 +155,7 @@
     state = "run"; applyEnv();
     last = performance.now(); mouseDown = false; adsHeld = false;
     resetTouch(); applyTouchUI();
-    $("hint").textContent = touchOn() ? TOUCH_HINT : KEY_HINT;
+    $("hint").textContent = touchOn() ? TOUCH_HINT : keyHint();
     if (touchOn()) goFullscreen(); else lockPointer();
   }
   function pause() {
@@ -197,6 +197,50 @@
   $("btnToMenu1").addEventListener("click", toMenu);
   $("btnToMenu2").addEventListener("click", toMenu);
 
+  // ---------------- teclas configuráveis (Controles > Teclado) ----------------
+  const BIND_DEF = { fwd: "KeyW", back: "KeyS", left: "KeyA", right: "KeyD", sprint: "ShiftLeft", crouch: "KeyC", reload: "KeyR", slot1: "Digit1", slot2: "Digit2", swap: "KeyQ", melee: "KeyV", mode: "KeyB", torch: "KeyF", mute: "KeyM", pause: "KeyP" };
+  const BIND_LABEL = { fwd: "Andar para frente", back: "Andar para trás", left: "Andar para a esquerda", right: "Andar para a direita", sprint: "Correr / prender a respiração", crouch: "Agachar",
+    reload: "Recarregar", slot1: "Arma 1", slot2: "Arma 2", swap: "Trocar de arma", melee: "Golpe de faca", mode: "Modo de tiro (auto / semi / rajada)", torch: "Lanterna", mute: "Som liga/desliga", pause: "Pausar (Esc sempre pausa)" };
+  function loadBinds() { let b = {}; try { b = JSON.parse(S.binds || "{}") || {}; } catch (e) {} const o = Object.assign({}, BIND_DEF); for (const k in o) if (typeof b[k] === "string" && b[k]) o[k] = b[k]; return o; }
+  let KB = loadBinds(), bindWait = null;
+  function keyName(c) {
+    if (!c) return "—";
+    if (/^Key[A-Z]$/.test(c)) return c.slice(3);
+    if (/^Digit\d$/.test(c)) return c.slice(5);
+    if (/^Numpad\d$/.test(c)) return "Num " + c.slice(6);
+    const N = { ShiftLeft: "Shift", ShiftRight: "Shift dir.", ControlLeft: "Ctrl", ControlRight: "Ctrl dir.", AltLeft: "Alt", AltRight: "Alt Gr", Space: "Espaço", Tab: "Tab", CapsLock: "Caps Lock",
+      Enter: "Enter", Backspace: "Backspace", ArrowUp: "↑", ArrowDown: "↓", ArrowLeft: "←", ArrowRight: "→", Backquote: "'", Minus: "-", Equal: "=", BracketLeft: "´", BracketRight: "[", Semicolon: "Ç", Quote: "~", Backslash: "]", Comma: ",", Period: ".", Slash: ";", IntlBackslash: "\\" };
+    return N[c] || c;
+  }
+  function keyHint() {
+    return keyName(KB.fwd) + keyName(KB.left) + keyName(KB.back) + keyName(KB.right) + " mover · Mouse mirar · Clique atirar · Botão direito mirar · " + keyName(KB.reload) + " recarregar · " + keyName(KB.slot1) + "/" + keyName(KB.slot2) +
+      " ou roda trocar arma · " + keyName(KB.crouch) + " agachar · " + keyName(KB.melee) + " faca · " + keyName(KB.mode) + " modo de tiro · " + keyName(KB.sprint) + " correr · " + keyName(KB.torch) + " lanterna · Esc pausar";
+  }
+  function renderBinds() {
+    const box = $("bindList"); if (!box) return;
+    box.innerHTML = Object.keys(BIND_DEF).map((k) => '<div class="bind"><span>' + BIND_LABEL[k] + '</span><button type="button" class="bkey' + (bindWait === k ? " wait" : "") + '" data-bind="' + k + '">' + (bindWait === k ? "Aperte uma tecla…" : keyName(KB[k])) + "</button></div>").join("");
+  }
+  function saveBinds() {
+    const o = {}; for (const k in KB) if (KB[k] !== BIND_DEF[k]) o[k] = KB[k];
+    S.binds = Object.keys(o).length ? JSON.stringify(o) : ""; saveSettings(); renderBinds();
+  }
+  document.addEventListener("click", (e) => {
+    const b = e.target.closest && e.target.closest("[data-bind]");
+    if (b) { bindWait = bindWait === b.getAttribute("data-bind") ? null : b.getAttribute("data-bind"); renderBinds(); return; }
+    if (e.target.id === "btnBindReset") { KB = Object.assign({}, BIND_DEF); bindWait = null; saveBinds(); }
+  });
+  window.addEventListener("keydown", (e) => {                                     // esperando a nova tecla: pega antes do jogo
+    if (!bindWait) return;
+    e.preventDefault(); e.stopImmediatePropagation();
+    const c = e.code, k = bindWait; bindWait = null;
+    if (c && c !== "Escape") {
+      const other = Object.keys(KB).find((q) => q !== k && KB[q] === c);
+      if (other) KB[other] = KB[k];                                                  // tecla já usada: as duas trocam de lugar
+      KB[k] = c;
+    }
+    saveBinds();
+  }, true);
+
   // ---------------- entrada ----------------
   window.addEventListener("keydown", (e) => {
     if (e.target && e.target.tagName === "INPUT") return;
@@ -205,16 +249,16 @@
     if (e.repeat) return;
     keys.add(c);
     if (state === "run") {
-      if (c === "Escape" || c === "KeyP") pause();
-      else if (c === "KeyR") game.startReload();
-      else if (c === "Digit1") game.switchWeapon(0);
-      else if (c === "Digit2") game.switchWeapon(1);
-      else if (c === "KeyQ") game.switchWeapon(1 - game.cur);
-      else if (c === "KeyV") game.requestMelee();
-      else if (c === "KeyB") game.toggleFireMode();
-      else if (c === "KeyF") { torchEnabled = !torchEnabled; }
-      else if (c === "KeyM") { S.muted = Snd.toggleMute(); saveSettings(); }
-    } else if (state === "dead" && (c === "KeyR" || c === "Space")) startGame();
+      if (c === "Escape" || c === KB.pause) pause();
+      else if (c === KB.reload) game.startReload();
+      else if (c === KB.slot1) game.switchWeapon(0);
+      else if (c === KB.slot2) game.switchWeapon(1);
+      else if (c === KB.swap) game.switchWeapon(1 - game.cur);
+      else if (c === KB.melee) game.requestMelee();
+      else if (c === KB.mode) game.toggleFireMode();
+      else if (c === KB.torch) { torchEnabled = !torchEnabled; }
+      else if (c === KB.mute) { S.muted = Snd.toggleMute(); saveSettings(); }
+    } else if (state === "dead" && (c === KB.reload || c === "Space")) startGame();
   });
   window.addEventListener("keyup", (e) => keys.delete(e.code));
   window.addEventListener("blur", () => { keys.clear(); mouseDown = false; adsHeld = false; if (state === "run") pause(); });
@@ -232,7 +276,6 @@
   window.addEventListener("wheel", (e) => { if (state !== "run") return; e.preventDefault(); game.switchWeapon(1 - game.cur); }, { passive: false });
 
   // ---------------- toque (celular) ----------------
-  const KEY_HINT = $("hint").textContent;
   const TOUCH_HINT = "Esquerda: arraste para andar (empurre até o fim para correr) · Direita: arraste para olhar · ● atirar · ◎ mirar";
   const adsRatio = () => (Math.tan((hfov * Math.PI) / 360) / Math.tan((S.fov * Math.PI) / 360)) * (S.adsSens / 70);
   const TS = { ptr: new Map(), move: null, mx: 0, my: 0, fire: false, ads: false, crouch: false, sprint: false, alt: false };
@@ -810,10 +853,10 @@
       if (keys.has("ArrowRight")) game.look(-k, 0);
       if (keys.has("ArrowUp")) game.look(0, k);
       if (keys.has("ArrowDown")) game.look(0, -k);
-      const shift = keys.has("ShiftLeft") || keys.has("ShiftRight");
+      const shift = keys.has(KB.sprint) || (KB.sprint === "ShiftLeft" && keys.has("ShiftRight"));
       lastInp = {
-        fwd: (keys.has("KeyW") ? 1 : 0) - (keys.has("KeyS") ? 1 : 0), strafe: (keys.has("KeyD") ? 1 : 0) - (keys.has("KeyA") ? 1 : 0),
-        sprint: shift, hold: shift, fire: mouseDown, ads: adsHeld, crouch: keys.has("KeyC"),
+        fwd: (keys.has(KB.fwd) ? 1 : 0) - (keys.has(KB.back) ? 1 : 0), strafe: (keys.has(KB.right) ? 1 : 0) - (keys.has(KB.left) ? 1 : 0),
+        sprint: shift, hold: shift, fire: mouseDown, ads: adsHeld, crouch: keys.has(KB.crouch),
       };
       touchInput(lastInp);
       if (game.team === "z") { if (lastInp.fire) Coop.claw(game); lastInp.fire = false; lastInp.ads = false; }   // infecção: zumbi ataca com as garras
@@ -847,7 +890,7 @@
   // ---------------- início ----------------
   window.__arena = { get game() { return game; }, get state() { return state; }, S, startGame, toMenu, TS, touchOn, get pvPivot() { return pvPivot; }, showTab, renderArsenal, ui };
   hfov = 70;
-  Coop.bindUI();
+  Coop.bindUI(); renderBinds();
   menuGame = makeMenuGame();
   resize(); applyQuality(); applyEnv(); applySound(); applyTouchUI(); $("fps").hidden = !S.showFps; renderAll(); showTab("mission");
   requestAnimationFrame(frame);

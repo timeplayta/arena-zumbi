@@ -27,7 +27,7 @@
     // som
     muted: false, volSfx: 100, volVoice: 100, volAmb: 70,
     // gráficos
-    shadows: "torch", res: 100, fx: "med", rainFx: true, sharp1: false, hudSize: 100, hud1: false, tpos: "", fpsCap: "0", showFps: false,
+    shadows: "torch", res: 100, fx: "med", rainFx: true, sharp1: false, hudSize: 100, hud1: false, tpos: "", binds: "", fpsCap: "0", showFps: false,
     // celular / toque
     touch: "auto", touchSens: 12, btnSize: 100, btnAlpha: 70, autoFire: true, vibrate: true, fullscreen: true,
   };

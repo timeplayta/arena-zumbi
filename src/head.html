@@ -247,6 +247,11 @@ table.sc { width: 100%; border-collapse: collapse; font-size: 15px; }
 table.sc th { text-align: left; font-family: var(--font-display); font-weight: 600; font-size: 17px; letter-spacing: 0.14em; color: var(--muted); padding: 4px 8px; border-bottom: 1px solid var(--line); text-transform: uppercase; }
 table.sc td { padding: 7px 8px; border-bottom: 1px solid #151b25; font-variant-numeric: tabular-nums; }
 table.sc td:first-child { font-family: var(--font-display); font-size: 22px; color: var(--amber); }
+.binds { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 6px 22px; }
+.bind { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 15px; color: #cfd6e0; border-bottom: 1px solid var(--line); padding: 3px 0; }
+.bkey { min-width: 92px; background: var(--surface-2, #1b212a); color: var(--fg); border: 1px solid rgba(255,255,255,0.25); padding: 4px 10px; font-family: var(--font-display); font-size: 18px; letter-spacing: 0.06em; cursor: pointer; }
+.bkey:hover { border-color: var(--amber); }
+.bkey.wait { background: var(--amber); color: #1a1205; border-color: var(--amber); font-size: 14px; }
 .keysgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 10px 26px; }
 .keysgrid div { display: flex; align-items: center; gap: 10px; font-size: 15px; color: #cfd6e0; min-width: 0; }
 .keysgrid span { min-width: 0; }
@@ -597,20 +602,17 @@ table.sc td:first-child { font-family: var(--font-display); font-size: 22px; col
             <div><kbd>▼</kbd><span>Agachar · <b>Ⅱ</b> pausar · <b>☀</b> lanterna</span></div>
           </div>
         </div>
-        <div class="sec"><h3>Teclado e mouse</h3>
+        <div class="sec"><h3>Teclado (clique para trocar a tecla)</h3>
+          <p>Clique numa tecla e aperte a nova. Se ela já estiver em uso, as duas trocam de lugar. Esc cancela.</p>
+          <div id="bindList" class="binds"></div>
+          <div class="row"><button type="button" class="btn" id="btnBindReset">Restaurar teclas padrão</button></div>
+        </div>
+        <div class="sec"><h3>Mouse</h3>
           <div class="keysgrid">
-            <div><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd><span>Mover</span></div>
             <div><kbd>Mouse</kbd><span>Mirar (ou setas do teclado)</span></div>
             <div><kbd>Clique</kbd><span>Atirar</span></div>
             <div><kbd>Botão direito</kbd><span>Mirar com zoom</span></div>
-            <div><kbd>R</kbd><span>Recarregar</span></div>
-            <div><kbd>1</kbd><kbd>2</kbd><span>Trocar de arma (também a roda do mouse ou Q)</span></div>
-            <div><kbd>Shift</kbd><span>Correr (gasta fôlego). Com o Falcão mirando: prender a respiração</span></div>
-            <div><kbd>C</kbd><span>Agachar: mais precisão, menos velocidade</span></div>
-            <div><kbd>V</kbd><span>Golpe de faca</span></div>
-            <div><kbd>B</kbd><span>Alternar modo de tiro (auto / semi / rajada), quando a arma permite</span></div>
-            <div><kbd>F</kbd><span>Lanterna</span></div>
-            <div><kbd>M</kbd><span>Som liga/desliga</span></div>
+            <div><kbd>Roda</kbd><span>Trocar de arma</span></div>
             <div><kbd>Esc</kbd><span>Pausar</span></div>
           </div>
         </div>
