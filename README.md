@@ -17,11 +17,11 @@ Funciona sem internet. F11 alterna tela cheia; Ctrl+Q fecha.
 
 | Projeto | O que faz | Pasta raiz | Endereço |
 |---|---|---|---|
-| `arena-zumbi` | Servidor online (salas co-op; depois contas e placares) | `/` | arena-zumbi.playes.workers.dev |
+| `arena-zumbi` | Servidor online (salas co-op; depois contas e placares) + também serve o jogo | `/` | arena-zumbi.playes.workers.dev |
 | `arena-zumbi-play` | O jogo (site estático) | `game` | arena-zumbi-play.playes.workers.dev |
 
 Em cada projeto: Workers & Pages > Create > Import a repository > este repositório.
-No `arena-zumbi-play`, em Root directory, escreva `game`. Deploy command: `npx wrangler deploy`. Sem build command.
+No `arena-zumbi-play`, em Root directory, escreva `game` (opcional: sem isso ele usa a config da raiz, que também serve o jogo). Deploy command: `npx wrangler deploy`. Sem build command.
 
 O endereço do servidor online fica em `DEFAULT_SERVER` (`src/znet.js`).
 
