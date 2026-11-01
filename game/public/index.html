@@ -1195,7 +1195,9 @@ const Logic = (function () {
         if (sh) { sh.kills += 1; if (head) sh.hs += 1; if (E) sh.bonus += Math.round(E.coins * D.coin); }
         else { this.kills += 1; if (E) this.bonus += Math.round(E.coins * D.coin); if (head) this.headshots += 1; }
         this.events.push(["kill", z.x, z.y, head, pts, z.brute, z.headGone, z.giant, z.kind]);
-        if (z.puppet) { /* infecção: sem itens */ }
+        if (z.puppet) {                                            // infecção: infectado abatido solta 4 kits médicos e 4 caixas de munição
+          for (let i = 0; i < 4; i++) { this.pickups.push(new Pickup("health", z.x, z.y, this.rnd)); this.pickups.push(new Pickup("ammo", z.x, z.y, this.rnd)); }
+        }
         else if (z.giant || E) {                                    // gigantes e especiais soltam um tesouro
           const nh = z.giant ? 2 : z.samurai ? 1 : 2, na = z.giant ? 3 : z.samurai ? 2 : 3;
           for (let i = 0; i < nh; i++) this.pickups.push(new Pickup("health", z.x, z.y, this.rnd));
@@ -1742,14 +1744,14 @@ const Logic = (function () {
         }
         const d = Math.hypot(p.x - this.px, p.y - this.py);
         let rb = null, rd = 1e9;                                    // co-op: aliado mais perto que pode pegar o item
-        if (this.others.length && p.age > 0.35) for (const o of this.others) if (o.alive && (p.kind !== "health" || o.hp < o.maxHp)) { const dd = Math.hypot(p.x - o.x, p.y - o.y); if (dd < rd) { rd = dd; rb = o; } }
+        if (this.others.length && p.age > 0.35) for (const o of this.others) if (o.alive && o.team !== "z" && (p.kind !== "health" || o.hp < o.maxHp)) { const dd = Math.hypot(p.x - o.x, p.y - o.y); if (dd < rd) { rd = dd; rb = o; } }
         if (rb && rd < PICK_R) { this.takeRemote(rb, p); continue; }
         if (rb && !(this.alive && d <= rd) && rd < MAGNET_R) {     // ímã do aliado
           p.pull = Math.min(1, p.pull + dt * 2.5);
           const sp = (2.5 + 7 * p.pull) * dt, k = Math.min(1, sp / Math.max(rd, 1e-3));
           p.x += (rb.x - p.x) * k; p.y += (rb.y - p.y) * k;
           if (p.landed) p.h = Math.min(0.25, p.h + dt);
-        } else if (this.alive && p.age > 0.35) {
+        } else if (this.alive && this.team !== "z" && p.age > 0.35) {
           const ok = this.canTake(p);
           if (d < PICK_R && ok) { this.takePickup(p); continue; }
           if (ok && d < MAGNET_R * this.magnetK) {              // ímã: o item desliza até você
@@ -1796,7 +1798,7 @@ const Logic = (function () {
         if (Math.abs(this.kvx) + Math.abs(this.kvy) < 0.05) this.kvx = this.kvy = 0;
       }
       if (this.coop && this.coop.role === "guest") { this.mirrorStep(dt); this.updateCracks(dt); return; }   // convidado: o mundo vem pelo anfitrião
-      if (this.gm === "infect") { this.updateInfect(dt); this.updateZombies(dt); }
+      if (this.gm === "infect") { this.updateInfect(dt); this.updateZombies(dt); this.updatePickups(dt); }
       else { this.updateWaves(dt); this.updateZombies(dt); this.updatePickups(dt); this.updateCracks(dt); }
       if (this.coop && !this.alive && !this.over && !this.others.some((o) => o.alive)) this.over = true;
     }
