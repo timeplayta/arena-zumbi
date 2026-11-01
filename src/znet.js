@@ -145,7 +145,10 @@
   // ---------- braços de zumbi em primeira pessoa (modo Infecção) ----------
   const ZArms = (() => {
     let Z = null, act = "", actT = 0, side = 0, idleT = 0;
-    function swipe() { act = side ? "light_miss2" : "light_miss1"; side ^= 1; actT = 0; }
+    function swipe() {                         // ataque a cada 50 ms: só reinicia a animação depois de meio golpe
+      if (act && Z && actT < Z.dur(act) * 0.5) return false;
+      act = side ? "light_miss2" : "light_miss1"; side ^= 1; actT = 0; return true;
+    }
     function update(g, dt) {
       const on = g.team === "z" && g.alive;
       if (!Z) {
@@ -346,9 +349,9 @@
     let clawCd = 0;
     function claw(g) {                                                     // jogador zumbi ataca com as garras
       if (g.team !== "z" || !g.alive) return;
-      const now = performance.now(); if (now < clawCd) return; clawCd = now + 1500;
+      const now = performance.now(); if (now < clawCd) return; clawCd = now + 50;
       if (st.host) g.claw(st.id); else send({ t: "claw" });
-      Snd.play("melee", 0.8, rand(0.7, 0.85)); g.shake = Math.max(g.shake, 0.25); ZArms.swipe();
+      if (ZArms.swipe()) { Snd.play("melee", 0.8, rand(0.7, 0.85)); g.shake = Math.max(g.shake, 0.25); }
     }
     function onToMenu() {
       if (!connected()) return;
@@ -379,9 +382,9 @@
       if (!active()) { infHud(g); if (teamKey) { teamKey = ""; e.innerHTML = ""; } return; }
       if (!g.others.length) { infHud(g); if (teamKey) { teamKey = ""; e.innerHTML = ""; } return; }
       infHud(g);
-      const rows = g.others.map((o) => [(o.name || nameOf(o.id)) + (o.team === "z" ? " (zumbi)" : ""), Math.max(0, Math.round(o.hp)), o.maxHp || 100, o.alive && o.team !== "z", slotOf(o.id), o.id]);
+      const rows = g.others.map((o) => { const L = g.lifeOf(o.id, o); return [(o.name || nameOf(o.id)) + (o.team === "z" ? " (zumbi)" : ""), Math.max(0, Math.round(L[0])), L[1], o.alive && L[0] > 0, slotOf(o.id), o.id, o.team === "z" ? 1 : 0]; });
       const k = JSON.stringify(rows); if (k === teamKey) return; teamKey = k;
-      e.innerHTML = rows.map((r) => '<div class="tm' + (r[3] ? "" : " down") + '"><i style="background:' + colorHex(shirtOf(r[5])) + '"></i><b>' + String(r[0]).replace(/[<>&]/g, "") + '</b><u><s style="width:' + Math.round(100 * clamp(r[1] / r[2], 0, 1)) + '%"></s></u></div>').join("");
+      e.innerHTML = rows.map((r) => '<div class="tm' + (r[3] ? "" : " down") + '"><i style="background:' + colorHex(shirtOf(r[5])) + '"></i><b>' + String(r[0]).replace(/[<>&]/g, "") + '</b><u><s style="width:' + Math.round(100 * clamp(r[1] / r[2], 0, 1)) + '%' + (r[6] ? ';background:#c0392b' : '') + '"></s></u></div>').join("");
     }
     // ---------------- UI do lobby ----------------
     function bindUI() {

@@ -4,7 +4,9 @@ const Logic = (function () {
   const ARENA0 = 22, WALL_H = 3.6, EYE_H = 1.7, STEP = 0.5, HEAD_ROOM = 1.85, CROUCH_DROP = 0.55, PLAYER_R = 0.38, ZOMBIE_R = 0.36;
   const PLAYER_SPEED = 4.6, SPRINT_MULT = 1.65;
   const ZOMBIE_RESPAWN = 5;                                   // infecção: segundos até o infectado abatido voltar
-  const CLAW_CD = 1.5;                                        // infecção: intervalo entre ataques do infectado (s)
+  // parâmetros da IA dos bots: escolhidos por busca em ~600 partidas simuladas de Infecção (11 bots, mapa Itália)
+  const BOT_AI = { samples: 10, roamR: 28, wz: 1, wh: 0.3, wHigh: 0.6, roamT: 6, boostR: 25, stand: 26, flee: 7, sprint: 4, away: 7, range: 28, camp: false, spotMode: "mix", spread: 12, group: 2, gap: 3, moveErr: 1.6, fireVar: 1.2, clawR: 1.7 };
+  const CLAW_CD = 0.05;                                       // infecção: intervalo entre ataques do infectado (s)
   const ATTACK_RANGE = 1.25, ZOMBIE_SEP = 0.75, RANGE = 90;
   const BODY_R = 0.34, BODY_H = 1.5, HEAD_Z = 1.67, HEAD_R = 0.21, LEG_H = 0.8;
   const MELEE_RANGE = 1.9, MELEE_CD = 0.75, MELEE_DMG = 55, SWITCH_TIME = 0.45;
@@ -184,6 +186,103 @@ const Logic = (function () {
     for (const b of BOXES) if (x > b[0] - margin && x < b[1] + margin && y > b[2] - margin && y < b[3] + margin) return true;
     return false;
   }
+
+  // ---------- navegação dos bots: grade de 0,5 m com andares (casas, terraços, escadas) + A* ----------
+  const Nav = (() => {
+    const C = 0.5, R = 0.34, cache = {};
+    function build() {
+      const A = ARENA, N = Math.round((2 * A) / C), BK = 4, NB = Math.ceil((2 * A + 2) / BK);
+      const bucket = Array.from({ length: NB * NB }, () => []);
+      const bi = (v) => clamp(Math.floor((v + A + 1) / BK), 0, NB - 1);
+      for (const b of BOXES) for (let j = bi(b[2] - 0.5); j <= bi(b[3] + 0.5); j++) for (let i = bi(b[0] - 0.5); i <= bi(b[1] + 0.5); i++) bucket[j * NB + i].push(b);
+      const near = (x, y) => bucket[bi(y) * NB + bi(x)];
+      const ground = (x, y, cur) => { let g = 0; const lim = cur + STEP + 0.01; for (const b of near(x, y)) if (x > b[0] && x < b[1] && y > b[2] && y < b[3] && b[4] <= lim && b[4] > g) g = b[4]; return g; };
+      const free = (x, y, gz) => {
+        if (Math.abs(x) > A - R || Math.abs(y) > A - R) return false;
+        for (const b of near(x, y)) {
+          if (b[4] <= gz + STEP || b[5] >= gz + HEAD_ROOM) continue;
+          const nx = x < b[0] ? b[0] : x > b[1] ? b[1] : x, ny = y < b[2] ? b[2] : y > b[3] ? b[3] : y;
+          if ((x - nx) * (x - nx) + (y - ny) * (y - ny) < R * R) return false;
+        }
+        return true;
+      };
+      const X = [], Y = [], Z = [], key = new Map(), cellLv = new Map();
+      const cx = (i) => -A + (i + 0.5) * C;
+      const node = (i, j, z) => {
+        const k = (j * N + i) * 128 + Math.round(z * 8);
+        let id = key.get(k); if (id !== undefined) return id;
+        id = X.length; X.push(cx(i)); Y.push(cx(j)); Z.push(z); key.set(k, id);
+        const c = j * N + i; let l = cellLv.get(c); if (!l) cellLv.set(c, (l = [])); l.push(id);
+        return id;
+      };
+      const seeds = MAP === "italia" ? ITALIA.zspawns.concat([[0, 8], [8, 0], [-8, 0], [0, -8]]) : [[0, 8], [0, -8], [8, 0], [-8, 0], [15, 15], [-15, -15]];
+      const q = [];
+      for (const sd of seeds) { const i = clamp(Math.floor((sd[0] + A) / C), 0, N - 1), j = clamp(Math.floor((sd[1] + A) / C), 0, N - 1), z = ground(cx(i), cx(j), 0); if (free(cx(i), cx(j), z)) { const n0 = X.length, id = node(i, j, z); if (id === n0) q.push([i, j, id]); } }
+      const DIR = [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [1, -1], [-1, 1], [-1, -1]];
+      const adj = [];
+      for (let h = 0; h < q.length; h++) {
+        const [i, j, id] = q[h], z = Z[id], out = [];
+        for (const d of DIR) {
+          const ni = i + d[0], nj = j + d[1]; if (ni < 0 || nj < 0 || ni >= N || nj >= N) continue;
+          const x2 = cx(ni), y2 = cx(nj), z2 = ground(x2, y2, z);
+          if (!free(x2, y2, z2) || !free((X[id] + x2) / 2, (Y[id] + y2) / 2, Math.max(z, z2))) continue;
+          if (d[0] && d[1] && (!free(cx(i + d[0]), cx(j), z) || !free(cx(i), cx(j + d[1]), z))) continue;   // não corta quina
+          const n0 = X.length, id2 = node(ni, nj, z2); if (id2 === n0) q.push([ni, nj, id2]);
+          out.push(id2, (d[0] && d[1] ? 1.414 : 1) * C + Math.max(0, z2 - z) * 0.6);
+        }
+        adj[id] = out;
+      }
+      const n = X.length;
+      return { N, A, X, Y, Z, adj, cellLv, n, free, ground, g: new Float32Array(n), par: new Int32Array(n), stamp: new Uint32Array(n), shut: new Uint32Array(n), gen: 0 };
+    }
+    function get() { const k = MAP; return cache[k] || (cache[k] = build()); }
+    function locate(x, y, gz) {                                   // nó mais perto (no mesmo andar)
+      const M = get(), i0 = Math.floor((x + M.A) / C), j0 = Math.floor((y + M.A) / C);
+      for (let r = 0; r <= 4; r++) {
+        let best = -1, bd = 1e9;
+        for (let j = j0 - r; j <= j0 + r; j++) for (let i = i0 - r; i <= i0 + r; i++) {
+          if (Math.max(Math.abs(i - i0), Math.abs(j - j0)) !== r || i < 0 || j < 0 || i >= M.N || j >= M.N) continue;
+          const l = M.cellLv.get(j * M.N + i); if (!l) continue;
+          for (const id of l) { const d = Math.hypot(M.X[id] - x, M.Y[id] - y) + Math.abs(M.Z[id] - gz) * 2 + (M.Z[id] > gz + STEP + 0.05 ? 9 : 0); if (d < bd) { bd = d; best = id; } }
+        }
+        if (best >= 0) return best;
+      }
+      return -1;
+    }
+    // A*: devolve lista de pontos [x, y, z] (do começo ao alvo); limite de nós para não pesar no celular
+    function path(x0, y0, z0, x1, y1, z1, maxN) {
+      const M = get(), s = locate(x0, y0, z0), t = locate(x1, y1, z1); if (s < 0 || t < 0) return null;
+      if (s === t) return [[x1, y1, z1]];
+      const gen = ++M.gen, H = [], tx = M.X[t], ty = M.Y[t], tz = M.Z[t];
+      const h = (id) => { const dx = Math.abs(M.X[id] - tx), dy = Math.abs(M.Y[id] - ty); return Math.max(dx, dy) + 0.414 * Math.min(dx, dy) + Math.abs(M.Z[id] - tz) * 0.5; };
+      const push = (id, f) => { H.push([f, id]); let i = H.length - 1; while (i > 0) { const p = (i - 1) >> 1; if (H[p][0] <= H[i][0]) break; [H[p], H[i]] = [H[i], H[p]]; i = p; } };
+      const pop = () => { const top = H[0], last = H.pop(); if (H.length) { H[0] = last; let i = 0; for (;;) { const l = 2 * i + 1, r = l + 1; let m = i; if (l < H.length && H[l][0] < H[m][0]) m = l; if (r < H.length && H[r][0] < H[m][0]) m = r; if (m === i) break; [H[m], H[i]] = [H[i], H[m]]; i = m; } } return top; };
+      M.stamp[s] = gen; M.g[s] = 0; M.par[s] = -1; push(s, h(s));
+      let best = s, bh = h(s), cnt = 0; maxN = maxN || 9000;
+      while (H.length) {
+        const [, u] = pop(); if (M.shut[u] === gen) continue; M.shut[u] = gen;
+        if (u === t) { best = t; break; }
+        const hu = h(u); if (hu < bh) { bh = hu; best = u; }
+        if (++cnt > maxN) break;
+        const e = M.adj[u]; if (!e) continue;
+        for (let k = 0; k < e.length; k += 2) {
+          const v = e[k], ng = M.g[u] + e[k + 1];
+          if (M.stamp[v] !== gen) { M.stamp[v] = gen; M.g[v] = 1e9; }
+          if (ng < M.g[v] && M.shut[v] !== gen) { M.g[v] = ng; M.par[v] = u; push(v, ng + h(v)); }
+        }
+      }
+      const out = []; for (let u = best; u >= 0; u = M.par[u]) out.push([M.X[u], M.Y[u], M.Z[u]]);
+      out.reverse(); return out;
+    }
+    function los(ax, ay, az, bx, by) {                           // dá para andar reto de A até B?
+      const M = get(), L = Math.hypot(bx - ax, by - ay), n = Math.ceil(L / 0.35);
+      let z = az;
+      for (let k = 1; k <= n; k++) { const x = ax + ((bx - ax) * k) / n, y = ay + ((by - ay) * k) / n, z2 = M.ground(x, y, z); if (z2 < z - 0.6 || !M.free(x, y, z2)) return false; z = z2; }
+      return true;
+    }
+    function randomNode(rnd) { const M = get(); const id = Math.floor(rnd() * M.n); return [M.X[id], M.Y[id], M.Z[id]]; }
+    return { get, locate, path, los, randomNode };
+  })();
 
   function faceNormal(x, y, z) {
     if (z < 0.02) return [0, 0, 1];
@@ -1329,6 +1428,7 @@ const Logic = (function () {
       const o = this.addRemote(id, name, { loadout: [{ id: w, a: {} }, { id: "p45", a: {} }] });
       o.bot = { stam: 100, tired: false, t: 0, wp: null, stuck: 0, detourT: 0, detour: 0, shootT: 0.5 + this.rnd(), aimErr: 0.03 + this.rnd() * 0.05, lastX: o.x, lastY: o.y, lastD: 0 };
       o.gz = 0; o.vz = 0; o.boostT = 0;
+      Nav.get();                                                                 // monta a grade de navegação uma vez (antes da partida)
       if (this.gm === "infect") this.infectJoin(id);
       return o;
     }
@@ -1347,53 +1447,142 @@ const Logic = (function () {
       o.x = q[0]; o.y = q[1]; o.mv = moved > 0.002 ? 1 : 0;
       const g = groundAt(o.x, o.y, o.gz || 0);                                   // escadas e beiradas
       if (g >= (o.gz || 0)) { o.gz = g; o.vz = 0; } else { o.vz = (o.vz || 0) - 22 * dt; o.gz = Math.max(g, o.gz + o.vz * dt); }
-      if (moved < spd * dt * 0.35) { B.stuck += dt; if (B.stuck > 0.5) { B.stuck = 0; B.detour = (this.rnd() < 0.5 ? -1 : 1) * (0.9 + this.rnd() * 1.2); B.detourT = 0.8 + this.rnd() * 1.2; B.wp = null; } }
+      if (moved < spd * dt * 0.35) { B.stuck += dt; if (B.stuck > 0.5) { B.stuck = 0; B.detour = (this.rnd() < 0.5 ? -1 : 1) * (0.9 + this.rnd() * 1.2); B.detourT = 0.6 + this.rnd() * 0.8; B.wp = null; B.path = null; B.repath = 0; } }
       else B.stuck = Math.max(0, B.stuck - dt);
     }
+    // IA dos bots ("treinada" em partidas simuladas: tools/tbots.js). BOT_AI guarda os parâmetros escolhidos.
+    botFollow(o, dt, spd) {                                                    // anda pelo caminho do A*
+      const B = o.bot, P = B.path; if (!P || B.pi >= P.length) return false;
+      while (B.pi < P.length - 1 && Math.hypot(P[B.pi][0] - o.x, P[B.pi][1] - o.y) < 0.5) B.pi++;
+      const j = Math.min(P.length - 1, B.pi + 4);                                // corta caminho quando dá para ir reto
+      if (j > B.pi && Math.abs(P[j][2] - (o.gz || 0)) < 0.3 && Nav.los(o.x, o.y, o.gz || 0, P[j][0], P[j][1])) B.pi = j;
+      const w = P[B.pi];
+      if (B.pi === P.length - 1 && Math.hypot(w[0] - o.x, w[1] - o.y) < 0.4) { B.path = null; o.mv = 0; return false; }
+      const ang = Math.atan2(-(w[0] - o.x), w[1] - o.y);
+      this.botMove(o, ang, spd, dt); B.moveAng = ang; return true;
+    }
+    botGo(o, x, y, z, maxN) { const B = o.bot; B.path = Nav.path(o.x, o.y, o.gz || 0, x, y, z, maxN || 7000); B.pi = 0; B.goal = [x, y, z]; B.repath = 0; }
+    botSpots() {                                                               // esconderijos espalhados: lugares altos com vista e cantos dentro de casas
+      const AI = BOT_AI, key = MAP + AI.spotMode;
+      if (this._spots && this._spots.key === key) return this._spots.list;
+      const M = Nav.get(), cand = [];
+      for (let id = 0; id < M.n; id += 4) {
+        const x = M.X[id], y = M.Y[id], z = M.Z[id]; let closed = 0, view = 0;
+        for (let k = 0; k < 12; k++) { const a = (k / 12) * 6.283, dx = Math.cos(a), dy = Math.sin(a); let d = 0.5; while (d < 8 && M.free(x + dx * d, y + dy * d, z)) d += 0.5; if (d < 5) closed++; view += d; }
+        const high = z > 2.4, house = closed >= 8 && z < 0.5;
+        if (AI.spotMode === "high" && !high) continue;
+        if (AI.spotMode === "house" && !house) continue;
+        if (!high && !house) continue;
+        cand.push([(high ? z * 2 + view / 12 : closed) + this.rnd() * 0.5, x, y, z]);
+      }
+      cand.sort((a, b) => b[0] - a[0]);
+      const list = [];
+      for (const c of cand) { if (list.every((q) => Math.hypot(q[0] - c[1], q[1] - c[2]) > AI.spread)) list.push([c[1], c[2], c[3]]); if (list.length >= 12) break; }
+      this._spots = { key, list }; return list;
+    }
     updateBots(dt) {
-      const ps = this.infPlayers();
+      const ps = this.infPlayers(), AI = BOT_AI, play = this.inf && this.inf.ph === "play";
+      const zs = this.zombies.filter((z) => z.state !== "dead");
       for (const o of this.others) {
         const B = o.bot; if (!B || !o.alive) continue;
         o.boostT = Math.max(0, (o.boostT || 0) - dt);
-        const sp = PLAYER_SPEED * (o.boostT > 0 ? 1.4 : 1);
-        if ((o.team || "h") === "z") {                                           // infectado: persegue o humano mais perto e ataca
+        const sp = PLAYER_SPEED * (o.boostT > 0 ? 1.4 : 1), oz = o.gz || 0;
+        B.repath = (B.repath || 0) - dt;
+        if ((o.team || "h") === "z") {                                           // infectado: caça o humano mais perto pelo caminho
+          if (!play) { o.mv = 0; continue; }
           let tg = null, bd = 1e9;
-          for (const q of ps) if (q.team === "h" && q.alive) { const d = Math.hypot(q.x - o.x, q.y - o.y) + Math.abs(q.gz - (o.gz || 0)) * 3; if (d < bd) { bd = d; tg = q; } }
-          if (!tg) continue;
-          const ang = Math.atan2(-(tg.x - o.x), tg.y - o.y);
-          o.yaw = ang;
-          if (bd > 1.5) this.botMove(o, ang, sp * SPRINT_MULT, dt);           // infectado corre sem cansar
-          else { o.mv = 0; if (this.inf && this.inf.ph === "play") this.claw(o.id); }
+          for (const q of ps) if (q.team === "h" && q.alive) { const d = Math.hypot(q.x - o.x, q.y - o.y) + Math.abs(q.gz - oz) * 3; if (d < bd) { bd = d; tg = q; } }
+          if (!tg) { o.mv = 0; continue; }
+          const dd = Math.hypot(tg.x - o.x, tg.y - o.y), same = Math.abs(tg.gz - oz) < 1.2, ang = Math.atan2(-(tg.x - o.x), tg.y - o.y);
+          if (dd < AI.clawR && same) { o.yaw = ang; this.claw(o.id); if (dd > 1.0) this.botMove(o, ang, sp * SPRINT_MULT, dt); else o.mv = 0; continue; }
+          if (same && dd < 9 && Nav.los(o.x, o.y, oz, tg.x, tg.y)) { o.yaw = ang; this.botMove(o, ang, sp * SPRINT_MULT, dt); B.path = null; continue; }
+          const moved = B.goal ? Math.hypot(B.goal[0] - tg.x, B.goal[1] - tg.y) : 99;
+          if (!B.path || B.repath <= 0 || moved > 2.5) { this.botGo(o, tg.x, tg.y, tg.gz, 8000); B.repath = 0.5 + this.rnd() * 0.4; }
+          if (!this.botFollow(o, dt, sp * SPRINT_MULT)) { o.yaw = ang; this.botMove(o, ang, sp * SPRINT_MULT, dt); }
+          else o.yaw = B.moveAng;
           continue;
         }
-        // humano: foge do infectado perto, atira se ele estiver à vista, senão anda pelo mapa
+        // humano: vai para um esconderijo, segura a posição atirando e foge pelo caminho quando o zumbi chega perto
         let zt = null, zd = 1e9;
-        for (const z of this.zombies) if (z.state !== "dead") { const d = Math.hypot(z.x - o.x, z.y - o.y); if (d < zd) { zd = d; zt = z; } }
-        let moveAng = null, spd = sp;
-        let sprint = false;
-        if (zt && zd < 7) { moveAng = Math.atan2(-(o.x - zt.x), o.y - zt.y) + Math.sin(this.time * 1.3 + o.x) * 0.6; sprint = zd < 4.5 && !B.tired; }
-        else {
-          if (!B.wp || Math.hypot(B.wp[0] - o.x, B.wp[1] - o.y) < 2 || (B.t -= dt) <= 0) { const A = ARENA - 4; B.wp = [(this.rnd() * 2 - 1) * A, (this.rnd() * 2 - 1) * A]; B.t = 8 + this.rnd() * 8; }
-          moveAng = Math.atan2(-(B.wp[0] - o.x), B.wp[1] - o.y); spd = sp * 0.75;
+        for (const z of zs) { const d = Math.hypot(z.x - o.x, z.y - o.y) + Math.abs((z.gz || 0) - oz) * 1.5; if (d < zd) { zd = d; zt = z; } }
+        if (!B.spot && AI.camp) {                                               // duplas/trios no mesmo esconderijo
+          const L = this.botSpots(); if (L.length) {
+            const i = this.others.filter((q) => q.bot).indexOf(o), k = Math.floor(i / AI.group) % L.length, m = i % AI.group; B.spot = L[k];
+            if (m) { const S = L[k], M = Nav.get(), id = Nav.locate(S[0] + Math.cos(m * 2.1) * AI.gap, S[1] + Math.sin(m * 2.1) * AI.gap, S[2]); if (id >= 0 && Math.abs(M.Z[id] - S[2]) < 0.3) B.spot = [M.X[id], M.Y[id], M.Z[id]]; }   // afastados: a garra pega quem está junto
+          }
         }
-        if (sprint) { spd = sp * SPRINT_MULT; B.stam -= 22 * dt; if (B.stam <= 0) { B.stam = 0; B.tired = true; } }   // humano cansa como o jogador
+        let spd = sp * 0.85, sprint = false, moving = false;
+        B.visT = (B.visT || 0) - dt;
+        if (B.visT <= 0) { B.visT = 0.15; B.vis = !!(play && zt && zd < AI.range && this.botLos(o, zt.x, zt.y, (zt.gz || 0) + 1.2)); }
+        const danger = play && zt && zd < AI.flee;
+        if (danger) {
+          if (!B.fleeing || B.repath <= 0) {                                   // escolhe para onde fugir: longe dos zumbis, perto de casa
+            let best = null, bs = -1e9;
+            for (let k = 0; k < 10; k++) {
+              const a = (k / 10) * 6.283 + this.rnd() * 0.5, r = 7 + this.rnd() * 9, x = o.x + Math.cos(a) * r, y = o.y + Math.sin(a) * r;
+              const id = Nav.locate(x, y, oz); if (id < 0) continue;
+              const M = Nav.get(), cx = M.X[id], cy = M.Y[id];
+              let dz = 1e9; for (const z of zs) dz = Math.min(dz, Math.hypot(z.x - cx, z.y - cy));
+              const toward = zt ? ((cx - o.x) * (zt.x - o.x) + (cy - o.y) * (zt.y - o.y)) / (Math.hypot(cx - o.x, cy - o.y) * zd + 1e-6) : 0;
+              const sc = Math.min(dz, 25) - toward * AI.away;
+              if (sc > bs) { bs = sc; best = [cx, cy, M.Z[id]]; }
+            }
+            if (best) this.botGo(o, best[0], best[1], best[2], 3000);
+            B.fleeing = true; B.repath = 0.8 + this.rnd() * 0.5;
+          }
+          sprint = zd < AI.sprint && !B.tired;
+          moving = this.botFollow(o, dt, sprint ? sp * SPRINT_MULT : sp);
+          if (!moving && zt) { const ang = Math.atan2(-(o.x - zt.x), o.y - zt.y); this.botMove(o, ang, sprint ? sp * SPRINT_MULT : sp, dt); moving = true; }
+        } else if (B.vis && zd < AI.stand) {                                      // zumbi à vista e ainda longe: para e mira
+          o.mv = 0;
+        } else {
+          if (B.fleeing) { B.fleeing = false; B.path = null; }
+          if (B.spot && AI.camp) {
+            const dsp = Math.hypot(B.spot[0] - o.x, B.spot[1] - o.y) + Math.abs(B.spot[2] - oz);
+            if (dsp > 1.2) {
+              if (!B.path || B.repath <= 0) { this.botGo(o, B.spot[0], B.spot[1], B.spot[2]); B.repath = 3 + this.rnd() * 2; if (!B.path) B.spot = null; }
+              sprint = !play && dsp > 12 && !B.tired;
+              moving = this.botFollow(o, dt, sprint ? sp * SPRINT_MULT : spd);
+            } else { o.mv = 0; B.path = null; }
+          } else {
+            if (!B.path || B.repath <= 0) {                                    // passeia para longe dos zumbis e dos outros humanos
+              let best = null, bs = -1e9;
+              for (let k = 0; k < AI.samples; k++) {
+                const r = Nav.randomNode(() => this.rnd()), dme = Math.hypot(r[0] - o.x, r[1] - o.y);
+                if (dme > AI.roamR) continue;
+                let dz = 40, dh = 40;
+                for (const z of zs) dz = Math.min(dz, Math.hypot(z.x - r[0], z.y - r[1]));
+                for (const q of ps) if (q.p !== o && q.team === "h" && q.alive) dh = Math.min(dh, Math.hypot(q.x - r[0], q.y - r[1]));
+                const sc = dz * AI.wz + Math.min(dh, 15) * AI.wh + r[2] * AI.wHigh - dme * 0.1;
+                if (sc > bs) { bs = sc; best = r; }
+              }
+              if (this.boosts) for (const b of this.boosts) {                   // booster perto: vida quando machucado, velocidade sempre
+                if (!b.on || Math.hypot(b.x - o.x, b.y - o.y) > AI.boostR || (b.k === "health" && o.hp > o.maxHp * 0.7)) continue;
+                let dz = 40; for (const z of zs) dz = Math.min(dz, Math.hypot(z.x - b.x, z.y - b.y));
+                if (dz > 12) { best = [b.x, b.y, b.z]; break; }
+              }
+              if (best) this.botGo(o, best[0], best[1], best[2]); B.repath = AI.roamT + this.rnd() * 4;
+            }
+            moving = this.botFollow(o, dt, spd);
+          }
+        }
+        if (sprint && moving) { B.stam -= 22 * dt; if (B.stam <= 0) { B.stam = 0; B.tired = true; } }   // humano cansa como o jogador
         else { B.stam = Math.min(100, B.stam + 14 * dt); if (B.tired && B.stam > 25) B.tired = false; }
+        if (!moving) o.mv = 0;
         B.shootT -= dt;
-        if (zt && zd < 26 && this.inf && this.inf.ph === "play") {
+        if (zt && zd < AI.range && play) {
           const hz = (zt.gz || 0) + 1.2;
-          if (B.shootT <= 0 && this.botLos(o, zt.x, zt.y, hz)) {
-            const c = o.cfgs[0], ex = o.x, ey = o.y, ez = (o.gz || 0) + 1.6;
-            const yaw = Math.atan2(-(zt.x - ex), zt.y - ey) + (this.rnd() - 0.5) * B.aimErr * 2, pit = Math.atan2(hz - ez, zd) + (this.rnd() - 0.5) * B.aimErr * 2;
+          if (B.shootT <= 0 && B.vis) {
+            const c = o.cfgs[0], ex = o.x, ey = o.y, ez = oz + 1.6, err = B.aimErr * (moving ? AI.moveErr : 1) * (zd > 15 ? 1.4 : 1);
+            const yaw = Math.atan2(-(zt.x - ex), zt.y - ey) + (this.rnd() - 0.5) * err * 2, pit = Math.atan2(hz - ez, Math.hypot(zt.x - ex, zt.y - ey)) + (this.rnd() - 0.5) * err * 2;
             o.yaw = yaw; o.pitch = pit;
             const cp = Math.cos(pit), dirs = [];
             for (let k = 0; k < c.pellets; k++) { const j = c.pellets > 1 ? 0.06 : 0; dirs.push([-Math.sin(yaw + (this.rnd() - 0.5) * j) * cp, Math.cos(yaw + (this.rnd() - 0.5) * j) * cp, Math.sin(pit)]); }
             this.remoteShot(o.id, { s: 0, o: [ex, ey, ez], d: dirs });
-            B.shootT = Math.max(c.delay, 0.12) * (1 + this.rnd() * 1.5);
-            if (zd > 6) { o.mv = 0; continue; }                                  // longe: para e atira
+            B.shootT = Math.max(c.delay, 0.12) * (1 + this.rnd() * AI.fireVar);
           }
-        }
-        this.botMove(o, moveAng, spd, dt);
-        if (!(zt && zd < 26)) o.yaw = moveAng;
+          if (B.vis) o.yaw = Math.atan2(-(zt.x - o.x), zt.y - o.y);
+        } else if (moving && B.moveAng !== undefined) o.yaw = B.moveAng;
       }
     }
     posOf(id) { if (id === this.coop.id) return [this.px, this.py, this.yaw, this.gz]; const o = this.remote(id); return o ? [o.x, o.y, o.yaw, o.gz || 0] : [0, 0, 0, 0]; }
@@ -1403,6 +1592,10 @@ const Logic = (function () {
       return a;
     }
     pz(id) { return this.zombies.find((z) => z.puppet === id && z.state !== "dead") || null; }
+    lifeOf(id, p) {                                                // vida para o HUD: infectado usa a vida do corpo de zumbi (1000)
+      if (this.gm !== "infect" || (p.team || "h") !== "z") return [p.hp, p.maxHp || 100];
+      const z = this.pz(id); return z ? [Math.max(0, z.hp), z.maxHp || 1000] : [0, 1000];
+    }
     spawnPuppet(id, x, y) {
       const z = new Zombie(x, y, 1000, 0, "walker", this.randint(3), this, 1);
       z.puppet = id; z.s = 1.12; z.limp = false; z.clawShow = 0;
@@ -1601,7 +1794,7 @@ const Logic = (function () {
   }
 
   return {
-    Game, Zombie, Pickup, buildSlot, groundAt, setMap, getMap: () => MAP, rangeFactor, damageAt, weaponStats, recoilPattern, pushOut, insideAny, clamp, wrapAngle, BOXES, OBSTACLES, LAMPS, WEAPONS, WEAPON_ORDER, DIFF, DIFF_ORDER, ELITE, SAM,
+    Game, Zombie, Pickup, Nav, BOT_AI, buildSlot, groundAt, setMap, getMap: () => MAP, rangeFactor, damageAt, weaponStats, recoilPattern, pushOut, insideAny, clamp, wrapAngle, BOXES, OBSTACLES, LAMPS, WEAPONS, WEAPON_ORDER, DIFF, DIFF_ORDER, ELITE, SAM,
     C: { ZOMBIE_RESPAWN, ARENA, WALL_H, EYE_H, CROUCH_DROP, PLAYER_R, RADAR_RANGE: 18, SWITCH_TIME, MELEE_CD, PICK_TTL },
   };
 })();

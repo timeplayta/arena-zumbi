@@ -777,9 +777,10 @@
     setText(el.wave, "wave", "ONDA " + Math.max(1, g.wave));
     setText(el.zleft, "zleft", String(g.aliveZombies().length + g.toSpawn));
     setText(el.score, "score", String(g.score)); setText(el.kills, "kills", String(g.kills));
-    setText(el.hpnum, "hp", String(Math.ceil(g.hp)));
-    el.hpfill.style.transform = "scaleX(" + clamp(g.hp / g.maxHp, 0, 1).toFixed(3) + ")";
-    el.hpfill.style.background = g.hp > g.maxHp * 0.5 ? "var(--ok)" : g.hp > g.maxHp * 0.25 ? "var(--amber)" : "var(--danger)";
+    const [hpV, hpM] = g.coop ? g.lifeOf(g.coop.id, g) : [g.hp, g.maxHp];     // infectado: mostra a vida do zumbi
+    setText(el.hpnum, "hp", String(Math.ceil(hpV)));
+    el.hpfill.style.transform = "scaleX(" + clamp(hpV / hpM, 0, 1).toFixed(3) + ")";
+    el.hpfill.style.background = hpV > hpM * 0.5 ? "var(--ok)" : hpV > hpM * 0.25 ? "var(--amber)" : "var(--danger)";
     el.arbar.classList.toggle("show", g.armorMax > 0);
     if (g.armorMax > 0) el.arfill.style.transform = "scaleX(" + clamp(g.armor / g.armorMax, 0, 1).toFixed(3) + ")";
     setText(el.coins, "coins", String(g.coins()));

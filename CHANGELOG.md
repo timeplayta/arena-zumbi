@@ -1,5 +1,11 @@
 # Novidades — Arena Zumbi
 
+## Bots mais espertos (01/11/2026)
+- Bots acham caminho pelo mapa: escadas, morros e casas.
+- Humanos fogem melhor, param para mirar e pegam boosters.
+- Vida do infectado agora aparece certa no HUD (1000).
+- Infectado ataca a cada 50 ms.
+
 ## Presente para o Juan (01/11/2026)
 - 100.000 moedas de presente para o perfil Juan (uma vez só).
 
