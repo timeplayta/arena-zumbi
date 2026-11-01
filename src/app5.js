@@ -92,7 +92,7 @@
       if (z.puppet && z.puppet === Coop.st.id) continue;                 // infecção: o próprio zumbi não aparece na câmera
       seen.add(z.id);
       let v = zviews.get(z.id);
-      if (!v) { v = z.tank ? new TankView(z) : z.samurai ? new SamuraiView(z) : z.wraith ? new WraithView(z) : new ZombieView(z); zviews.set(z.id, v); }
+      if (!v) { v = z.tank ? new TankView(z) : z.samurai ? new SamuraiView(z) : z.wraith ? new WraithView(z) : new ZombieView(z); if (z.puppet) redSkin(v); zviews.set(z.id, v); }
       v.update(z);
     }
     for (const [id, v] of zviews) if (!seen.has(id)) { v.destroy(); zviews.delete(id); }
@@ -467,7 +467,7 @@
     camera.rotation.set(g.pitch + g.recoil + sway[1] + (sh ? (Math.random() - 0.5) * sh : 0), g.yaw + g.recoilYaw + sway[0] + (sh ? (Math.random() - 0.5) * sh : 0), camRoll);
     hfov += ((g.ads ? c.adsFov : S.fov) - hfov) * Math.min(1, dt * 12);
     camera.fov = vfovFor(hfov); camera.updateProjectionMatrix();
-    animateGun(dt, g); if (zm) knife.visible = false;
+    animateGun(dt, g); if (zm) knife.visible = false; ZArms.update(g, dt);
     flickerT -= dt;
     if (flickerT <= 0) { flickerT = rand(0.04, 0.2); lampLights[2].intensity = env.lamp * (Math.random() < 0.25 ? rand(0, 0.5) : 1); }
     syncZombies(g); syncPickups(g); syncCracks(g); updateShocks(dt); syncAllies(g, dt);

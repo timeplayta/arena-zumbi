@@ -94,7 +94,7 @@ button { font-family: inherit; color: inherit; }
 #inf.z { color: #ff6a52; border-color: #8a2a20; }
 .hud.infmode .stats .stat { display: none; } .hud.infmode .wave { display: none; }
 .hud.zhud .ammo { display: none; }
-#view.zmode { filter: sepia(0.5) saturate(1.8) hue-rotate(-28deg) contrast(1.1); }
+#view.zmode { filter: sepia(0.35) saturate(1.5) hue-rotate(-12deg) contrast(1.08); }
 .coop-mode { margin: -6px 0 10px; color: var(--amber); font-size: 18px; }
 #stage.touchmode #inf { top: 62px; font-size: 16px; }
 #feed { position: absolute; left: 0; right: 0; bottom: 150px; display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 24px; letter-spacing: 0.08em; }
@@ -7708,6 +7708,59 @@ const Logic = (function () {
   }
   function clearAllies() { for (const v of allyViews.values()) scene.remove(v.root); allyViews.clear(); }
 
+  // ---------- braços de zumbi em primeira pessoa (modo Infecção) ----------
+  const ZArms = (() => {
+    let root = null, swipeT = 1, side = 1;
+    const arms = [];
+    function build() {
+      root = new THREE.Group(); root.visible = false; camera.add(root);
+      const skin = new THREE.MeshStandardMaterial({ color: 0x8c141c, roughness: 0.6 });
+      const vein = new THREE.MeshStandardMaterial({ color: 0x5e0b12, roughness: 0.7 });
+      const claw = new THREE.MeshStandardMaterial({ color: 0x2a0a0c, roughness: 0.35, metalness: 0.2 });
+      const limb = (a, b, r0, r1, m, p) => {
+        const A = new THREE.Vector3(...a), B = new THREE.Vector3(...b), d = B.clone().sub(A), L = d.length();
+        const o = new THREE.Mesh(new THREE.CylinderGeometry(r1, r0, L, 10), m); o.position.copy(A).add(B).multiplyScalar(0.5);
+        o.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), d.normalize()); p.add(o); return o;
+      };
+      for (const sx of [-1, 1]) {
+        const arm = new THREE.Group(); root.add(arm);
+        const pivot = new THREE.Group(); arm.add(pivot);
+        // antebraço vindo do canto da tela até a mão
+        limb([0.34 * sx, -0.5, -0.12], [0.2 * sx, -0.26, -0.5], 0.075, 0.055, skin, pivot);
+        limb([0.33 * sx, -0.47, -0.16], [0.21 * sx, -0.27, -0.47], 0.02, 0.015, vein, pivot).position.x += 0.035 * sx;
+        const hand = new THREE.Group(); hand.position.set(0.2 * sx, -0.25, -0.52); pivot.add(hand);
+        const palm = new THREE.Mesh(new THREE.SphereGeometry(0.06, 12, 8), skin); palm.scale.set(1.2, 0.7, 1.1); hand.add(palm);
+        // 4 garras longas e curvas (3 dedos + polegar)
+        const fingers = [[-0.04, 0.02, -0.25], [0, 0.03, -0.05], [0.04, 0.02, 0.15], [0.06 * -sx, -0.02, -0.6]];
+        fingers.forEach((f, i) => {
+          const fg = new THREE.Group(); fg.position.set(f[0] * sx, f[1], -0.03); fg.rotation.set(0.6, f[2] * sx * 0.8, 0); hand.add(fg);
+          const L1 = i === 3 ? 0.06 : 0.08;
+          limb([0, 0, 0], [0, 0.02, -L1], 0.016, 0.013, skin, fg);
+          const tip = new THREE.Group(); tip.position.set(0, 0.02, -L1); tip.rotation.x = -0.35; fg.add(tip);
+          const c1 = new THREE.Mesh(new THREE.ConeGeometry(0.014, i === 3 ? 0.09 : 0.14, 7), claw); c1.rotation.x = -Math.PI / 2; c1.position.z = -(i === 3 ? 0.045 : 0.07); tip.add(c1);
+        });
+        arms.push({ arm, pivot, sx });
+      }
+    }
+    function swipe() { swipeT = 0; side = -side; }
+    function update(g, dt) {
+      const on = g.team === "z" && g.alive;
+      if (!root) { if (!on) return; build(); }
+      root.visible = on; if (!on) return;
+      swipeT = Math.min(1, swipeT + dt / 0.38);
+      const t = g.time, bob = g.moving ? Math.sin(g.bob * 0.9) : 0;
+      for (const a of arms) {
+        const act = a.sx === side ? swipeT : 1, k = Math.sin(Math.PI * act);    // golpe: o braço cruza a tela
+        a.pivot.position.set(-a.sx * 0.13 * k, 0.012 * Math.sin(t * 2 + a.sx) + 0.02 * bob * a.sx + 0.07 * k, -0.06 * k);
+        a.pivot.rotation.set(-0.15 * k, 0, a.sx * 0.28 * k + 0.02 * Math.sin(t * 1.7));
+      }
+    }
+    return { swipe, update };
+  })();
+  function redSkin(v) {                                     // zumbis-jogadores: pele vermelha
+    for (const m of v.mats || []) { if (m.color) m.color.setRGB(1.4, 0.36, 0.36); if (m.emissive) { m.userData.base = 0x260406; m.emissive.setHex(0x260406); } }
+  }
+
   const Coop = (() => {
     const st = { ws: null, id: null, host: false, code: "", status: "off", msg: "", players: [], stamp: "0", gm: "coop", gmSel: "coop", started: false, diff: "normal", starting: false, over: false, name: "" };
     const lobby = {};                       // anfitrião: id -> { name, info, full }
@@ -7876,7 +7929,7 @@ const Logic = (function () {
       if (g.team !== "z" || !g.alive) return;
       const now = performance.now(); if (now < clawCd) return; clawCd = now + 700;
       if (st.host) g.claw(st.id); else send({ t: "claw" });
-      Snd.play("melee", 0.8, rand(0.7, 0.85)); g.shake = Math.max(g.shake, 0.25);
+      Snd.play("melee", 0.8, rand(0.7, 0.85)); g.shake = Math.max(g.shake, 0.25); ZArms.swipe();
     }
     function onToMenu() {
       if (!connected()) return;
@@ -8018,7 +8071,7 @@ const Logic = (function () {
       if (z.puppet && z.puppet === Coop.st.id) continue;                 // infecção: o próprio zumbi não aparece na câmera
       seen.add(z.id);
       let v = zviews.get(z.id);
-      if (!v) { v = z.tank ? new TankView(z) : z.samurai ? new SamuraiView(z) : z.wraith ? new WraithView(z) : new ZombieView(z); zviews.set(z.id, v); }
+      if (!v) { v = z.tank ? new TankView(z) : z.samurai ? new SamuraiView(z) : z.wraith ? new WraithView(z) : new ZombieView(z); if (z.puppet) redSkin(v); zviews.set(z.id, v); }
       v.update(z);
     }
     for (const [id, v] of zviews) if (!seen.has(id)) { v.destroy(); zviews.delete(id); }
@@ -8393,7 +8446,7 @@ const Logic = (function () {
     camera.rotation.set(g.pitch + g.recoil + sway[1] + (sh ? (Math.random() - 0.5) * sh : 0), g.yaw + g.recoilYaw + sway[0] + (sh ? (Math.random() - 0.5) * sh : 0), camRoll);
     hfov += ((g.ads ? c.adsFov : S.fov) - hfov) * Math.min(1, dt * 12);
     camera.fov = vfovFor(hfov); camera.updateProjectionMatrix();
-    animateGun(dt, g); if (zm) knife.visible = false;
+    animateGun(dt, g); if (zm) knife.visible = false; ZArms.update(g, dt);
     flickerT -= dt;
     if (flickerT <= 0) { flickerT = rand(0.04, 0.2); lampLights[2].intensity = env.lamp * (Math.random() < 0.25 ? rand(0, 0.5) : 1); }
     syncZombies(g); syncPickups(g); syncCracks(g); updateShocks(dt); syncAllies(g, dt);
