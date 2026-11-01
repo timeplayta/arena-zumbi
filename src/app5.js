@@ -89,6 +89,7 @@
   function syncZombies(g) {
     const seen = new Set();
     for (const z of g.zombies) {
+      if (z.puppet && z.puppet === Coop.st.id) continue;                 // infecção: o próprio zumbi não aparece na câmera
       seen.add(z.id);
       let v = zviews.get(z.id);
       if (!v) { v = z.tank ? new TankView(z) : z.samurai ? new SamuraiView(z) : z.wraith ? new WraithView(z) : new ZombieView(z); zviews.set(z.id, v); }
@@ -456,7 +457,9 @@
   function syncGame(dt) {
     const g = game, c = g.w().cfg;
     setViewGun(g.w());
-    gunRoot.visible = true; torch.visible = torchEnabled;
+    const zm = g.team === "z";
+    gunRoot.visible = !zm; torch.visible = torchEnabled;
+    $("view").classList.toggle("zmode", zm); $("hud").classList.toggle("zhud", zm);
     const bobh = S.bob && g.moving ? Math.abs(Math.sin(g.bob)) * (g.sprinting ? 0.05 : 0.03) : 0;
     const sh = g.hurtT * 0.05 + g.shake * 0.03, sway = g.aimSway();
     camera.position.set(g.px, g.eyeH() + bobh, -g.py);
@@ -464,7 +467,7 @@
     camera.rotation.set(g.pitch + g.recoil + sway[1] + (sh ? (Math.random() - 0.5) * sh : 0), g.yaw + g.recoilYaw + sway[0] + (sh ? (Math.random() - 0.5) * sh : 0), camRoll);
     hfov += ((g.ads ? c.adsFov : S.fov) - hfov) * Math.min(1, dt * 12);
     camera.fov = vfovFor(hfov); camera.updateProjectionMatrix();
-    animateGun(dt, g);
+    animateGun(dt, g); if (zm) knife.visible = false;
     flickerT -= dt;
     if (flickerT <= 0) { flickerT = rand(0.04, 0.2); lampLights[2].intensity = env.lamp * (Math.random() < 0.25 ? rand(0, 0.5) : 1); }
     syncZombies(g); syncPickups(g); syncCracks(g); updateShocks(dt); syncAllies(g, dt);
@@ -504,6 +507,15 @@
           else spatial("shot_" + wid, ev[3], ev[4], SHOT_VOL[wid] || 0.9, rand(0.96, 1.05), 0.3, 55);
           break;
         }
+        case "infected": {
+          const me = ev[1] === Coop.st.id, nm = me ? "VOCÊ" : (Coop.nameOf(ev[1]) || "ALGUÉM").toUpperCase();
+          feedLine(ev[2] ? nm + (me ? " É O PRIMEIRO ZUMBI!" : " É O PRIMEIRO ZUMBI") : nm + (me ? " VIROU ZUMBI!" : " VIROU ZUMBI"), true);
+          Snd.play("giantroar", me ? 0.9 : 0.5, 1.25, 0, 0.2); if (me) { buzz([80, 40, 160]); game.shake = Math.max(game.shake, 0.8); }
+          break;
+        }
+        case "claw": spatial("melee", ev[1], ev[2], 0.9, rand(0.65, 0.8), 0.1, 25); break;
+        case "zrespawn": if (ev[1] === Coop.st.id) feedLine("VOCÊ VOLTOU", false); break;
+        case "inf_end": Snd.play("horn", 1, ev[1] === "h" ? 1.1 : 0.6, 0, 0); break;
         case "ally_down": feedLine((Coop.nameOf(ev[1]) || "ALIADO").toUpperCase() + " CAIU", true); break;
         case "shot": {
           const id = ev[1];
@@ -648,7 +660,7 @@
       const dx = x - g.px, dy = y - g.py, lx = (dx * rx + dy * ry) * sc, ly = (dx * fx + dy * fy) * sc;
       if (Math.abs(lx) < h - 6 && Math.abs(ly) < h - 6) { rctx.fillStyle = col; rctx.fillRect(h + lx - r, h - ly - r, r * 2, r * 2); }
     };
-    for (const o of g.others) if (o.alive) dot(o.x, o.y, "#6fe08a", 6);
+    for (const o of g.others) if (o.alive && o.team !== "z") dot(o.x, o.y, "#6fe08a", 6);
     for (const z of g.zombies) {
       if (z.state === "dead") continue;
       if (z.wraith) { rctx.globalAlpha = z.vis > 0.3 ? 1 : 0.25 + 0.2 * Math.sin(g.time * 9); dot(z.x, z.y, "#7ffcff", 7); rctx.globalAlpha = 1; }
@@ -747,6 +759,7 @@
         sprint: shift, hold: shift, fire: mouseDown, ads: adsHeld, crouch: keys.has("KeyC"),
       };
       touchInput(lastInp);
+      if (game.team === "z") { if (lastInp.fire) Coop.claw(game); lastInp.fire = false; lastInp.ads = false; }   // infecção: zumbi ataca com as garras
       if (game.time > 12 && !$("tzone").hidden) $("tzone").hidden = true;
       game.update(dt, lastInp); Coop.afterUpdate(game, dt); processEvents(); syncGame(dt); updateHud(dt); updateWeather(dt);
       if (!game.alive && Coop.ended()) onDeath();

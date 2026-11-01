@@ -82,6 +82,7 @@
   function syncAllies(g, dt) {
     const seen = new Set();
     g.others.forEach((o, i) => {
+      if (o.team === "z") return;
       seen.add(o.id);
       let v = allyViews.get(o.id);
       const nm = o.name || Coop.nameOf(o.id);
@@ -102,10 +103,10 @@
   function clearAllies() { for (const v of allyViews.values()) scene.remove(v.root); allyViews.clear(); }
 
   const Coop = (() => {
-    const st = { ws: null, id: null, host: false, code: "", status: "off", msg: "", players: [], stamp: "0", started: false, diff: "normal", starting: false, over: false, name: "" };
+    const st = { ws: null, id: null, host: false, code: "", status: "off", msg: "", players: [], stamp: "0", gm: "coop", gmSel: "coop", started: false, diff: "normal", starting: false, over: false, name: "" };
     const lobby = {};                       // anfitrião: id -> { name, info, full }
     let acc = 0, sAcc = 0, sentZ = new Set(), sentP = new Set(), pingT = 0, game0 = null;
-    const WORLD = /^(wave|giant|elite|kill|clear|wall|hit|rshot|ally_down|tank_|sam_|wraith_)/;
+    const WORLD = /^(wave|giant|elite|kill|clear|wall|hit|rshot|ally_down|infected|claw|inf_end|zrespawn|tank_|sam_|wraith_)/;
     const setMsg = (m, cls) => { st.msg = m; const e = $("coopStatus"); if (e) { e.textContent = m; e.className = "coop-status " + (cls || ""); } };
     const DEFAULT_SERVER = "arena-zumbi.playes.workers.dev";       // servidor online (salas co-op); o jogo pode ficar em outro endereço
     function serverHost() {
@@ -130,27 +131,28 @@
     function renderLobby() {
       const e = $("coopPlayers"); if (!e) return;
       const on = connected();
-      $("coopOff").hidden = on; $("coopOn").hidden = !on;
+      $("coopOff").hidden = on; $("coopOn").hidden = !on; $("coopModes").hidden = on;
       if (on) {
         $("coopRoom").textContent = st.label || st.code;
+        $("coopMode").textContent = st.gm === "infect" ? "Infecção · até 8 jogadores" : "Co-op · até 4 jogadores";
         e.innerHTML = st.players.map((p, i) => '<div class="coop-p"><i style="background:' + colorHex(shirtOf(p.id)) + '"></i><b>' + p.name.replace(/[<>&]/g, "") + "</b>" + (p.id === "p1" ? "<span>anfitrião</span>" : "") + (p.id === st.id ? "<span>você</span>" : "") + "</div>").join("");
         $("coopHint").textContent = st.host ? (st.started ? "Partida em andamento. Quem entrar agora cai direto no jogo." : "Quando todos entrarem, clique em Jogar (embaixo) para começar.") : (st.started ? "Partida em andamento." : "Aguardando o anfitrião iniciar a partida.");
       }
-      const pb = $("btnPlay"); if (pb) pb.textContent = on && !st.host ? "Aguardando anfitrião" : on ? "Jogar em co-op" : "Jogar";
+      const pb = $("btnPlay"); if (pb) pb.textContent = on && !st.host ? "Aguardando anfitrião" : on ? (st.gm === "infect" ? "Iniciar infecção" : "Jogar em co-op") : "Jogar";
     }
     function lobbyList() { return Object.keys(lobby).map((id) => ({ id, name: lobby[id].name })); }
     function hostLobby() {
       st.players = [{ id: "p1", name: st.name || "Anfitrião" }].concat(lobbyList());
-      send({ t: "lobby", players: st.players, started: st.started, diff: st.diff, stamp: st.stamp }); renderLobby();
+      send({ t: "lobby", players: st.players, started: st.started, diff: st.diff, stamp: st.stamp, gm: st.gm }); renderLobby();
     }
     async function open(role, label, pass) {
       leave(true);
       const code = roomKey(label);
       if (code.length < 3) { setMsg("O nome da sala precisa de pelo menos 3 letras ou números.", "err"); return; }
       const h = serverHost(), pw = await hashPw(pass);
-      st.name = (S.name || "Sobrevivente").slice(0, 14); st.code = code; st.label = String(label).trim().slice(0, 16); st.host = role === "host"; st.status = "connecting"; setMsg("Conectando...");
+      st.name = (S.name || "Sobrevivente").slice(0, 14); st.code = code; st.label = String(label).trim().slice(0, 16); st.host = role === "host"; if (st.host) st.gm = st.gmSel; st.status = "connecting"; setMsg("Conectando...");
       const local = /^(localhost|127\.|192\.168\.|10\.)/.test(h);
-      let ws; try { ws = new WebSocket((local ? "ws://" : "wss://") + h + "/ws/" + code + "?role=" + role + (pw ? "&pw=" + pw : "")); } catch (e) { setMsg("Não consegui conectar ao servidor.", "err"); st.status = "off"; return; }
+      let ws; try { ws = new WebSocket((local ? "ws://" : "wss://") + h + "/ws/" + code + "?role=" + role + (pw ? "&pw=" + pw : "") + (role === "host" ? "&max=" + (st.gmSel === "infect" ? 8 : 4) : "")); } catch (e) { setMsg("Não consegui conectar ao servidor.", "err"); st.status = "off"; return; }
       st.ws = ws;
       ws.onopen = () => { pingT = performance.now(); };
       ws.onmessage = (ev) => { if (ws !== st.ws) return; if (ev.data === "pong") return; let m; try { m = JSON.parse(ev.data); } catch (e) { return; } onMsg(m); };
@@ -177,7 +179,7 @@
         // --- anfitrião ---
         case "join": break;
         case "hello": if (!st.host) break; lobby[m.from] = Object.assign(lobby[m.from] || {}, { name: String(m.name || "Jogador").slice(0, 14) }); hostLobby();
-          if (st.started) send({ t: "start", diff: st.diff }, m.from); break;
+          if (st.started) send({ t: "start", diff: st.diff, gm: st.gm }, m.from); break;
         case "info": if (!st.host || !lobby[m.from]) break; lobby[m.from].info = m.info; lobby[m.from].full = true; if (game && game.coop) hostAddRemote(m.from); break;
         case "leave": if (!st.host) break; delete lobby[m.id]; if (game && game.coop) game.removeRemote(m.id); hostLobby();
           if (game && game.coop) feedLine("JOGADOR SAIU", false, "dim"); break;
@@ -185,9 +187,10 @@
         case "s": if (st.host && game && game.coop) game.setRemote(m.from, m); break;
         case "shot": if (st.host && game && game.coop) game.remoteShot(m.from, m); break;
         case "melee": if (st.host && game && game.coop) game.remoteMelee(m.from); break;
+        case "claw": if (st.host && game && game.coop) game.claw(m.from); break;
         // --- convidado ---
-        case "lobby": st.players = m.players || []; st.stamp = m.stamp || st.stamp; st.started = !!m.started; st.diff = m.diff || st.diff; renderLobby(); break;
-        case "start": st.diff = m.diff || "normal"; st.started = true; st.over = false;
+        case "lobby": st.players = m.players || []; st.stamp = m.stamp || st.stamp; st.gm = m.gm || "coop"; st.started = !!m.started; st.diff = m.diff || st.diff; renderLobby(); break;
+        case "start": st.diff = m.diff || "normal"; st.gm = m.gm || st.gm; st.started = true; st.over = false;
           if (state === "menu" || state === "dead") { st.starting = true; try { startGame(); } finally { st.starting = false; } }
           renderLobby(); break;
         case "snap": if (game && game.coop && game.coop.role === "guest") game.applySnapshot(m, 0); break;
@@ -200,12 +203,14 @@
     function hostAddRemote(id) {
       const L = lobby[id]; if (!L || !game || !game.coop) return;
       game.addRemote(id, L.name, L.info || {}); L.needFull = true;
+      if (game.gm === "infect" && game.inf && game.inf.ph !== "prep") game.becomeZombie(id);   // entrou no meio: já chega zumbi
     }
     // ---------------- ligação com o jogo ----------------
-    function hostStartBroadcast() { st.started = true; st.over = false; st.diff = S.diff; send({ t: "start", diff: st.diff }); hostLobby(); }
+    function hostStartBroadcast() { st.started = true; st.over = false; st.diff = S.diff; send({ t: "start", diff: st.diff, gm: st.gm }); hostLobby(); }
     function attach(g) {
       if (!connected()) { game0 = null; return; }
       g.enableCoop(st.host ? "host" : "guest", st.id); game0 = g; acc = sAcc = 0; sentZ = new Set(); sentP = new Set(); st.over = false;
+      if (st.host && st.gm === "infect") g.infectStart(); else if (!st.host) g.gm = st.gm === "infect" ? "infect" : "";
       if (st.host) { for (const id in lobby) if (lobby[id].info) hostAddRemote(id); }
     }
     const active = () => connected() && !!game && !!game.coop;
@@ -260,6 +265,13 @@
         const full = g.makeSnapshot(g.zombies.map((q) => g.staticZombie(q)), g.pickups.map((p) => g.staticPickup(p))); full.t = "snap"; send(full, id); lobby[id].needFull = false;
       }
     }
+    let clawCd = 0;
+    function claw(g) {                                                     // jogador zumbi ataca com as garras
+      if (g.team !== "z" || !g.alive) return;
+      const now = performance.now(); if (now < clawCd) return; clawCd = now + 700;
+      if (st.host) g.claw(st.id); else send({ t: "claw" });
+      Snd.play("melee", 0.8, rand(0.7, 0.85)); g.shake = Math.max(g.shake, 0.25);
+    }
     function onToMenu() {
       if (!connected()) return;
       if (st.host && st.started) { st.started = false; send({ t: "over" }); hostLobby(); }
@@ -267,11 +279,25 @@
       clearAllies();
     }
     // ---------------- HUD do time ----------------
-    let teamKey = "";
+    let teamKey = "", infKey = "";
+    function infHud(g) {
+      const e = $("inf"); if (!e) return;
+      const on = g.gm === "infect" && !!g.inf;
+      $("hud").classList.toggle("infmode", on);
+      let t = "";
+      if (on) {
+        const I = g.inf, mm = Math.floor(Math.max(0, I.t) / 60), ss = String(Math.max(0, Math.ceil(I.t)) % 60).padStart(2, "0");
+        t = I.ph === "play" ? "HUMANOS " + I.hu + " · ZUMBIS " + I.zo + " · " + mm + ":" + ss : I.ph === "end" ? (I.win === "h" ? "HUMANOS VENCERAM" : "ZUMBIS VENCERAM") : "PREPARE-SE";
+        if (g.team === "z") t = "VOCÊ É ZUMBI · " + t;
+      }
+      if (t !== infKey) { infKey = t; e.textContent = t; e.hidden = !t; e.classList.toggle("z", g.team === "z"); }
+    }
     function hud(g) {
       const e = $("team"); if (!e) return;
-      if (!active() || !g.others.length) { if (teamKey) { teamKey = ""; e.innerHTML = ""; } return; }
-      const rows = g.others.map((o) => [o.name || nameOf(o.id), Math.max(0, Math.round(o.hp)), o.maxHp || 100, o.alive, slotOf(o.id), o.id]);
+      if (!active()) { infHud(g); if (teamKey) { teamKey = ""; e.innerHTML = ""; } return; }
+      if (!g.others.length) { infHud(g); if (teamKey) { teamKey = ""; e.innerHTML = ""; } return; }
+      infHud(g);
+      const rows = g.others.map((o) => [(o.name || nameOf(o.id)) + (o.team === "z" ? " (zumbi)" : ""), Math.max(0, Math.round(o.hp)), o.maxHp || 100, o.alive && o.team !== "z", slotOf(o.id), o.id]);
       const k = JSON.stringify(rows); if (k === teamKey) return; teamKey = k;
       e.innerHTML = rows.map((r) => '<div class="tm' + (r[3] ? "" : " down") + '"><i style="background:' + colorHex(shirtOf(r[5])) + '"></i><b>' + String(r[0]).replace(/[<>&]/g, "") + '</b><u><s style="width:' + Math.round(100 * clamp(r[1] / r[2], 0, 1)) + '%"></s></u></div>').join("");
     }
@@ -279,6 +305,10 @@
     function bindUI() {
       const nm = $("coopName"); if (!nm) return;
       try { nm.value = localStorage.getItem("arena-zumbi-room") || ""; } catch (e) {}
+      const modes = document.querySelectorAll("[data-gm]");
+      const paint = () => modes.forEach((b) => b.classList.toggle("on", b.getAttribute("data-gm") === st.gmSel));
+      modes.forEach((b) => b.addEventListener("click", () => { st.gmSel = b.getAttribute("data-gm"); paint(); }));
+      paint();
       const go = (role) => { try { localStorage.setItem("arena-zumbi-room", nm.value.trim()); } catch (e) {} open(role, nm.value, $("coopPass").value); };
       $("btnCoopCreate").addEventListener("click", () => go("host"));
       $("btnCoopJoin").addEventListener("click", () => go("guest"));
@@ -286,5 +316,5 @@
       for (const id of ["coopName", "coopPass"]) $(id).addEventListener("keydown", (e) => { e.stopPropagation(); if (e.key === "Enter") go("guest"); });
       renderLobby();
     }
-    return { st, active, ended, attach, afterUpdate, hostStartBroadcast, sendInfo, hud, onToMenu, bindUI, nameOf, slotOf, shirtOf, connected, leave, isHost: () => st.host, inRoom: () => connected(), toast: (m) => setMsg(m, "err"), lobby };
+    return { st, active, ended, attach, afterUpdate, hostStartBroadcast, sendInfo, hud, onToMenu, bindUI, nameOf, slotOf, shirtOf, claw, connected, leave, isHost: () => st.host, inRoom: () => connected(), toast: (m) => setMsg(m, "err"), lobby };
   })();

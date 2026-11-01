@@ -27,7 +27,7 @@ O endereço do servidor online fica em `DEFAULT_SERVER` (`src/znet.js`).
 
 ## Co-op online
 
-Até 4 jogadores. O anfitrião roda a partida; o Cloudflare só repassa mensagens (Worker + Durable Object).
+Modos: Co-op (até 4) e Infecção (até 8). O anfitrião roda a partida; o Cloudflare só repassa mensagens (Worker + Durable Object).
 Aba "Co-op online" > nome da sala (e senha, se quiser) > Criar sala. Os outros escrevem o mesmo nome e senha > Entrar na sala. O anfitrião clica em Jogar.
 
 Teste local: `node online/dev-server.js` e abra http://localhost:8787

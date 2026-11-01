@@ -351,6 +351,7 @@ const Logic = (function () {
       this.events = [];
       // ---- co-op online ----
       this.coop = null; this.others = []; this.over = false; this.pout = []; this._tgt = null; this._shooter = null; this.lastShot = null;
+      this.gm = ""; this.team = "h"; this.inf = null;
       this.zmap = new Map(); this.pmap = new Map(); this.snapT = 0; this.shotN = 0;
     }
     uniform(a, b) { return a + (b - a) * this.rnd(); }
@@ -410,6 +411,7 @@ const Logic = (function () {
     }
 
     requestMelee() {
+      if (this.team === "z") return;
       if (this.meleeT > 0 || !this.alive || this.switchT > 0) return;
       this.cancelReload();
       this.meleeT = this.mel.cd; this.cool = Math.max(this.cool, 0.5);
@@ -560,7 +562,8 @@ const Logic = (function () {
         if (sh) { sh.kills += 1; if (head) sh.hs += 1; if (E) sh.bonus += Math.round(E.coins * D.coin); }
         else { this.kills += 1; if (E) this.bonus += Math.round(E.coins * D.coin); if (head) this.headshots += 1; }
         this.events.push(["kill", z.x, z.y, head, pts, z.brute, z.headGone, z.giant, z.kind]);
-        if (z.giant || E) {                                         // gigantes e especiais soltam um tesouro
+        if (z.puppet) { /* infecção: sem itens */ }
+        else if (z.giant || E) {                                    // gigantes e especiais soltam um tesouro
           const nh = z.giant ? 2 : z.samurai ? 1 : 2, na = z.giant ? 3 : z.samurai ? 2 : 3;
           for (let i = 0; i < nh; i++) this.pickups.push(new Pickup("health", z.x, z.y, this.rnd));
           for (let i = 0; i < na; i++) this.pickups.push(new Pickup("ammo", z.x, z.y, this.rnd));
@@ -675,6 +678,7 @@ const Logic = (function () {
       const rel = z ? wrapAngle(Math.atan2(-(z.x - this.px), z.y - this.py) - this.yaw) : (o.rel || 0);
       if (!o.soft) this.events.push(["hurt", rel]);
       if (this.hp <= 0) {
+        if (this.gm === "infect" && this.team === "h") { this.hp = 1; this.becomeZombie(this.coop.id); return; }
         if (this.revives > 0) {                                  // "Segunda chance" da loja
           this.revives -= 1; this.hp = this.maxHp; this.armor = Math.max(this.armor, this.armorMax * 0.5); this.invulnT = 4; this.shake = 1.4;
           for (const q of this.zombies) if (q.state !== "dead" && !q.wraith) { const dx = q.x - this.px, dy = q.y - this.py, d = Math.hypot(dx, dy) || 1; if (d < 14) { q.kx += (dx / d) * 22; q.ky += (dy / d) * 22; q.stagger = 2.5; } }
@@ -710,6 +714,7 @@ const Logic = (function () {
       if (this.ads) speed *= c.adsSpeed;
       speed *= 1 - 0.45 * this.crouchT;
       speed *= this.crackSlow;
+      if (this.team === "z") speed *= 1.22;
       if (this.moving) {
         this.px += mx * speed * dt; this.py += my * speed * dt;
         [this.px, this.py] = pushOut(this.px, this.py, PLAYER_R);
@@ -1018,6 +1023,7 @@ const Logic = (function () {
           if (Math.abs(z.kx) + Math.abs(z.ky) < 0.01) z.kx = z.ky = 0;
         }
         if (z.state === "dead") { z.deadT += dt; z.fall = Math.min(1, z.deadT / 0.55); continue; }
+        if (z.puppet) continue;                                     // infecção: zumbi controlado por um jogador
         z.stagger = Math.max(0, z.stagger - dt); z.slowT = Math.max(0, z.slowT - dt);
         const hd = Math.hypot(this.px - z.x, this.py - z.y) || 1e-6;
         z.groanT -= dt;
@@ -1157,7 +1163,8 @@ const Logic = (function () {
         if (Math.abs(this.kvx) + Math.abs(this.kvy) < 0.05) this.kvx = this.kvy = 0;
       }
       if (this.coop && this.coop.role === "guest") { this.mirrorStep(dt); this.updateCracks(dt); return; }   // convidado: o mundo vem pelo anfitrião
-      this.updateWaves(dt); this.updateZombies(dt); this.updatePickups(dt); this.updateCracks(dt);
+      if (this.gm === "infect") { this.updateInfect(dt); this.updateZombies(dt); }
+      else { this.updateWaves(dt); this.updateZombies(dt); this.updatePickups(dt); this.updateCracks(dt); }
       if (this.coop && !this.alive && !this.over && !this.others.some((o) => o.alive)) this.over = true;
     }
 
@@ -1202,7 +1209,7 @@ const Logic = (function () {
       for (let i = n0; i < this.events.length; i++) this.events[i].src = a.id;   // de quem foi o efeito (para os convidados)
     }
     remoteShot(id, m) {
-      const a = this.remote(id); if (!a || !a.alive || !m || !Array.isArray(m.d)) return;
+      const a = this.remote(id); if (!a || !a.alive || !m || !Array.isArray(m.d) || a.team === "z") return;
       const c = a.cfgs[m.s | 0]; if (!c) return;
       const o = Array.isArray(m.o) ? m.o : [a.x, a.y, 1.6];
       if (Math.hypot(o[0] - a.x, o[1] - a.y) > 3) return;
@@ -1218,7 +1225,7 @@ const Logic = (function () {
       });
     }
     remoteMelee(id) {
-      const a = this.remote(id); if (!a || !a.alive) return;
+      const a = this.remote(id); if (!a || !a.alive || a.team === "z") return;
       this.asShooter(a, () => this.doMelee());
       for (const e of this.events) if (e.src === a.id && (e[0] === "melee_hit" || e[0] === "melee_miss")) e.drop = true;
     }
@@ -1243,6 +1250,7 @@ const Logic = (function () {
       t.hp -= amount;
       const rel = z ? wrapAngle(Math.atan2(-(z.x - t.x), z.y - t.y) - t.yaw) : (o.rel || 0);
       if (!o.soft) this.fx(t.id, ["hurt", rel]);
+      if (t.hp <= 0 && this.gm === "infect" && (t.team || "h") === "h") { t.hp = 1; this.becomeZombie(t.id); return; }
       if (t.hp <= 0) { t.hp = 0; t.alive = false; this.fx(t.id, ["down"]); this.events.push(["ally_down", t.id]); }
     }
     takeRemote(a, p) {
@@ -1261,19 +1269,113 @@ const Logic = (function () {
       const z = [];
       for (const q of this.zombies) z.push([q.id, r2(q.x), r2(q.y), r2(q.yaw), q.state, Math.round(q.hp), r2(q.hitT), r2(q.deadT), r2(q.phase), r2(q.attackT), q.act, r2(q.actT), r2(q.seqT), r2(q.vis), q.atk, q.combo, q.dodgeDir, q.headGone ? 1 : 0, q.untouch ? 1 : 0, r2(q.shield)]);
       const p = this.pickups.map((k) => [k.id, r2(k.x), r2(k.y), r2(k.h), k.landed ? 1 : 0, r2(k.pull)]);
-      const me = this.coop.id, pl = [[me, r2(this.px), r2(this.py), r2(this.yaw), r2(this.pitch), Math.round(this.hp), this.maxHp, this.alive ? 1 : 0, this.w().cfg.id, this.crouchT > 0.5 ? 1 : 0, this.moving ? 1 : 0, Math.round(this.armor), this.kills, this.headshots, this.bonus]];
-      for (const o of this.others) pl.push([o.id, r2(o.x), r2(o.y), r2(o.yaw), r2(o.pitch), Math.round(o.hp), o.maxHp, o.alive ? 1 : 0, o.wi, o.cr, o.mv, Math.round(o.armor), o.kills, o.hs, o.bonus]);
-      return { tm: r2(this.time), w: this.wave, zl: this.aliveZombies().length + this.toSpawn, sc: this.score, bw: this.between ? 1 : 0, pt: r2(this.pauseT), bn: this.banner, bs: this.bannerSub, bT: r2(this.bannerT), z, p, pl, zn: newZ, pn: newP };
+      const me = this.coop.id, pl = [[me, r2(this.px), r2(this.py), r2(this.yaw), r2(this.pitch), Math.round(this.hp), this.maxHp, this.alive ? 1 : 0, this.w().cfg.id, this.crouchT > 0.5 ? 1 : 0, this.moving ? 1 : 0, Math.round(this.armor), this.kills, this.headshots, this.bonus, this.team || "h"]];
+      for (const o of this.others) pl.push([o.id, r2(o.x), r2(o.y), r2(o.yaw), r2(o.pitch), Math.round(o.hp), o.maxHp, o.alive ? 1 : 0, o.wi, o.cr, o.mv, Math.round(o.armor), o.kills, o.hs, o.bonus, o.team || "h"]);
+      return { tm: r2(this.time), w: this.wave, zl: this.aliveZombies().length + this.toSpawn, sc: this.score, bw: this.between ? 1 : 0, pt: r2(this.pauseT), bn: this.banner, bs: this.bannerSub, bT: r2(this.bannerT), z, p, pl, zn: newZ, pn: newP, inf: this.inf ? [this.inf.ph, Math.ceil(this.inf.t), this.inf.hu, this.inf.zo, this.inf.win] : 0 };
     }
     // registros estáticos de zumbis e itens novos (enviados uma vez)
-    staticZombie(q) { return { id: q.id, x: q.x, y: q.y, hp: q.maxHp, sp: q.speed, k: q.kind, v: q.variant, dm: q.dmgMul, s: q.s, tn: q.tint, lm: q.limp ? 1 : 0, ap: q.armPose, ph: q.phase }; }
+    staticZombie(q) { return { id: q.id, x: q.x, y: q.y, hp: q.maxHp, sp: q.speed, k: q.kind, v: q.variant, dm: q.dmgMul, s: q.s, tn: q.tint, lm: q.limp ? 1 : 0, ap: q.armPose, ph: q.phase, pu: q.puppet || "" }; }
     staticPickup(k) { return { id: k.id, k: k.kind, x: k.x, y: k.y }; }
+    // ---- MODO INFECÇÃO (anfitrião): um jogador vira zumbi e infecta os outros ----
+    infectStart() {
+      this.gm = "infect"; this.inf = { ph: "prep", t: 10, hu: 0, zo: 0, win: "" }; this.team = "h";
+      for (const o of this.others) o.team = "h";
+      this.zombies = []; this.pickups = []; this.toSpawn = 0; this.queue = []; this.giantsLeft = 0; this.between = false; this.wave = 1;
+    }
+    posOf(id) { if (id === this.coop.id) return [this.px, this.py, this.yaw]; const o = this.remote(id); return o ? [o.x, o.y, o.yaw] : [0, 0, 0]; }
+    infPlayers() {
+      const a = [{ id: this.coop.id, me: true, p: this, x: this.px, y: this.py, team: this.team || "h", alive: this.alive }];
+      for (const o of this.others) a.push({ id: o.id, me: false, p: o, x: o.x, y: o.y, team: o.team || "h", alive: o.alive });
+      return a;
+    }
+    pz(id) { return this.zombies.find((z) => z.puppet === id && z.state !== "dead") || null; }
+    spawnPuppet(id, x, y) {
+      const hu = this.infPlayers().filter((q) => q.team === "h").length;
+      const z = new Zombie(x, y, 400 + 120 * Math.max(1, hu), 0, "walker", this.randint(3), this, 1);
+      z.puppet = id; z.s = 1.12; z.limp = false; z.clawShow = 0;
+      this.zombies.push(z); return z;
+    }
+    zSpawnPoint() {
+      const hs = this.infPlayers().filter((q) => q.team === "h");
+      let best = [0, ARENA - 3], bd = -1;
+      for (let i = 0; i < 24; i++) {
+        const side = this.randint(4), u = this.uniform(-ARENA + 3, ARENA - 3), e = ARENA - 3, c = [[u, e], [u, -e], [e, u], [-e, u]][side];
+        if (insideAny(c[0], c[1], 0.9)) continue;
+        const d = hs.length ? Math.min(...hs.map((q) => Math.hypot(q.x - c[0], q.y - c[1]))) : 99;
+        if (d > bd) { bd = d; best = c; }
+      }
+      return best;
+    }
+    becomeZombie(id, first) {
+      const q = this.infPlayers().find((k) => k.id === id); if (!q || q.team === "z") return;
+      const p = q.p; p.team = "z"; p.zDeadT = 0; p.clawT = 0.6;
+      if (q.me) { this.hp = this.maxHp; this.alive = true; this.armor = 0; this.invulnT = 1; }
+      else { p.hp = p.maxHp; p.alive = true; p.armor = 0; p.invulnT = 1; }
+      this.spawnPuppet(id, q.x, q.y);
+      this.events.push(["infected", id, first ? 1 : 0]);
+    }
+    claw(id) {
+      if (this.gm !== "infect" || !this.inf || this.inf.ph !== "play") return;
+      const q = this.infPlayers().find((k) => k.id === id); if (!q || q.team !== "z" || !q.alive) return;
+      const z = this.pz(id); if (!z || (q.p.clawT || 0) > 0) return;
+      q.p.clawT = 0.7; z.clawShow = 0.45; z.attackT = 0;
+      const [x, y, yaw] = this.posOf(id), fx = -Math.sin(yaw), fy = Math.cos(yaw);
+      this.events.push(["claw", x, y]);
+      for (const h of this.infPlayers()) {
+        if (h.team !== "h" || !h.alive) continue;
+        const dx = h.x - x, dy = h.y - y, d = Math.hypot(dx, dy);
+        if (d > 2.2 || d < 1e-3 || (dx * fx + dy * fy) / d < 0.3) continue;
+        if (h.me) this.hurt(42, z, {}); else this.hurtRemote(h.p, 42, z, {});
+      }
+    }
+    infectEnd(w) {
+      const I = this.inf; I.ph = "end"; I.t = 6; I.win = w;
+      this.banner = w === "h" ? "HUMANOS VENCERAM" : "ZUMBIS VENCERAM"; this.bannerSub = w === "h" ? "Sobreviveram até o fim" : "Ninguém escapou"; this.bannerT = 6;
+      this.events.push(["inf_end", w]);
+    }
+    updateInfect(dt) {
+      const I = this.inf, ps = this.infPlayers();
+      for (const q of ps) {
+        q.p.clawT = Math.max(0, (q.p.clawT || 0) - dt);
+        if (q.team !== "z") continue;
+        let z = this.pz(q.id);
+        if (!z) {                                                       // zumbi abatido: volta em 4 s longe dos humanos
+          q.p.alive = false; q.p.zDeadT = (q.p.zDeadT || 0) + dt;
+          if (q.p.zDeadT >= 4) {
+            const sp = this.zSpawnPoint(); q.p.zDeadT = 0; q.p.alive = true;
+            if (q.me) { this.px = sp[0]; this.py = sp[1]; this.kvx = this.kvy = 0; this.hp = this.maxHp; }
+            else { q.p.x = sp[0]; q.p.y = sp[1]; this.fx(q.id, ["respawn", sp[0], sp[1]]); }
+            this.spawnPuppet(q.id, sp[0], sp[1]); this.events.push(["zrespawn", q.id]);
+          }
+          continue;
+        }
+        const [x, y, yaw] = this.posOf(q.id), mv = Math.hypot(x - z.x, y - z.y);
+        z.x = x; z.y = y; z.yaw = yaw; z.kx = z.ky = 0; z.stagger = 0;
+        if (z.clawShow > 0) { z.clawShow -= dt; z.state = "attack"; z.attackT += dt; } else z.state = "walk";
+        z.phase += Math.min(mv, 0.5) * 2.6;
+      }
+      I.hu = ps.filter((q) => q.team === "h").length; I.zo = ps.length - I.hu;
+      if (I.ph === "prep") {
+        I.t -= dt; this.banner = "INFECÇÃO EM " + Math.max(1, Math.ceil(I.t)); this.bannerSub = "Corra e se espalhe!"; this.bannerT = 0.4;
+        if (I.t <= 0) {
+          const c = ps.filter((q) => q.alive), pick = c[this.randint(c.length)];
+          I.ph = "play"; I.t = 180; this.becomeZombie(pick.id, true);
+          this.banner = "A INFECÇÃO COMEÇOU"; this.bannerSub = "Fuja dos zumbis por 3 minutos"; this.bannerT = 3; this.events.push(["wave", 1]);
+        }
+      } else if (I.ph === "play") {
+        I.t -= dt;
+        if (I.hu === 0) this.infectEnd("z"); else if (I.t <= 0) this.infectEnd("h");
+      } else if (I.ph === "end") {
+        I.t -= dt; this.bannerT = Math.max(this.bannerT, 0.4);
+        if (I.t <= 0) this.over = true;
+      }
+    }
     // ---- convidado ----
     mirrorAddZombie(r) {
       if (this.zmap.has(r.id)) return;
       const fake = { uniform: (a, b) => (a + b) / 2, rnd: () => 0.5 };
       const q = new Zombie(r.x, r.y, r.hp, r.sp, r.k, r.v, fake, r.dm);
-      q.id = r.id; q.s = r.s; q.tint = r.tn; q.limp = !!r.lm; q.armPose = r.ap; q.phase = r.ph; q.tx = r.x; q.ty = r.y; q.tyaw = 0; q.phRate = 0; q.psnap = r.ph;
+      q.id = r.id; q.s = r.s; q.tint = r.tn; q.puppet = r.pu || ""; q.limp = !!r.lm; q.armPose = r.ap; q.phase = r.ph; q.tx = r.x; q.ty = r.y; q.tyaw = 0; q.phRate = 0; q.psnap = r.ph;
       this.zombies.push(q); this.zmap.set(q.id, q);
       if (r.k === "wraith") { q.untouch = true; q.vis = 0; }
     }
@@ -1306,15 +1408,16 @@ const Logic = (function () {
       const me = this.coop.id, seenO = new Set();
       for (const a of s.pl) {
         if (a[0] === me) {
-          this.hp = a[5]; this.maxHp = a[6]; this.armor = a[11]; this.kills = a[12]; this.headshots = a[13]; this.bonus = a[14];
+          this.hp = a[5]; this.maxHp = a[6]; this.armor = a[11]; this.kills = a[12]; this.headshots = a[13]; this.bonus = a[14]; this.team = a[15] || "h";
           const was = this.alive; this.alive = !!a[7]; if (was && !this.alive) this.moving = false;
           continue;
         }
         seenO.add(a[0]);
         let o = this.others.find((q) => q.id === a[0]);
         if (!o) { o = { id: a[0], name: "", x: a[1], y: a[2], yaw: a[3], pitch: 0, hp: 100, maxHp: 100, alive: true, wi: "ax4", cr: 0, mv: 0, flash: 0, tx: a[1], ty: a[2], tyaw: a[3] }; this.others.push(o); }
-        o.tx = a[1]; o.ty = a[2]; o.tyaw = a[3]; o.pitch = a[4]; o.hp = a[5]; o.maxHp = a[6]; o.alive = !!a[7]; o.wi = a[8]; o.cr = a[9]; o.mv = a[10];
+        o.tx = a[1]; o.ty = a[2]; o.tyaw = a[3]; o.pitch = a[4]; o.hp = a[5]; o.maxHp = a[6]; o.alive = !!a[7]; o.wi = a[8]; o.cr = a[9]; o.mv = a[10]; o.team = a[15] || "h";
       }
+      if (s.inf) { this.gm = "infect"; this.inf = { ph: s.inf[0], t: s.inf[1], hu: s.inf[2], zo: s.inf[3], win: s.inf[4] }; }
       this.others = this.others.filter((o) => seenO.has(o.id));
     }
     mirrorStep(dt) {

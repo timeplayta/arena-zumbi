@@ -90,6 +90,13 @@ button { font-family: inherit; color: inherit; }
 #team u { display: block; width: 70px; height: 7px; background: rgba(255,255,255,0.15); text-decoration: none; }
 #team s { display: block; height: 100%; background: var(--ok); text-decoration: none; }
 #team .down { opacity: 0.55; } #team .down s { background: var(--danger); }
+#inf { position: absolute; top: 14px; left: 50%; transform: translateX(-50%); font-family: var(--font-display); font-size: 26px; letter-spacing: 0.1em; padding: 2px 14px; background: rgba(0,0,0,0.5); border: 1px solid var(--line); white-space: nowrap; }
+#inf.z { color: #ff6a52; border-color: #8a2a20; }
+.hud.infmode .stats .stat { display: none; } .hud.infmode .wave { display: none; }
+.hud.zhud .ammo { display: none; }
+#view.zmode { filter: sepia(0.5) saturate(1.8) hue-rotate(-28deg) contrast(1.1); }
+.coop-mode { margin: -6px 0 10px; color: var(--amber); font-size: 18px; }
+#stage.touchmode #inf { top: 62px; font-size: 16px; }
 #feed { position: absolute; left: 0; right: 0; bottom: 150px; display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 24px; letter-spacing: 0.08em; }
 #feed div { animation: feedout 1.8s forwards; color: var(--amber); }
 #feed div.head { color: #ffe34a; }
@@ -382,6 +389,7 @@ table.sc td:first-child { font-family: var(--font-display); font-size: 22px; col
     <div id="dmgdir"><i></i></div>
     <div id="feed"></div>
     <div id="team"></div>
+    <div id="inf" hidden></div>
     <div id="banner"><div class="big" id="bannerBig"></div><div class="sub" id="bannerSub"></div></div>
     <div id="msg"></div>
     <div id="boss" hidden><div class="bname" id="bossName">GIGANTE</div><div class="bbar"><div id="bossfill"></div></div></div>
@@ -416,7 +424,7 @@ table.sc td:first-child { font-family: var(--font-display); font-size: 22px; col
         <button type="button" data-tab="custom">Personalizar</button>
         <button type="button" data-tab="settings">Ajustes</button>
         <button type="button" data-tab="scores">Recordes</button>
-        <button type="button" data-tab="online">Co-op online</button>
+        <button type="button" data-tab="online">Online</button>
         <button type="button" data-tab="controls">Controles</button>
       </nav>
       <div class="who" id="who" hidden></div>
@@ -519,9 +527,13 @@ table.sc td:first-child { font-family: var(--font-display); font-size: 22px; col
       </section>
 
       <section class="panel" data-panel="online" hidden>
-        <h2>Co-op online</h2>
-        <div class="sec"><h3>Jogue com amigos</h3>
-          <p>Um jogador cria a sala com um nome (e senha, se quiser). Os outros entram digitando o mesmo nome e senha. O anfitrião roda a partida e todos enfrentam as mesmas ondas, juntos. Quem cair renasce no começo da próxima onda. Máximo de 4 jogadores.</p></div>
+        <h2>Online</h2>
+        <div class="sec" id="coopModes"><h3>Modo</h3>
+          <div class="opts">
+            <button type="button" class="opt" data-gm="coop"><b>Co-op</b><span>Até 4 jogadores contra as ondas de zumbis, juntos. Quem cair renasce na próxima onda.</span></button>
+            <button type="button" class="opt" data-gm="infect"><b>Infecção</b><span>Até 8 jogadores. Um vira zumbi e infecta os outros. Humanos vencem se durarem 3 minutos.</span></button>
+          </div>
+          <p>Quem cria a sala escolhe o modo. Quem entra segue o modo da sala.</p></div>
         <div id="coopOff" class="sec">
           <div class="coop-form">
             <div class="field"><label for="coopName">Nome da sala</label><input type="text" id="coopName" maxlength="16" autocomplete="off" spellcheck="false" placeholder="ex.: Turma do Zé"></div>
@@ -531,7 +543,8 @@ table.sc td:first-child { font-family: var(--font-display); font-size: 22px; col
         </div>
         <div id="coopOn" class="sec" hidden>
           <h3>Sala</h3>
-          <div class="coop-room"><span>SALA</span><b id="coopRoom">-----</b></div>
+          <div class="coop-room"><b id="coopRoom">-----</b></div>
+          <p id="coopMode" class="coop-mode"></p>
           <div id="coopPlayers" class="coop-players"></div>
           <p id="coopHint"></p>
           <div class="row"><button type="button" class="btn" id="btnCoopLeave">Sair da sala</button></div>
