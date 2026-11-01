@@ -129,12 +129,17 @@
     else if (lockHeld) { lockHeld = false; if (state === "run") pause(); }
   });
   function startGame() {
+    if (Coop.inRoom() && !Coop.st.starting) {
+      if (!Coop.isHost()) { Coop.toast("Só o anfitrião inicia a partida."); return; }
+      Coop.hostStartBroadcast();
+    }
     Snd.init(); applySound();
     clearViews(); resetFx(); clearDropped();
     sanitizeOwned();
     payRun(game, runUsed);
     const ro = runOpts(); runUsed = ro.used; burnFlash = 0;
-    game = new Game({ loadout: loadoutSel(), diff: S.diff, perks: ro.perks, melee: ro.melee });
+    game = new Game({ loadout: loadoutSel(), diff: Coop.inRoom() && !Coop.isHost() ? Coop.st.diff : S.diff, perks: ro.perks, melee: ro.melee });
+    clearAllies(); Coop.attach(game); Coop.sendInfo(ro);
     setMeleeModel(wallet.melee); updateWho();
     vmKey = ""; setViewGun(game.w());
     adsT = 0; sprintBlend = 0; hfov = S.fov; dmgT = 0; $("feed").innerHTML = "";
@@ -162,7 +167,7 @@
   }
   function toMenu() {
     try { document.exitPointerLock(); } catch (e) {}
-    canvas.style.cursor = ""; state = "menu"; payRun(game, runUsed); clearViews(); resetFx(); menuGame = makeMenuGame(); hfov = 70;
+    canvas.style.cursor = ""; state = "menu"; Coop.onToMenu(); payRun(game, runUsed); clearViews(); resetFx(); menuGame = makeMenuGame(); hfov = 70;
     $("menu").hidden = false; $("hud").hidden = true; $("pause").hidden = true; $("dead").hidden = true; $("scope").style.opacity = "0";
     $("view").classList.remove("low"); $("fx-low").style.opacity = "0"; $("fx-hurt").style.opacity = "0";
     applyEnv(); renderAll(); showTab(ui.tab); resetTouch(); applyTouchUI();
@@ -462,7 +467,7 @@
     animateGun(dt, g);
     flickerT -= dt;
     if (flickerT <= 0) { flickerT = rand(0.04, 0.2); lampLights[2].intensity = env.lamp * (Math.random() < 0.25 ? rand(0, 0.5) : 1); }
-    syncZombies(g); syncPickups(g); syncCracks(g); updateShocks(dt);
+    syncZombies(g); syncPickups(g); syncCracks(g); updateShocks(dt); syncAllies(g, dt);
     fxBlood.update(dt); fxSpark.update(dt); fxBrass.update(dt); fxShell.update(dt); fxSmoke.update(dt); fxTrace.update(dt); updatePools(dt); updateDropped(dt);
   }
 
@@ -489,7 +494,17 @@
   const SHOT_VOL = { p45: 0.85, smg: 0.75, ax4: 0.9, brutus: 1, falcao: 1 };
   function processEvents() {
     for (const ev of game.popEvents()) {
+      if (ev.drop) continue;
       switch (ev[0]) {
+        case "rshot": {
+          const wid = ev[2], o = game.others.find((q) => q.id === ev[1]);
+          fxTrace.emit(ev[3], ev[5], -ev[4], ev[6], ev[8], -ev[7], ev[9]);
+          if (o) o.flash = 0.07;
+          if (ev[9]) spatial("shot_sil", ev[3], ev[4], 0.8, 1, 0.05, 40);
+          else spatial("shot_" + wid, ev[3], ev[4], SHOT_VOL[wid] || 0.9, rand(0.96, 1.05), 0.3, 55);
+          break;
+        }
+        case "ally_down": feedLine((Coop.nameOf(ev[1]) || "ALIADO").toUpperCase() + " CAIU", true); break;
         case "shot": {
           const id = ev[1];
           camera.updateMatrixWorld(true); vm.muzzle.getWorldPosition(tmpV);
@@ -608,7 +623,7 @@
           Snd.play("sword_slam", 1, rand(0.95, 1.05), panOf(ev[1], ev[2]) * 0.5, 0.4); buzz([100, 50, 200]); break;
         }
         case "wraith_vanish": spatial("whisper", ev[1], ev[2], 0.7, 1.3, 0.5, 40); break;
-        case "dead": Snd.play("die", 1, 0.7); break;
+        case "dead": Snd.play("die", 1, 0.7); if (Coop.active() && !Coop.ended()) feedLine("VOCÊ CAIU - RENASCE NA PRÓXIMA ONDA", true); break;
       }
     }
   }
@@ -633,6 +648,7 @@
       const dx = x - g.px, dy = y - g.py, lx = (dx * rx + dy * ry) * sc, ly = (dx * fx + dy * fy) * sc;
       if (Math.abs(lx) < h - 6 && Math.abs(ly) < h - 6) { rctx.fillStyle = col; rctx.fillRect(h + lx - r, h - ly - r, r * 2, r * 2); }
     };
+    for (const o of g.others) if (o.alive) dot(o.x, o.y, "#6fe08a", 6);
     for (const z of g.zombies) {
       if (z.state === "dead") continue;
       if (z.wraith) { rctx.globalAlpha = z.vis > 0.3 ? 1 : 0.25 + 0.2 * Math.sin(g.time * 9); dot(z.x, z.y, "#7ffcff", 7); rctx.globalAlpha = 1; }
@@ -645,6 +661,7 @@
   const setText = (node, key, val) => { if (hudLast[key] !== val) { hudLast[key] = val; node.textContent = val; } };
   function updateHud(dt) {
     const g = game, s = g.w(), c = s.cfg;
+    Coop.hud(g);
     setText(el.wave, "wave", "ONDA " + Math.max(1, g.wave));
     setText(el.zleft, "zleft", String(g.aliveZombies().length + g.toSpawn));
     setText(el.score, "score", String(g.score)); setText(el.kills, "kills", String(g.kills));
@@ -731,8 +748,12 @@
       };
       touchInput(lastInp);
       if (game.time > 12 && !$("tzone").hidden) $("tzone").hidden = true;
-      game.update(dt, lastInp); processEvents(); syncGame(dt); updateHud(dt); updateWeather(dt);
-      if (!game.alive) onDeath();
+      game.update(dt, lastInp); Coop.afterUpdate(game, dt); processEvents(); syncGame(dt); updateHud(dt); updateWeather(dt);
+      if (!game.alive && Coop.ended()) onDeath();
+      else if (Coop.active() && Coop.ended()) onDeath();
+    } else if (state === "pause" && Coop.active()) {
+      game.update(dt, {}); Coop.afterUpdate(game, dt); processEvents(); syncGame(dt); updateHud(dt); updateWeather(dt);
+      if (Coop.ended()) onDeath();
     } else if (state === "dead") {
       game.update(dt, {}); processEvents(); syncGame(dt); updateHud(dt); updateWeather(dt);
     } else if (state === "menu") menuTick(dt);
@@ -743,6 +764,7 @@
   // ---------------- início ----------------
   window.__arena = { get game() { return game; }, get state() { return state; }, S, startGame, toMenu, TS, touchOn, get pvPivot() { return pvPivot; }, showTab, renderArsenal, ui };
   hfov = 70;
+  Coop.bindUI();
   menuGame = makeMenuGame();
   resize(); applyQuality(); applyEnv(); applySound(); applyTouchUI(); $("fps").hidden = !S.showFps; renderAll(); showTab("mission");
   requestAnimationFrame(frame);

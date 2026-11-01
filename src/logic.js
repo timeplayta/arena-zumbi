@@ -309,8 +309,10 @@ const Logic = (function () {
   }
   // Itens que caem dos zumbis: saltam do corpo, quicam no chão e são puxados (ímã) quando você chega perto.
   const PICK_R = 1.35, MAGNET_R = 4.5, PICK_TTL = 30;
+  let nextPickupId = 1;
   class Pickup {
     constructor(kind, x, y, rnd) {
+      this.id = nextPickupId++;
       const r = rnd || Math.random, a = r() * 6.2832, v = 1.4 + r() * 1.2;
       this.kind = kind; this.x = x; this.y = y; this.h = 0.9; this.vx = Math.cos(a) * v; this.vy = Math.sin(a) * v; this.vz = 3.2;
       this.landed = false; this.ttl = PICK_TTL; this.age = 0; this.pull = 0; this.fullT = 0;
@@ -347,6 +349,9 @@ const Logic = (function () {
       this.wave = 0; this.toSpawn = 0; this.giantsLeft = 0; this.giantTotal = 0; this.shake = 0; this.spawnT = 0; this.between = true; this.pauseT = 3.5;
       this.banner = "PREPARE-SE"; this.bannerSub = ""; this.bannerT = 3;
       this.events = [];
+      // ---- co-op online ----
+      this.coop = null; this.others = []; this.over = false; this.pout = []; this._tgt = null; this._shooter = null; this.lastShot = null;
+      this.zmap = new Map(); this.pmap = new Map(); this.snapT = 0; this.shotN = 0;
     }
     uniform(a, b) { return a + (b - a) * this.rnd(); }
     randint(n) { return Math.floor(this.rnd() * n); }
@@ -459,7 +464,7 @@ const Logic = (function () {
           if (z.shield > 0.5) { if (zone === "head") r.mul = 0.3; else r.blocked = true; }   // capacete aguenta 30%; o resto o escudo para
           else r.mul = zone === "head" ? 1 : 0.8;                       // escudo baixo: só a armadura
         } else r.mul = zone === "head" ? 1.15 : 0.6;                    // lados e costas: armadura (cabeça sem capacete atrás)
-      } else if (z.samurai && z.dodgeCd <= 0 && z.act !== "dodge" && z.state !== "dead" && this.rnd() < 0.5 && z.act !== "strike") {
+      } else if (!(this.coop && this.coop.role === "guest") && z.samurai && z.dodgeCd <= 0 && z.act !== "dodge" && z.state !== "dead" && this.rnd() < 0.5 && z.act !== "strike") {
         this.startDodge(z); r.dodged = true;
       }
       return r;
@@ -486,30 +491,19 @@ const Logic = (function () {
       this.sustain = Math.min(1, this.sustain + R.build);
       this.kickV = rv;
       let first = null, anyHit = false;
-      const ox = this.px, oy = this.py, oz = eyeH;
+      const ox = this.px, oy = this.py, oz = eyeH, dirs = [];
       for (let p = 0; p < c.pellets; p++) {
         const a = this.rnd() * 6.2832, r = sp * Math.sqrt(this.rnd());
         const yaw = this.yaw + this.recoilYaw * 0 + sway[0] + r * Math.cos(a);
         const pitch = this.pitch + baseRec + sway[1] + r * Math.sin(a);
         const cp = Math.cos(pitch);
         const dx = -Math.sin(yaw) * cp, dy = Math.cos(yaw) * cp, dz = Math.sin(pitch);
-        const exclude = new Set();
-        let left = c.pierce, mul = 1;
-        for (;;) {
-          const h = this.cast(ox, oy, oz, dx, dy, dz, exclude, c.range.max);
-          if (h.kind === null) { const fr = Math.min(60, c.range.max); if (!first) first = [ox + dx * fr, oy + dy * fr, oz + dz * fr]; break; }
-          const hx = ox + dx * h.t, hy = oy + dy * h.t, hz = oz + dz * h.t;
-          if (!first) first = [hx, hy, hz];
-          if (h.kind === "world") { const n = faceNormal(hx, hy, hz); this.events.push(["wall", hx, hy, hz, n[0], n[1], n[2]]); break; }
-          const fz = this.shotFilter(h.z, h.zone, hx, hy, hz);          // escudo do Colosso, armadura e esquiva do Mestre da Katana
-          if (fz.dodged) { exclude.add(h.z); continue; }                  // errou: o projétil passa direto
-          if (fz.blocked) { this.events.push(["block", hx, hy, hz, h.z.id]); break; }
-          this.damageZombie(h.z, damageAt(c, h.t, h.zone) * mul * fz.mul, h.zone, [hx, hy, hz], c);
-          anyHit = true;
-          if (left > 0) { exclude.add(h.z); left--; mul *= 0.7; continue; }
-          break;
-        }
+        dirs.push([Math.round(dx * 1e4) / 1e4, Math.round(dy * 1e4) / 1e4, Math.round(dz * 1e4) / 1e4]);
+        const t = this.traceShot(ox, oy, oz, dx, dy, dz, c);
+        if (!first) first = t.first;
+        if (t.hit) anyHit = true;
       }
+      if (this.coop) this.lastShot = { s: this.cur, o: [ox, oy, oz], d: dirs };
       if (anyHit) this.hits += 1;
       this.events.push(["shot", c.id, first[0], first[1], first[2], c.hasSil]);
       this.events.push(["eject", c.id]);
@@ -517,9 +511,37 @@ const Logic = (function () {
       if (c.bolt) this.sched.push({ t: c.delay * 0.45, ev: ["bolt"] });
     }
 
+    // um projétil: segue o raio, fura o que puder e aplica o dano. Devolve o ponto final e se acertou algum zumbi.
+    traceShot(ox, oy, oz, dx, dy, dz, c) {
+      let first = null, hit = false;
+      const exclude = new Set();
+      let left = c.pierce, mul = 1;
+      for (;;) {
+        const h = this.cast(ox, oy, oz, dx, dy, dz, exclude, c.range.max);
+        if (h.kind === null) { const fr = Math.min(60, c.range.max); if (!first) first = [ox + dx * fr, oy + dy * fr, oz + dz * fr]; break; }
+        const hx = ox + dx * h.t, hy = oy + dy * h.t, hz = oz + dz * h.t;
+        if (!first) first = [hx, hy, hz];
+        if (h.kind === "world") { const n = faceNormal(hx, hy, hz); this.events.push(["wall", hx, hy, hz, n[0], n[1], n[2]]); break; }
+        const fz = this.shotFilter(h.z, h.zone, hx, hy, hz);          // escudo do Colosso, armadura e esquiva do Mestre da Katana
+        if (fz.dodged) { exclude.add(h.z); continue; }                  // errou: o projétil passa direto
+        if (fz.blocked) { this.events.push(["block", hx, hy, hz, h.z.id]); break; }
+        this.damageZombie(h.z, damageAt(c, h.t, h.zone) * mul * fz.mul, h.zone, [hx, hy, hz], c);
+        hit = true;
+        if (left > 0) { exclude.add(h.z); left--; mul *= 0.7; continue; }
+        break;
+      }
+      return { first, hit };
+    }
+
     damageZombie(z, dmg, zone, p, c) {
       if (z.state === "dead") return;
       const head = zone === "head";
+      if (this.coop && this.coop.role === "guest") {                  // convidado: o dano de verdade é calculado pelo anfitrião; aqui só o efeito
+        z.hitT = 0.12; this.hitmarkT = 0.14; this.hitmarkHead = head;
+        this.events.push(["hit", p[0], p[1], p[2], head, z.id]);
+        return;
+      }
+      const sh = this._shooter;
       if (!c.melee) dmg *= this.dmgBoost;
       z.hp -= dmg; z.hitT = 0.12;
       z.stagger = Math.max(z.stagger, (0.18 + (c.knock || 0) * 0.8) * (z.giant || z.tank ? 0.1 : z.samurai ? 0.5 : z.wraith ? 0 : 1));
@@ -528,15 +550,15 @@ const Logic = (function () {
         const dx = z.x - this.px, dy = z.y - this.py, d = Math.hypot(dx, dy) || 1, kn = z.giant || z.tank ? 0.02 : z.wraith ? 0 : z.samurai ? 0.4 : z.brute ? 0.2 : 1;
         z.kx += (dx / d) * c.knock * 14 * kn; z.ky += (dy / d) * c.knock * 14 * kn;
       }
-      this.hitmarkT = 0.14; this.hitmarkHead = head;
+      if (!sh) { this.hitmarkT = 0.14; this.hitmarkHead = head; }
       this.events.push(["hit", p[0], p[1], p[2], head, z.id]);
       if (z.hp <= 0) {
         z.state = "dead"; z.deadT = 0; z.headGone = head && z.hp < -20 && !z.wraith && !z.tank; z.untouch = false;
         const E = ELITE[z.kind], D = this.diff;
         const pts = Math.round((100 + (head ? 50 : 0) + (z.giant ? 900 : z.brute ? 150 : 0) + (E ? E.pts : 0)) * D.score);
-        this.kills += 1; this.score += pts;
-        if (E) this.bonus += Math.round(E.coins * D.coin);
-        if (head) this.headshots += 1;
+        this.score += pts;
+        if (sh) { sh.kills += 1; if (head) sh.hs += 1; if (E) sh.bonus += Math.round(E.coins * D.coin); }
+        else { this.kills += 1; if (E) this.bonus += Math.round(E.coins * D.coin); if (head) this.headshots += 1; }
         this.events.push(["kill", z.x, z.y, head, pts, z.brute, z.headGone, z.giant, z.kind]);
         if (z.giant || E) {                                         // gigantes e especiais soltam um tesouro
           const nh = z.giant ? 2 : z.samurai ? 1 : 2, na = z.giant ? 3 : z.samurai ? 2 : 3;
@@ -572,6 +594,7 @@ const Logic = (function () {
       this.toSpawn += this.giantsLeft + this.queue.length; this.giantTotal = this.toSpawn; this.queueTotal = this.toSpawn;
       this.banner = "ONDA " + this.wave; this.bannerSub = ""; this.bannerT = 3;
       this.events.push(["wave", this.wave]);
+      if (this.coop) this.respawnDead();
     }
     spawnZombie() {
       const w = this.wave, D = this.diff;
@@ -579,7 +602,7 @@ const Logic = (function () {
       for (let i = 0; i < 40; i++) {
         const side = this.randint(4), u = this.uniform(-ARENA + 2, ARENA - 2), e = ARENA - this.uniform(1.4, 3);
         [x, y] = [[u, e], [u, -e], [e, u], [-e, u]][side];
-        if (Math.hypot(x - this.px, y - this.py) < 14 || insideAny(x, y, 0.9)) continue;
+        if (this.nearAny(x, y, 14) || insideAny(x, y, 0.9)) continue;
         break;
       }
       const brutes = this.zombies.filter((z) => z.brute && !z.giant && !z.tank && z.state !== "dead").length;
@@ -607,7 +630,7 @@ const Logic = (function () {
     spawnElite(kind, x, y) {
       const E = ELITE[kind], D = this.diff, w = this.wave, hpMul = Math.pow(D.hp, 0.6);   // chefes crescem com a dificuldade, mas bem mais devagar que os zumbis comuns
       const hp = (E.hp + E.grow * (w - 1)) * hpMul, speed = E.speed * (kind === "wraith" ? 1 : 1 + 0.04 * (D.extreme || 0));
-      if (kind === "wraith") { const a = this.rnd() * 6.28; x = clamp(this.px + Math.cos(a) * 16, -ARENA + 2, ARENA - 2); y = clamp(this.py + Math.sin(a) * 16, -ARENA + 2, ARENA - 2); }
+      if (kind === "wraith") { const a = this.rnd() * 6.28, tp = this.randomPlayer(); x = clamp(tp.x + Math.cos(a) * 16, -ARENA + 2, ARENA - 2); y = clamp(tp.y + Math.sin(a) * 16, -ARENA + 2, ARENA - 2); }
       const z = new Zombie(x, y, hp, speed, kind, this.randint(3), this, E.dmg);
       this.zombies.push(z);
       if (kind === "wraith") { z.untouch = true; z.vis = 0; z.act = "stalk"; }
@@ -634,11 +657,13 @@ const Logic = (function () {
           if (this.armorMax) this.armor = Math.min(this.armorMax, this.armor + this.armorMax * 0.3);
           for (const s of this.slots) s.reserve = Math.min(s.cfg.maxRes * (1 + this.perks.ammoPack), s.reserve + Math.round(s.cfg.ammoPick * 1.5 * this.diff.ammo));
         }
+        for (const o of this.others) if (o.alive) { o.hp = Math.min(o.maxHp, o.hp + this.diff.heal); if (o.armorMax) o.armor = Math.min(o.armorMax, o.armor + o.armorMax * 0.3); this.fx(o.id, ["clearbonus"]); }
         this.events.push(["clear", this.wave]);
       }
     }
 
     hurt(amount, z, o) {
+      if (this._tgt) return this.hurtRemote(this._tgt, amount, z, o || {});
       if (!this.alive || this.invulnT > 0) return;
       o = o || {};
       if (this.armor > 0 && !o.pierce) {                         // o colete absorve 60% do golpe até acabar
@@ -659,7 +684,7 @@ const Logic = (function () {
         this.hp = 0; this.alive = false; this.events.push(["dead"]);
       }
     }
-    push(vx, vy) { this.kvx += vx; this.kvy += vy; }
+    push(vx, vy) { if (this._tgt) { this.fx(this._tgt.id, ["push", vx, vy]); return; } this.kvx += vx; this.kvy += vy; }
 
     // ---------- jogador ----------
     updatePlayer(dt, inp) {
@@ -764,7 +789,7 @@ const Logic = (function () {
       z.phase += dt * (spd * 2.4 + 1);
       if (z.giant || z.tank) {
         const n = Math.floor(z.phase / Math.PI);
-        if (n !== z.stepN) { z.stepN = n; this.shake = Math.max(this.shake, clamp(1 - dist / 24, 0, 1) * (z.tank ? 0.3 : 0.55)); this.events.push(["stomp", dist, z.tank ? 1 : 0]); }
+        if (n !== z.stepN) { z.stepN = n; this.shake = Math.max(this.shake, clamp(1 - dist / 24, 0, 1) * (z.tank ? 0.3 : 0.55)); this.events.push(["stomp", this.hostDist(z.x, z.y), z.tank ? 1 : 0]); }
       }
     }
 
@@ -994,26 +1019,20 @@ const Logic = (function () {
         }
         if (z.state === "dead") { z.deadT += dt; z.fall = Math.min(1, z.deadT / 0.55); continue; }
         z.stagger = Math.max(0, z.stagger - dt); z.slowT = Math.max(0, z.slowT - dt);
-        const dx = this.px - z.x, dy = this.py - z.y, dist = Math.hypot(dx, dy) || 1e-6;
+        const hd = Math.hypot(this.px - z.x, this.py - z.y) || 1e-6;
         z.groanT -= dt;
         if (z.groanT <= 0) {
           z.groanT = z.elite ? this.uniform(5, 10) : this.uniform(4, 9);
           const rx = Math.cos(this.yaw), ry = Math.sin(this.yaw);
-          this.events.push(["groan", dist, z.kind, clamp(((z.x - this.px) * rx + (z.y - this.py) * ry) / dist, -1, 1)]);
+          this.events.push(["groan", hd, z.kind, clamp(((z.x - this.px) * rx + (z.y - this.py) * ry) / hd, -1, 1)]);
         }
-        if (z.tank) { this.updateTank(z, dt, dist); continue; }
-        if (z.samurai) { this.updateSamurai(z, dt, dist, dx, dy); continue; }
-        if (z.wraith) { this.updateWraith(z, dt, dist); continue; }
-        const diff = wrapAngle(Math.atan2(-dx, dy) - z.yaw);
-        z.yaw = wrapAngle(z.yaw + clamp(diff, -7 * dt, 7 * dt));
-        if (dist < ATTACK_RANGE * z.s * (z.brute ? 1.1 : 1)) {
-          z.state = "attack"; z.attackT += dt; z.attackCd -= dt;
-          if (z.attackCd <= 0) { z.attackCd = z.giant ? 1.9 : z.brute ? 1.4 : 1; this.hurt(base * this.diff.dmg * z.dmgMul, z); if (z.giant) this.shake = Math.max(this.shake, 0.9); }
-          continue;
-        }
-        z.state = "walk"; z.attackCd = Math.max(z.attackCd, 0.3);
-        const spd = z.speed * (z.stagger > 0 ? 0.25 : 1) * (z.slowT > 0 ? (z.giant ? 0.85 : 0.55) : 1) * (z.limp ? 0.8 : 1);
-        this.walkToward(z, dt, dx, dy, dist, spd);
+        const tg = this.others.length ? this.nearestTarget(z.x, z.y) : null;
+        if (tg) {                                                    // co-op: o zumbi persegue o jogador mais perto
+          const sx = this.px, sy = this.py, sw = this.yaw;
+          this._hp = [sx, sy]; this._tgt = tg; this.px = tg.x; this.py = tg.y; this.yaw = tg.yaw;
+          this.zombieAI(z, dt, base);
+          this.px = sx; this.py = sy; this.yaw = sw; this._tgt = null;
+        } else this.zombieAI(z, dt, base);
       }
       const live = this.aliveZombies().filter((z) => !z.wraith);
       for (let i = 0; i < live.length; i++) {
@@ -1032,6 +1051,23 @@ const Logic = (function () {
       }
       for (const z of live) [z.x, z.y] = pushOut(z.x, z.y, ZOMBIE_R * z.s);
       this.zombies = this.zombies.filter((z) => !(z.state === "dead" && z.deadT > 6));
+    }
+
+    zombieAI(z, dt, base) {
+      const dx = this.px - z.x, dy = this.py - z.y, dist = Math.hypot(dx, dy) || 1e-6;
+      if (z.tank) { this.updateTank(z, dt, dist); return; }
+      if (z.samurai) { this.updateSamurai(z, dt, dist, dx, dy); return; }
+      if (z.wraith) { this.updateWraith(z, dt, dist); return; }
+      const diff = wrapAngle(Math.atan2(-dx, dy) - z.yaw);
+      z.yaw = wrapAngle(z.yaw + clamp(diff, -7 * dt, 7 * dt));
+      if (dist < ATTACK_RANGE * z.s * (z.brute ? 1.1 : 1)) {
+        z.state = "attack"; z.attackT += dt; z.attackCd -= dt;
+        if (z.attackCd <= 0) { z.attackCd = z.giant ? 1.9 : z.brute ? 1.4 : 1; this.hurt(base * this.diff.dmg * z.dmgMul, z); if (z.giant) this.shake = Math.max(this.shake, 0.9); }
+        return;
+      }
+      z.state = "walk"; z.attackCd = Math.max(z.attackCd, 0.3);
+      const spd = z.speed * (z.stagger > 0 ? 0.25 : 1) * (z.slowT > 0 ? (z.giant ? 0.85 : 0.55) : 1) * (z.limp ? 0.8 : 1);
+      this.walkToward(z, dt, dx, dy, dist, spd);
     }
 
     canTake(p) { return p.kind !== "health" || this.hp < this.maxHp; }
@@ -1066,7 +1102,15 @@ const Logic = (function () {
           }
         }
         const d = Math.hypot(p.x - this.px, p.y - this.py);
-        if (this.alive && p.age > 0.35) {
+        let rb = null, rd = 1e9;                                    // co-op: aliado mais perto que pode pegar o item
+        if (this.others.length && p.age > 0.35) for (const o of this.others) if (o.alive && (p.kind !== "health" || o.hp < o.maxHp)) { const dd = Math.hypot(p.x - o.x, p.y - o.y); if (dd < rd) { rd = dd; rb = o; } }
+        if (rb && rd < PICK_R) { this.takeRemote(rb, p); continue; }
+        if (rb && !(this.alive && d <= rd) && rd < MAGNET_R) {     // ímã do aliado
+          p.pull = Math.min(1, p.pull + dt * 2.5);
+          const sp = (2.5 + 7 * p.pull) * dt, k = Math.min(1, sp / Math.max(rd, 1e-3));
+          p.x += (rb.x - p.x) * k; p.y += (rb.y - p.y) * k;
+          if (p.landed) p.h = Math.min(0.25, p.h + dt);
+        } else if (this.alive && p.age > 0.35) {
           const ok = this.canTake(p);
           if (d < PICK_R && ok) { this.takePickup(p); continue; }
           if (ok && d < MAGNET_R * this.magnetK) {              // ímã: o item desliza até você
@@ -1112,7 +1156,200 @@ const Logic = (function () {
         const k = Math.exp(-6 * dt); this.kvx *= k; this.kvy *= k;
         if (Math.abs(this.kvx) + Math.abs(this.kvy) < 0.05) this.kvx = this.kvy = 0;
       }
+      if (this.coop && this.coop.role === "guest") { this.mirrorStep(dt); this.updateCracks(dt); return; }   // convidado: o mundo vem pelo anfitrião
       this.updateWaves(dt); this.updateZombies(dt); this.updatePickups(dt); this.updateCracks(dt);
+      if (this.coop && !this.alive && !this.over && !this.others.some((o) => o.alive)) this.over = true;
+    }
+
+    // =====================================================================================================
+    //  CO-OP ONLINE  (o anfitrião roda o mundo; convidados mandam posição/tiros e recebem o estado)
+    // =====================================================================================================
+    enableCoop(role, id) { this.coop = { role, id }; this.over = false; this.others = []; this.pout = []; }
+    fx(id, ev) { this.pout.push([id, ev]); }                         // mensagem direcionada a um jogador
+    popOut() { const o = this.pout; this.pout = []; return o; }
+    hostDist(x, y) { const h = this._tgt && this._hp ? this._hp : [this.px, this.py]; return Math.hypot(x - h[0], y - h[1]); }
+    // ---- anfitrião ----
+    addRemote(id, name, info) {
+      info = info || {};
+      const pk = Object.assign({ hp: 0, armor: 0, dmg: 0, vest: 0 }, info.perks || {});
+      const lo = Array.isArray(info.loadout) && info.loadout.length === 2 ? info.loadout : [{ id: "ax4", a: {} }, { id: "p45", a: {} }];
+      let cfgs; try { cfgs = [buildSlot(lo[0]).cfg, buildSlot(lo[1]).cfg]; } catch (e) { cfgs = [buildSlot({ id: "ax4", a: {} }).cfg, buildSlot({ id: "p45", a: {} }).cfg]; }
+      const n = this.others.length + 1, maxHp = 100 + 10 * clamp(pk.hp | 0, 0, 10), armorMax = 25 * clamp(pk.armor | 0, 0, 4) + 50 * clamp(pk.vest | 0, 0, 1);
+      const a = { id, name: String(name || "Jogador").slice(0, 14), x: -2 + n * 1.6, y: -4, yaw: 0, pitch: 0, hp: maxHp, maxHp, armor: armorMax, armorMax, alive: true,
+        wi: lo[0].id, cr: 0, mv: 0, kills: 0, hs: 0, bonus: 0, cfgs, dmgBoost: 1 + 0.05 * clamp(pk.dmg | 0, 0, 10), invulnT: 0, shotT: 0,
+        mel: Object.assign({ dmg: MELEE_DMG, range: MELEE_RANGE, cd: MELEE_CD, knock: 6 }, info.melee && info.melee.dmg ? { dmg: clamp(info.melee.dmg, 10, 200), range: clamp(info.melee.range || MELEE_RANGE, 1, 3), cd: clamp(info.melee.cd || MELEE_CD, 0.3, 2), knock: clamp(info.melee.knock || 6, 0, 12) } : {}) };
+      this.others = this.others.filter((o) => o.id !== id); this.others.push(a);
+      return a;
+    }
+    removeRemote(id) { this.others = this.others.filter((o) => o.id !== id); }
+    remote(id) { return this.others.find((o) => o.id === id) || null; }
+    setRemote(id, m) {
+      const a = this.remote(id); if (!a) return;
+      if (a.alive) {
+        const nx = clamp(Number(m.x) || 0, -ARENA, ARENA), ny = clamp(Number(m.y) || 0, -ARENA, ARENA);
+        a.mv = Math.hypot(nx - a.x, ny - a.y) > 0.02 ? 1 : 0; a.x = nx; a.y = ny;
+      }
+      a.yaw = Number(m.yaw) || 0; a.pitch = clamp(Number(m.pitch) || 0, -1.6, 1.6); a.cr = m.cr ? 1 : 0;
+      if (typeof m.w === "string") a.wi = m.w.slice(0, 12);
+    }
+    asShooter(a, fn) {
+      const sv = { px: this.px, py: this.py, yaw: this.yaw, dmg: this.dmgBoost, mel: this.mel, sh: this._shooter };
+      this.px = a.x; this.py = a.y; this.yaw = a.yaw; this.dmgBoost = a.dmgBoost; this.mel = a.mel; this._shooter = a;
+      const n0 = this.events.length;
+      try { fn(); } finally {
+        this.px = sv.px; this.py = sv.py; this.yaw = sv.yaw; this.dmgBoost = sv.dmg; this.mel = sv.mel; this._shooter = sv.sh;
+      }
+      for (let i = n0; i < this.events.length; i++) this.events[i].src = a.id;   // de quem foi o efeito (para os convidados)
+    }
+    remoteShot(id, m) {
+      const a = this.remote(id); if (!a || !a.alive || !m || !Array.isArray(m.d)) return;
+      const c = a.cfgs[m.s | 0]; if (!c) return;
+      const o = Array.isArray(m.o) ? m.o : [a.x, a.y, 1.6];
+      if (Math.hypot(o[0] - a.x, o[1] - a.y) > 3) return;
+      const ds = m.d.slice(0, Math.min(14, c.pellets + 1));
+      this.asShooter(a, () => {
+        let first = null;
+        for (const d of ds) {
+          const L = Math.hypot(d[0], d[1], d[2]) || 1, dx = d[0] / L, dy = d[1] / L, dz = d[2] / L;
+          const t = this.traceShot(o[0], o[1], clamp(o[2], 0.8, 2), dx, dy, dz, c);
+          if (!first) first = t.first;
+        }
+        if (first) this.events.push(["rshot", a.id, c.id, o[0] - Math.sin(a.yaw) * 0.7, o[1] + Math.cos(a.yaw) * 0.7, clamp(o[2], 0.8, 2) - 0.2, first[0], first[1], first[2], !!c.hasSil]);
+      });
+    }
+    remoteMelee(id) {
+      const a = this.remote(id); if (!a || !a.alive) return;
+      this.asShooter(a, () => this.doMelee());
+      for (const e of this.events) if (e.src === a.id && (e[0] === "melee_hit" || e[0] === "melee_miss")) e.drop = true;
+    }
+    nearestTarget(x, y) {
+      let best = null, bd = this.alive ? Math.hypot(this.px - x, this.py - y) : 1e9;
+      for (const o of this.others) if (o.alive) { const d = Math.hypot(o.x - x, o.y - y); if (d < bd) { bd = d; best = o; } }
+      return best;
+    }
+    nearAny(x, y, r) {
+      if (this.alive && Math.hypot(x - this.px, y - this.py) < r) return true;
+      for (const o of this.others) if (o.alive && Math.hypot(x - o.x, y - o.y) < r) return true;
+      return false;
+    }
+    randomPlayer() {
+      const c = []; if (this.alive) c.push({ x: this.px, y: this.py });
+      for (const o of this.others) if (o.alive) c.push({ x: o.x, y: o.y });
+      return c.length ? c[this.randint(c.length)] : { x: this.px, y: this.py };
+    }
+    hurtRemote(t, amount, z, o) {
+      if (!t.alive || t.invulnT > 0) return;
+      if (t.armor > 0 && !o.pierce) { const ab = Math.min(t.armor, amount * 0.6); t.armor -= ab; amount -= ab; }
+      t.hp -= amount;
+      const rel = z ? wrapAngle(Math.atan2(-(z.x - t.x), z.y - t.y) - t.yaw) : (o.rel || 0);
+      if (!o.soft) this.fx(t.id, ["hurt", rel]);
+      if (t.hp <= 0) { t.hp = 0; t.alive = false; this.fx(t.id, ["down"]); this.events.push(["ally_down", t.id]); }
+    }
+    takeRemote(a, p) {
+      if (p.kind === "health") { const gain = Math.min(30, a.maxHp - a.hp); a.hp = Math.min(a.maxHp, a.hp + 30); this.fx(a.id, ["pickup", "health", Math.round(gain)]); }
+      else this.fx(a.id, ["pickup", "ammo", 0]);
+    }
+    teamAlive() { return this.alive || this.others.some((o) => o.alive); }
+    respawnDead() {
+      const at = (i) => [-2 + i * 1.6, -4];
+      if (!this.alive) { this.alive = true; this.hp = this.maxHp; this.armor = this.armorMax; this.invulnT = 3; this.px = 0; this.py = -4; this.kvx = this.kvy = 0; this.events.push(["respawned"]); }
+      this.others.forEach((o, i) => { if (!o.alive) { o.alive = true; o.hp = o.maxHp; o.armor = o.armorMax; o.invulnT = 3; const q = at(i + 1); o.x = q[0]; o.y = q[1]; this.fx(o.id, ["respawn", q[0], q[1]]); } });
+    }
+    // jogador local + aliados -> lista para o pacote
+    makeSnapshot(newZ, newP) {
+      const r2 = (v) => Math.round(v * 100) / 100;
+      const z = [];
+      for (const q of this.zombies) z.push([q.id, r2(q.x), r2(q.y), r2(q.yaw), q.state, Math.round(q.hp), r2(q.hitT), r2(q.deadT), r2(q.phase), r2(q.attackT), q.act, r2(q.actT), r2(q.seqT), r2(q.vis), q.atk, q.combo, q.dodgeDir, q.headGone ? 1 : 0, q.untouch ? 1 : 0, r2(q.shield)]);
+      const p = this.pickups.map((k) => [k.id, r2(k.x), r2(k.y), r2(k.h), k.landed ? 1 : 0, r2(k.pull)]);
+      const me = this.coop.id, pl = [[me, r2(this.px), r2(this.py), r2(this.yaw), r2(this.pitch), Math.round(this.hp), this.maxHp, this.alive ? 1 : 0, this.w().cfg.id, this.crouchT > 0.5 ? 1 : 0, this.moving ? 1 : 0, Math.round(this.armor), this.kills, this.headshots, this.bonus]];
+      for (const o of this.others) pl.push([o.id, r2(o.x), r2(o.y), r2(o.yaw), r2(o.pitch), Math.round(o.hp), o.maxHp, o.alive ? 1 : 0, o.wi, o.cr, o.mv, Math.round(o.armor), o.kills, o.hs, o.bonus]);
+      return { tm: r2(this.time), w: this.wave, zl: this.aliveZombies().length + this.toSpawn, sc: this.score, bw: this.between ? 1 : 0, pt: r2(this.pauseT), bn: this.banner, bs: this.bannerSub, bT: r2(this.bannerT), z, p, pl, zn: newZ, pn: newP };
+    }
+    // registros estáticos de zumbis e itens novos (enviados uma vez)
+    staticZombie(q) { return { id: q.id, x: q.x, y: q.y, hp: q.maxHp, sp: q.speed, k: q.kind, v: q.variant, dm: q.dmgMul, s: q.s, tn: q.tint, lm: q.limp ? 1 : 0, ap: q.armPose, ph: q.phase }; }
+    staticPickup(k) { return { id: k.id, k: k.kind, x: k.x, y: k.y }; }
+    // ---- convidado ----
+    mirrorAddZombie(r) {
+      if (this.zmap.has(r.id)) return;
+      const fake = { uniform: (a, b) => (a + b) / 2, rnd: () => 0.5 };
+      const q = new Zombie(r.x, r.y, r.hp, r.sp, r.k, r.v, fake, r.dm);
+      q.id = r.id; q.s = r.s; q.tint = r.tn; q.limp = !!r.lm; q.armPose = r.ap; q.phase = r.ph; q.tx = r.x; q.ty = r.y; q.tyaw = 0; q.phRate = 0; q.psnap = r.ph;
+      this.zombies.push(q); this.zmap.set(q.id, q);
+      if (r.k === "wraith") { q.untouch = true; q.vis = 0; }
+    }
+    mirrorAddPickup(r) {
+      if (this.pmap.has(r.id)) return;
+      const k = new Pickup(r.k, r.x, r.y, () => 0.5); k.id = r.id; k.ttl = 99; k.landed = true; k.h = 0; k.vx = k.vy = k.vz = 0;
+      this.pickups.push(k); this.pmap.set(k.id, k);
+    }
+    applySnapshot(s, dt) {
+      if (s.zn) for (const r of s.zn) this.mirrorAddZombie(r);
+      if (s.pn) for (const r of s.pn) this.mirrorAddPickup(r);
+      const dsn = Math.max(0.02, s.tm - (this.snapT || s.tm - 0.08)); this.snapT = s.tm;
+      const seen = new Set();
+      for (const a of s.z) {
+        const q = this.zmap.get(a[0]); if (!q) continue;
+        seen.add(q.id);
+        q.tx = a[1]; q.ty = a[2]; q.tyaw = a[3];
+        q.state = a[4]; q.hp = a[5]; q.hitT = Math.max(q.hitT, a[6]); q.deadT = a[7];
+        const rate = (a[8] - q.psnap) / dsn; q.psnap = a[8]; q.phRate = clamp(rate, 0, 40); q.phase = a[8];
+        q.attackT = a[9]; q.act = a[10]; q.actT = a[11]; q.seqT = a[12]; q.vis = a[13]; q.atk = a[14]; q.combo = a[15]; q.dodgeDir = a[16]; q.headGone = !!a[17]; q.untouch = !!a[18]; q.shield = a[19];
+        if (q.state === "dead") { q.x = q.tx; q.y = q.ty; q.yaw = q.tyaw; }
+      }
+      for (let i = this.zombies.length - 1; i >= 0; i--) { const q = this.zombies[i]; if (!seen.has(q.id)) { this.zombies.splice(i, 1); this.zmap.delete(q.id); } }
+      const seenP = new Set();
+      for (const a of s.p) { const k = this.pmap.get(a[0]); if (!k) continue; seenP.add(k.id); k.x = a[1]; k.y = a[2]; k.h = a[3]; k.landed = !!a[4]; k.pull = a[5]; }
+      for (let i = this.pickups.length - 1; i >= 0; i--) { const k = this.pickups[i]; if (!seenP.has(k.id)) { this.pickups.splice(i, 1); this.pmap.delete(k.id); } }
+      this.wave = s.w; this.score = s.sc; this.between = !!s.bw; this.pauseT = s.pt; this.toSpawn = 0; this.zleft = s.zl;
+      if (s.bn !== this.banner || s.bs !== this.bannerSub) { this.banner = s.bn; this.bannerSub = s.bs; }
+      this.bannerT = Math.max(this.bannerT, s.bT);
+      const me = this.coop.id, seenO = new Set();
+      for (const a of s.pl) {
+        if (a[0] === me) {
+          this.hp = a[5]; this.maxHp = a[6]; this.armor = a[11]; this.kills = a[12]; this.headshots = a[13]; this.bonus = a[14];
+          const was = this.alive; this.alive = !!a[7]; if (was && !this.alive) this.moving = false;
+          continue;
+        }
+        seenO.add(a[0]);
+        let o = this.others.find((q) => q.id === a[0]);
+        if (!o) { o = { id: a[0], name: "", x: a[1], y: a[2], yaw: a[3], pitch: 0, hp: 100, maxHp: 100, alive: true, wi: "ax4", cr: 0, mv: 0, flash: 0, tx: a[1], ty: a[2], tyaw: a[3] }; this.others.push(o); }
+        o.tx = a[1]; o.ty = a[2]; o.tyaw = a[3]; o.pitch = a[4]; o.hp = a[5]; o.maxHp = a[6]; o.alive = !!a[7]; o.wi = a[8]; o.cr = a[9]; o.mv = a[10];
+      }
+      this.others = this.others.filter((o) => seenO.has(o.id));
+    }
+    mirrorStep(dt) {
+      const k = 1 - Math.exp(-dt * 16);
+      for (const q of this.zombies) {
+        q.hitT = Math.max(0, q.hitT - dt);
+        if (q.state === "dead") { q.deadT += dt; q.fall = Math.min(1, q.deadT / 0.55); continue; }
+        q.fall = 0;
+        if (Math.hypot(q.tx - q.x, q.ty - q.y) > 6) { q.x = q.tx; q.y = q.ty; q.yaw = q.tyaw; }
+        else { q.x += (q.tx - q.x) * k; q.y += (q.ty - q.y) * k; q.yaw = wrapAngle(q.yaw + wrapAngle(q.tyaw - q.yaw) * k); }
+        q.phase += q.phRate * dt; q.attackT += dt; q.actT += dt; q.seqT += dt;
+        q.groanT -= dt;
+        if (q.groanT <= 0) {
+          q.groanT = q.elite ? this.uniform(5, 10) : this.uniform(4, 9);
+          const d = Math.hypot(this.px - q.x, this.py - q.y) || 1e-6, rx = Math.cos(this.yaw), ry = Math.sin(this.yaw);
+          this.events.push(["groan", d, q.kind, clamp(((q.x - this.px) * rx + (q.y - this.py) * ry) / d, -1, 1)]);
+        }
+      }
+      for (const o of this.others) { o.x += (o.tx - o.x) * k; o.y += (o.ty - o.y) * k; o.yaw = wrapAngle(o.yaw + wrapAngle(o.tyaw - o.yaw) * k); o.flash = Math.max(0, (o.flash || 0) - dt); }
+      for (const p of this.pickups) p.age += dt;
+    }
+    // mensagens direcionadas ao jogador local (convidado)
+    applyFx(ev) {
+      switch (ev[0]) {
+        case "hurt": this.hurtT = Math.max(this.hurtT, 0.5); this.events.push(["hurt", ev[1]]); break;
+        case "push": this.kvx += ev[1]; this.kvy += ev[2]; break;
+        case "pickup":
+          if (ev[1] === "health") this.events.push(["pickup", "health", ev[2]]);
+          else { let gain = 0; this.slots.forEach((s, i) => { const b = s.reserve; s.reserve = Math.min(s.cfg.maxRes * (1 + this.perks.ammoPack), s.reserve + Math.round(s.cfg.ammoPick * (i === this.cur ? 1 : 0.5))); if (i === this.cur) gain = s.reserve - b; }); this.events.push(["pickup", "ammo", gain]); }
+          break;
+        case "clearbonus": for (const s of this.slots) s.reserve = Math.min(s.cfg.maxRes * (1 + this.perks.ammoPack), s.reserve + Math.round(s.cfg.ammoPick * 1.5 * this.diff.ammo)); break;
+        case "down": this.events.push(["dead"]); this.banner = "VOCÊ CAIU"; this.bannerSub = "Renasce na próxima onda"; this.bannerT = 4; break;
+        case "respawn": this.px = ev[1]; this.py = ev[2]; this.kvx = this.kvy = 0; this.invulnT = 3; this.banner = "DE VOLTA!"; this.bannerSub = "Você renasceu"; this.bannerT = 3;
+          for (const s of this.slots) s.reserve = Math.max(s.reserve, Math.round(s.cfg.reserve * this.diff.ammo * 0.5)); break;
+      }
     }
   }
 

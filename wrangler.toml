@@ -1,0 +1,24 @@
+name = "arena-zumbi"
+main = "worker/index.js"
+compatibility_date = "2026-10-01"
+
+# o jogo (HTML) e servido junto com a API/WebSocket
+[assets]
+directory = "./public"
+binding = "ASSETS"
+run_worker_first = ["/ws/*", "/api/*"]
+
+# salas de co-op (um Durable Object por codigo de sala)
+[[durable_objects.bindings]]
+name = "ROOMS"
+class_name = "Room"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["Room"]
+
+# ranking do co-op
+[[d1_databases]]
+binding = "DB"
+database_name = "arena_zumbi_online"
+database_id = "3be157c8-499a-47c4-8dc4-647527ed48a9"

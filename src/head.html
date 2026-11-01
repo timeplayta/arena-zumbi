@@ -71,6 +71,23 @@ button { font-family: inherit; color: inherit; }
 
 #dmgdir { position: absolute; left: 50%; top: 50%; width: 0; height: 0; opacity: 0; }
 #dmgdir i { position: absolute; left: -70px; top: -190px; width: 140px; height: 60px; background: radial-gradient(ellipse at 50% 100%, rgba(255, 40, 30, 0.9), transparent 70%); }
+.btn { background: var(--panel, #161b22); color: var(--fg); border: 1px solid rgba(255,255,255,0.22); padding: 10px 22px; font-family: var(--font-display); font-size: 22px; letter-spacing: 0.08em; text-transform: uppercase; cursor: pointer; }
+.btn:hover { border-color: var(--amber); color: var(--amber); }
+.coop-room { display: flex; align-items: baseline; gap: 14px; margin-bottom: 12px; }
+.coop-room span { font-size: 14px; color: var(--muted); letter-spacing: 0.2em; }
+.coop-room b { font-family: var(--font-display); font-size: 54px; letter-spacing: 0.22em; color: var(--amber); user-select: text; -webkit-user-select: text; }
+.coop-players { display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; }
+.coop-p { display: flex; align-items: center; gap: 10px; font-size: 20px; }
+.coop-p i, #team i { width: 12px; height: 12px; border-radius: 50%; display: inline-block; flex: none; }
+.coop-p span { font-size: 13px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; }
+.coop-status { min-height: 22px; font-size: 16px; color: var(--muted); }
+.coop-status.ok { color: var(--ok); } .coop-status.err { color: var(--danger); }
+#team { position: absolute; left: 16px; top: 176px; display: flex; flex-direction: column; gap: 6px; font-size: 16px; min-width: 150px; }
+#team .tm { display: flex; align-items: center; gap: 8px; text-shadow: 0 1px 4px #000; }
+#team .tm b { font-weight: 600; flex: 1; letter-spacing: 0.04em; }
+#team u { display: block; width: 70px; height: 7px; background: rgba(255,255,255,0.15); text-decoration: none; }
+#team s { display: block; height: 100%; background: var(--ok); text-decoration: none; }
+#team .down { opacity: 0.55; } #team .down s { background: var(--danger); }
 #feed { position: absolute; left: 0; right: 0; bottom: 150px; display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 24px; letter-spacing: 0.08em; }
 #feed div { animation: feedout 1.8s forwards; color: var(--amber); }
 #feed div.head { color: #ffe34a; }
@@ -342,6 +359,7 @@ table.sc td:first-child { font-family: var(--font-display); font-size: 22px; col
     <div id="cross" class="xh st-cross"><i></i><i></i><i></i><i></i><i></i></div>
     <div id="dmgdir"><i></i></div>
     <div id="feed"></div>
+    <div id="team"></div>
     <div id="banner"><div class="big" id="bannerBig"></div><div class="sub" id="bannerSub"></div></div>
     <div id="msg"></div>
     <div id="boss" hidden><div class="bname" id="bossName">GIGANTE</div><div class="bbar"><div id="bossfill"></div></div></div>
@@ -376,6 +394,7 @@ table.sc td:first-child { font-family: var(--font-display); font-size: 22px; col
         <button type="button" data-tab="custom">Personalizar</button>
         <button type="button" data-tab="settings">Ajustes</button>
         <button type="button" data-tab="scores">Recordes</button>
+        <button type="button" data-tab="online">Co-op online</button>
         <button type="button" data-tab="controls">Controles</button>
       </nav>
       <div class="who" id="who" hidden></div>
@@ -477,6 +496,25 @@ table.sc td:first-child { font-family: var(--font-display); font-size: 22px; col
         <div class="sec" id="scoreBox"></div>
       </section>
 
+      <section class="panel" data-panel="online" hidden>
+        <h2>Co-op online</h2>
+        <div class="sec"><h3>Jogue com amigos</h3>
+          <p>Um jogador cria a sala e passa o código; os outros entram com ele. O anfitrião roda a partida e todos enfrentam as mesmas ondas, juntos. Quem cair renasce no começo da próxima onda. Máximo de 4 jogadores.</p></div>
+        <div id="coopOff" class="sec">
+          <div class="field"><label for="coopServer">Servidor online (endereço do Cloudflare, ex.: arena-zumbi.seunome.workers.dev)</label><input type="text" id="coopServer" autocomplete="off" spellcheck="false"></div>
+          <div class="row" style="margin-top:14px"><button type="button" class="btn" id="btnCoopCreate">Criar sala</button></div>
+          <div class="field" style="margin-top:18px"><label for="coopCode">Ou entre com o código da sala</label><input type="text" id="coopCode" maxlength="8" autocomplete="off" spellcheck="false" style="text-transform:uppercase"></div>
+          <div class="row" style="margin-top:14px"><button type="button" class="btn" id="btnCoopJoin">Entrar na sala</button></div>
+        </div>
+        <div id="coopOn" class="sec" hidden>
+          <h3>Sala</h3>
+          <div class="coop-room"><span>CÓDIGO</span><b id="coopRoom">-----</b></div>
+          <div id="coopPlayers" class="coop-players"></div>
+          <p id="coopHint"></p>
+          <div class="row"><button type="button" class="btn" id="btnCoopLeave">Sair da sala</button></div>
+        </div>
+        <div id="coopStatus" class="coop-status"></div>
+      </section>
       <section class="panel" data-panel="controls" hidden>
         <h2>Controles</h2>
         <div class="sec"><h3>Celular</h3>
