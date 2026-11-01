@@ -11,19 +11,20 @@ export class Room {
   peers() { return this.state.getWebSockets().map((ws) => ({ ws, info: ws.deserializeAttachment() || {} })); }
   async fetch(request) {
     if (request.headers.get("Upgrade") !== "websocket") return new Response("Use WebSocket", { status: 426 });
-    const role = new URL(request.url).searchParams.get("role") === "host" ? "host" : "guest";
+    const q = new URL(request.url).searchParams, role = q.get("role") === "host" ? "host" : "guest", pw = (q.get("pw") || "").slice(0, 64);
     const pair = new WebSocketPair();
     const [client, server] = Object.values(pair);
     const peers = this.peers(), host = peers.find((p) => p.info.host);
     this.state.acceptWebSocket(server);
     const refuse = (m) => { send(server, { t: "error", m }); server.close(1008, m); };
-    if (role === "host" && host) refuse("Essa sala já existe. Escolha outro código.");
-    else if (role === "guest" && !host) refuse("Sala não encontrada. Confira o código.");
+    if (role === "host" && host) refuse("Essa sala já existe. Escolha outro nome.");
+    else if (role === "guest" && !host) refuse("Sala não encontrada. Confira o nome.");
+    else if (role === "guest" && host.info.pw && host.info.pw !== pw) refuse("Senha incorreta.");
     else if (peers.length >= MAX_PLAYERS) refuse("Sala cheia (máximo " + MAX_PLAYERS + " jogadores).");
     else {
       const used = new Set(peers.map((p) => p.info.id));
       let id = "p1"; if (role === "guest") for (let i = 2; i <= MAX_PLAYERS; i++) if (!used.has("p" + i)) { id = "p" + i; break; }
-      server.serializeAttachment({ id, host: role === "host" });
+      server.serializeAttachment({ id, host: role === "host", pw: role === "host" ? pw : "" });
       send(server, { t: "welcome", id, host: role === "host", max: MAX_PLAYERS });
       if (role === "guest") send(host.ws, { t: "join", id });
     }
@@ -57,7 +58,7 @@ export class Room {
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
-    const m = url.pathname.match(/^\/ws\/([A-Za-z0-9]{3,8})$/);
+    const m = url.pathname.match(/^\/ws\/([A-Za-z0-9]{3,16})$/);
     if (m) return env.ROOMS.get(env.ROOMS.idFromName(m[1].toUpperCase())).fetch(request);
     return env.ASSETS.fetch(request);
   },

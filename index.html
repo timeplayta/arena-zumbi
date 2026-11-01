@@ -1,3 +1,4 @@
+<meta charset="utf-8">
 <title>Arena Zumbi</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
 <meta name="claude:viewport-fit-sides" content="cover">
@@ -75,11 +76,12 @@ button { font-family: inherit; color: inherit; }
 .btn:hover { border-color: var(--amber); color: var(--amber); }
 .coop-room { display: flex; align-items: baseline; gap: 14px; margin-bottom: 12px; }
 .coop-room span { font-size: 14px; color: var(--muted); letter-spacing: 0.2em; }
-.coop-room b { font-family: var(--font-display); font-size: 54px; letter-spacing: 0.22em; color: var(--amber); user-select: text; -webkit-user-select: text; }
+.coop-room b { font-family: var(--font-display); font-size: 44px; letter-spacing: 0.08em; word-break: break-word; color: var(--amber); user-select: text; -webkit-user-select: text; }
 .coop-players { display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; }
 .coop-p { display: flex; align-items: center; gap: 10px; font-size: 20px; }
 .coop-p i, #team i { width: 12px; height: 12px; border-radius: 50%; display: inline-block; flex: none; }
 .coop-p span { font-size: 13px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; }
+.coop-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
 .coop-status { min-height: 22px; font-size: 16px; color: var(--muted); }
 .coop-status.ok { color: var(--ok); } .coop-status.err { color: var(--danger); }
 #team { position: absolute; left: 16px; top: 176px; display: flex; flex-direction: column; gap: 6px; font-size: 16px; min-width: 150px; }
@@ -99,7 +101,7 @@ button { font-family: inherit; color: inherit; }
 #banner .big { font-size: clamp(48px, 9vw, 96px); font-weight: 700; letter-spacing: 0.06em; color: var(--danger); line-height: 1; }
 #banner .sub { font-size: clamp(20px, 3vw, 28px); letter-spacing: 0.1em; color: var(--fg); }
 #msg { position: absolute; left: 0; right: 0; top: calc(50% + 70px); text-align: center; font-size: 30px; letter-spacing: 0.1em; font-weight: 600; color: var(--amber); }
-#hint { position: absolute; left: 0; right: 0; bottom: 96px; text-align: center; font-family: var(--font-body); font-size: 15px; color: #d4dae3; padding-inline: 16px; }
+#hint { position: absolute; left: 310px; right: 310px; bottom: 96px; text-align: center; font-family: var(--font-body); font-size: 15px; color: #d4dae3; padding-inline: 16px; }
 
 /* ---------- cartões (pausa, morte) ---------- */
 .overlay { position: absolute; inset: 0; display: grid; place-items: center; overflow-y: auto;
@@ -286,7 +288,7 @@ table.sc td:first-child { font-family: var(--font-display); font-size: 22px; col
 #touch .sw { right: calc(var(--sr) + 18 * var(--u)); bottom: calc(26px + 110 * var(--u)); }
 #touch .ml { right: calc(var(--sr) + 178 * var(--u)); bottom: 30px; }
 #touch .cr { right: calc(var(--sr) + 164 * var(--u)); bottom: calc(26px + 80 * var(--u)); }
-#touch .md { right: calc(var(--sr) + 246 * var(--u)); bottom: 34px; width: calc(50 * var(--u)); height: calc(50 * var(--u)); font-size: calc(16 * var(--u)); }
+#touch .md { right: calc(var(--sr) + 246 * var(--u)); bottom: 34px; width: calc(50 * var(--u)); height: calc(50 * var(--u)); font-size: calc(12 * var(--u)); letter-spacing: 0; }
 #touch .ttop { position: absolute; top: 10px; left: 50%; transform: translateX(-50%); display: flex; gap: 14px; }
 #touch .ttop .tb { position: static; width: calc(46 * var(--u)); height: calc(46 * var(--u)); }
 #stick { position: absolute; left: 0; top: 0; width: calc(132 * var(--u)); height: calc(132 * var(--u)); margin: calc(-66 * var(--u)) 0 0 calc(-66 * var(--u));
@@ -310,6 +312,26 @@ table.sc td:first-child { font-family: var(--font-display); font-size: 22px; col
 #stage.touchmode .ammo .wname { font-size: 20px; }
 #stage.touchmode .vital { position: absolute; grid-area: auto; left: 40%; bottom: 10px; transform: translateX(-50%); width: min(210px, 26vw); }
 #stage.touchmode #feed { bottom: 96px; }
+#stage.touchmode #team { top: 104px; left: max(14px, env(safe-area-inset-left, 0px)); font-size: 12px; gap: 3px; min-width: 0; }
+#stage.touchmode #team u { width: 46px; height: 5px; }
+#stage.touchmode #team i { width: 9px; height: 9px; }
+@media (max-height: 520px) {
+  #stage.touchmode #banner { top: 27%; }
+  #stage.touchmode #banner .big { font-size: 32px; }
+  #stage.touchmode #banner .sub { font-size: 16px; }
+  #stage.touchmode #msg { font-size: 20px; top: calc(50% + 40px); }
+  #stage.touchmode #hint { top: auto; bottom: 84px; left: 24%; right: 34%; font-size: 11px; line-height: 1.25; opacity: 0.8; }
+  #stage.touchmode .ammo { top: 10px; line-height: 1; }
+  #stage.touchmode .ammo .wname { font-size: 14px; letter-spacing: 0.06em; }
+  #stage.touchmode .ammo .wmode { font-size: 10px; letter-spacing: 0.08em; margin-bottom: 0; }
+  #stage.touchmode #mag { font-size: 34px; }
+  #stage.touchmode #reserve { font-size: 16px; margin-left: 3px; }
+  #stage.touchmode .slots { font-size: 11px; gap: 4px; margin-top: 2px; }
+  #stage.touchmode .slots span { padding: 0 5px; }
+  #stage.touchmode .wave { font-size: 26px; } #stage.touchmode .stat { font-size: 14px; }
+  #stage.touchmode #boss { top: 54px; }
+  #stage.touchmode #feed { font-size: 16px; bottom: 84px; }
+}
 @media (max-height: 520px) {
   .wave { font-size: 30px; } .stat { font-size: 16px; }
   #radar { width: 86px; height: 86px; }
@@ -499,16 +521,17 @@ table.sc td:first-child { font-family: var(--font-display); font-size: 22px; col
       <section class="panel" data-panel="online" hidden>
         <h2>Co-op online</h2>
         <div class="sec"><h3>Jogue com amigos</h3>
-          <p>Um jogador cria a sala e passa o código; os outros entram com ele. O anfitrião roda a partida e todos enfrentam as mesmas ondas, juntos. Quem cair renasce no começo da próxima onda. Máximo de 4 jogadores.</p></div>
+          <p>Um jogador cria a sala com um nome (e senha, se quiser). Os outros entram digitando o mesmo nome e senha. O anfitrião roda a partida e todos enfrentam as mesmas ondas, juntos. Quem cair renasce no começo da próxima onda. Máximo de 4 jogadores.</p></div>
         <div id="coopOff" class="sec">
-          <div class="field"><label for="coopServer">Servidor online (endereço do Cloudflare, ex.: arena-zumbi.seunome.workers.dev)</label><input type="text" id="coopServer" autocomplete="off" spellcheck="false"></div>
-          <div class="row" style="margin-top:14px"><button type="button" class="btn" id="btnCoopCreate">Criar sala</button></div>
-          <div class="field" style="margin-top:18px"><label for="coopCode">Ou entre com o código da sala</label><input type="text" id="coopCode" maxlength="8" autocomplete="off" spellcheck="false" style="text-transform:uppercase"></div>
-          <div class="row" style="margin-top:14px"><button type="button" class="btn" id="btnCoopJoin">Entrar na sala</button></div>
+          <div class="coop-form">
+            <div class="field"><label for="coopName">Nome da sala</label><input type="text" id="coopName" maxlength="16" autocomplete="off" spellcheck="false" placeholder="ex.: Turma do Zé"></div>
+            <div class="field"><label for="coopPass">Senha (opcional)</label><input type="password" id="coopPass" maxlength="16" autocomplete="off" placeholder="deixe vazio para sala aberta"></div>
+          </div>
+          <div class="row" style="margin-top:14px"><button type="button" class="btn" id="btnCoopCreate">Criar sala</button><button type="button" class="btn" id="btnCoopJoin">Entrar na sala</button></div>
         </div>
         <div id="coopOn" class="sec" hidden>
           <h3>Sala</h3>
-          <div class="coop-room"><span>CÓDIGO</span><b id="coopRoom">-----</b></div>
+          <div class="coop-room"><span>SALA</span><b id="coopRoom">-----</b></div>
           <div id="coopPlayers" class="coop-players"></div>
           <p id="coopHint"></p>
           <div class="row"><button type="button" class="btn" id="btnCoopLeave">Sair da sala</button></div>
@@ -7521,14 +7544,17 @@ const Logic = (function () {
     let acc = 0, sAcc = 0, sentZ = new Set(), sentP = new Set(), pingT = 0, game0 = null;
     const WORLD = /^(wave|giant|elite|kill|clear|wall|hit|rshot|ally_down|tank_|sam_|wraith_)/;
     const setMsg = (m, cls) => { st.msg = m; const e = $("coopStatus"); if (e) { e.textContent = m; e.className = "coop-status " + (cls || ""); } };
+    const DEFAULT_SERVER = "arena-zumbi.sistemasparasaude.workers.dev";       // usado no .exe e fora do endereço do Worker
     function serverHost() {
-      let v = ""; try { v = localStorage.getItem("arena-zumbi-server") || ""; } catch (e) {}
-      v = v.trim().replace(/^(https?|wss?):\/\//i, "").replace(/\/.*$/, "");
-      if (v) return v;
       if (/^https?:$/.test(location.protocol) && !/claude|anthropic/i.test(location.hostname)) return location.host;
-      return "";
+      return DEFAULT_SERVER;
     }
-    const newCode = () => { const a = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"; let s = ""; for (let i = 0; i < 5; i++) s += a[Math.floor(Math.random() * a.length)]; return s; };
+    const roomKey = (n) => String(n || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 16);
+    async function hashPw(pw) {
+      if (!pw) return "";
+      try { const b = await crypto.subtle.digest("SHA-256", new TextEncoder().encode("arena-zumbi:" + pw)); return Array.from(new Uint8Array(b)).map((x) => x.toString(16).padStart(2, "0")).join("").slice(0, 32); }
+      catch (e) { let h = 5381; for (const c of "arena-zumbi:" + pw) h = ((h * 33) ^ c.charCodeAt(0)) >>> 0; return "x" + h.toString(16); }
+    }
     function send(o, to) { if (!st.ws || st.ws.readyState !== 1) return; if (to) o.to = to; try { st.ws.send(JSON.stringify(o)); } catch (e) {} }
     const connected = () => !!st.ws && st.status === "on";
     function nameOf(id) { const p = st.players.find((q) => q.id === id); return p ? p.name : id === "p1" ? "Anfitrião" : "Jogador"; }
@@ -7538,9 +7564,9 @@ const Logic = (function () {
       const on = connected();
       $("coopOff").hidden = on; $("coopOn").hidden = !on;
       if (on) {
-        $("coopRoom").textContent = st.code;
+        $("coopRoom").textContent = st.label || st.code;
         e.innerHTML = st.players.map((p, i) => '<div class="coop-p"><i style="background:#' + ALLY_COLORS[i % 4].toString(16).padStart(6, "0") + '"></i><b>' + p.name.replace(/[<>&]/g, "") + "</b>" + (p.id === "p1" ? "<span>anfitrião</span>" : "") + (p.id === st.id ? "<span>você</span>" : "") + "</div>").join("");
-        $("coopHint").textContent = st.host ? (st.started ? "Partida em andamento — quem entrar agora cai direto no jogo." : "Quando todos entrarem, clique em Jogar (embaixo) para começar.") : (st.started ? "Partida em andamento..." : "Aguardando o anfitrião iniciar a partida.");
+        $("coopHint").textContent = st.host ? (st.started ? "Partida em andamento. Quem entrar agora cai direto no jogo." : "Quando todos entrarem, clique em Jogar (embaixo) para começar.") : (st.started ? "Partida em andamento." : "Aguardando o anfitrião iniciar a partida.");
       }
       const pb = $("btnPlay"); if (pb) pb.textContent = on && !st.host ? "Aguardando anfitrião" : on ? "Jogar em co-op" : "Jogar";
     }
@@ -7549,13 +7575,14 @@ const Logic = (function () {
       st.players = [{ id: "p1", name: st.name || "Anfitrião" }].concat(lobbyList());
       send({ t: "lobby", players: st.players, started: st.started, diff: st.diff }); renderLobby();
     }
-    function open(role, code) {
+    async function open(role, label, pass) {
       leave(true);
-      const h = serverHost();
-      if (!h) { setMsg("Informe o endereço do servidor online (campo acima).", "err"); return; }
-      st.name = (S.name || "Sobrevivente").slice(0, 14); st.code = code; st.host = role === "host"; st.status = "connecting"; setMsg("Conectando...");
+      const code = roomKey(label);
+      if (code.length < 3) { setMsg("O nome da sala precisa de pelo menos 3 letras ou números.", "err"); return; }
+      const h = serverHost(), pw = await hashPw(pass);
+      st.name = (S.name || "Sobrevivente").slice(0, 14); st.code = code; st.label = String(label).trim().slice(0, 16); st.host = role === "host"; st.status = "connecting"; setMsg("Conectando...");
       const local = /^(localhost|127\.|192\.168\.|10\.)/.test(h);
-      let ws; try { ws = new WebSocket((local ? "ws://" : "wss://") + h + "/ws/" + code + "?role=" + role); } catch (e) { setMsg("Endereço de servidor inválido.", "err"); st.status = "off"; return; }
+      let ws; try { ws = new WebSocket((local ? "ws://" : "wss://") + h + "/ws/" + code + "?role=" + role + (pw ? "&pw=" + pw : "")); } catch (e) { setMsg("Não consegui conectar ao servidor.", "err"); st.status = "off"; return; }
       st.ws = ws;
       ws.onopen = () => { pingT = performance.now(); };
       ws.onmessage = (ev) => { if (ws !== st.ws) return; if (ev.data === "pong") return; let m; try { m = JSON.parse(ev.data); } catch (e) { return; } onMsg(m); };
@@ -7574,7 +7601,7 @@ const Logic = (function () {
     function onMsg(m) {
       switch (m.t) {
         case "welcome":
-          st.id = m.id; st.status = "on"; setMsg(st.host ? "Sala criada! Passe o código para os amigos." : "Entrou na sala " + st.code + ".", "ok");
+          st.id = m.id; st.status = "on"; setMsg(st.host ? "Sala criada. Passe o nome (e a senha) aos amigos." : "Você entrou na sala.", "ok");
           if (st.host) { st.started = false; hostLobby(); } else { send({ t: "hello", name: st.name }); renderLobby(); }
           break;
         case "error": setMsg(m.m || "Erro.", "err"); st.status = "error"; break;
@@ -7682,20 +7709,13 @@ const Logic = (function () {
     }
     // ---------------- UI do lobby ----------------
     function bindUI() {
-      const srv = $("coopServer"); if (!srv) return;
-      try { srv.value = localStorage.getItem("arena-zumbi-server") || ""; } catch (e) {}
-      const auto = serverHost(); if (!srv.value && auto) srv.placeholder = auto + " (automático)";
-      srv.addEventListener("change", () => { try { localStorage.setItem("arena-zumbi-server", srv.value.trim()); } catch (e) {} });
-      $("btnCoopCreate").addEventListener("click", () => { try { localStorage.setItem("arena-zumbi-server", srv.value.trim()); } catch (e) {} open("host", newCode()); });
-      $("btnCoopJoin").addEventListener("click", () => {
-        const c = $("coopCode").value.trim().toUpperCase().replace(/[^A-Z0-9]/g, "");
-        if (c.length < 3) { setMsg("Digite o código da sala.", "err"); return; }
-        try { localStorage.setItem("arena-zumbi-server", srv.value.trim()); } catch (e) {}
-        open("guest", c);
-      });
+      const nm = $("coopName"); if (!nm) return;
+      try { nm.value = localStorage.getItem("arena-zumbi-room") || ""; } catch (e) {}
+      const go = (role) => { try { localStorage.setItem("arena-zumbi-room", nm.value.trim()); } catch (e) {} open(role, nm.value, $("coopPass").value); };
+      $("btnCoopCreate").addEventListener("click", () => go("host"));
+      $("btnCoopJoin").addEventListener("click", () => go("guest"));
       $("btnCoopLeave").addEventListener("click", () => { onToMenu(); leave(); });
-      $("coopCode").addEventListener("keydown", (e) => { e.stopPropagation(); if (e.key === "Enter") $("btnCoopJoin").click(); });
-      srv.addEventListener("keydown", (e) => e.stopPropagation());
+      for (const id of ["coopName", "coopPass"]) $(id).addEventListener("keydown", (e) => { e.stopPropagation(); if (e.key === "Enter") go("guest"); });
       renderLobby();
     }
     return { st, active, ended, attach, afterUpdate, hostStartBroadcast, sendInfo, hud, onToMenu, bindUI, nameOf, slotOf, connected, leave, isHost: () => st.host, inRoom: () => connected(), toast: (m) => setMsg(m, "err"), lobby };

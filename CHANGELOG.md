@@ -1,5 +1,11 @@
 # Novidades — Arena Zumbi
 
+## Ajustes (31/10/2026)
+- Acentos corrigidos (o texto aparecia como "VocÃª", "MISSÃ£O").
+- HUD do celular reorganizado: munição, aviso de onda, dica e botão MODO.
+- Co-op: sala por nome e senha opcional. Sem código e sem endereço de servidor na tela.
+- Dica de teclas não cobre mais a munição.
+
 ## Co-op online (31/10/2026)
 - Correção: o mundo do anfitrião não congela mais com a aba em segundo plano.
 - Até 4 jogadores por sala, com código de 5 letras.

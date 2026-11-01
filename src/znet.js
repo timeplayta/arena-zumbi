@@ -62,14 +62,17 @@
     let acc = 0, sAcc = 0, sentZ = new Set(), sentP = new Set(), pingT = 0, game0 = null;
     const WORLD = /^(wave|giant|elite|kill|clear|wall|hit|rshot|ally_down|tank_|sam_|wraith_)/;
     const setMsg = (m, cls) => { st.msg = m; const e = $("coopStatus"); if (e) { e.textContent = m; e.className = "coop-status " + (cls || ""); } };
+    const DEFAULT_SERVER = "arena-zumbi.sistemasparasaude.workers.dev";       // usado no .exe e fora do endereço do Worker
     function serverHost() {
-      let v = ""; try { v = localStorage.getItem("arena-zumbi-server") || ""; } catch (e) {}
-      v = v.trim().replace(/^(https?|wss?):\/\//i, "").replace(/\/.*$/, "");
-      if (v) return v;
       if (/^https?:$/.test(location.protocol) && !/claude|anthropic/i.test(location.hostname)) return location.host;
-      return "";
+      return DEFAULT_SERVER;
     }
-    const newCode = () => { const a = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"; let s = ""; for (let i = 0; i < 5; i++) s += a[Math.floor(Math.random() * a.length)]; return s; };
+    const roomKey = (n) => String(n || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 16);
+    async function hashPw(pw) {
+      if (!pw) return "";
+      try { const b = await crypto.subtle.digest("SHA-256", new TextEncoder().encode("arena-zumbi:" + pw)); return Array.from(new Uint8Array(b)).map((x) => x.toString(16).padStart(2, "0")).join("").slice(0, 32); }
+      catch (e) { let h = 5381; for (const c of "arena-zumbi:" + pw) h = ((h * 33) ^ c.charCodeAt(0)) >>> 0; return "x" + h.toString(16); }
+    }
     function send(o, to) { if (!st.ws || st.ws.readyState !== 1) return; if (to) o.to = to; try { st.ws.send(JSON.stringify(o)); } catch (e) {} }
     const connected = () => !!st.ws && st.status === "on";
     function nameOf(id) { const p = st.players.find((q) => q.id === id); return p ? p.name : id === "p1" ? "Anfitrião" : "Jogador"; }
@@ -79,9 +82,9 @@
       const on = connected();
       $("coopOff").hidden = on; $("coopOn").hidden = !on;
       if (on) {
-        $("coopRoom").textContent = st.code;
+        $("coopRoom").textContent = st.label || st.code;
         e.innerHTML = st.players.map((p, i) => '<div class="coop-p"><i style="background:#' + ALLY_COLORS[i % 4].toString(16).padStart(6, "0") + '"></i><b>' + p.name.replace(/[<>&]/g, "") + "</b>" + (p.id === "p1" ? "<span>anfitrião</span>" : "") + (p.id === st.id ? "<span>você</span>" : "") + "</div>").join("");
-        $("coopHint").textContent = st.host ? (st.started ? "Partida em andamento — quem entrar agora cai direto no jogo." : "Quando todos entrarem, clique em Jogar (embaixo) para começar.") : (st.started ? "Partida em andamento..." : "Aguardando o anfitrião iniciar a partida.");
+        $("coopHint").textContent = st.host ? (st.started ? "Partida em andamento. Quem entrar agora cai direto no jogo." : "Quando todos entrarem, clique em Jogar (embaixo) para começar.") : (st.started ? "Partida em andamento." : "Aguardando o anfitrião iniciar a partida.");
       }
       const pb = $("btnPlay"); if (pb) pb.textContent = on && !st.host ? "Aguardando anfitrião" : on ? "Jogar em co-op" : "Jogar";
     }
@@ -90,13 +93,14 @@
       st.players = [{ id: "p1", name: st.name || "Anfitrião" }].concat(lobbyList());
       send({ t: "lobby", players: st.players, started: st.started, diff: st.diff }); renderLobby();
     }
-    function open(role, code) {
+    async function open(role, label, pass) {
       leave(true);
-      const h = serverHost();
-      if (!h) { setMsg("Informe o endereço do servidor online (campo acima).", "err"); return; }
-      st.name = (S.name || "Sobrevivente").slice(0, 14); st.code = code; st.host = role === "host"; st.status = "connecting"; setMsg("Conectando...");
+      const code = roomKey(label);
+      if (code.length < 3) { setMsg("O nome da sala precisa de pelo menos 3 letras ou números.", "err"); return; }
+      const h = serverHost(), pw = await hashPw(pass);
+      st.name = (S.name || "Sobrevivente").slice(0, 14); st.code = code; st.label = String(label).trim().slice(0, 16); st.host = role === "host"; st.status = "connecting"; setMsg("Conectando...");
       const local = /^(localhost|127\.|192\.168\.|10\.)/.test(h);
-      let ws; try { ws = new WebSocket((local ? "ws://" : "wss://") + h + "/ws/" + code + "?role=" + role); } catch (e) { setMsg("Endereço de servidor inválido.", "err"); st.status = "off"; return; }
+      let ws; try { ws = new WebSocket((local ? "ws://" : "wss://") + h + "/ws/" + code + "?role=" + role + (pw ? "&pw=" + pw : "")); } catch (e) { setMsg("Não consegui conectar ao servidor.", "err"); st.status = "off"; return; }
       st.ws = ws;
       ws.onopen = () => { pingT = performance.now(); };
       ws.onmessage = (ev) => { if (ws !== st.ws) return; if (ev.data === "pong") return; let m; try { m = JSON.parse(ev.data); } catch (e) { return; } onMsg(m); };
@@ -115,7 +119,7 @@
     function onMsg(m) {
       switch (m.t) {
         case "welcome":
-          st.id = m.id; st.status = "on"; setMsg(st.host ? "Sala criada! Passe o código para os amigos." : "Entrou na sala " + st.code + ".", "ok");
+          st.id = m.id; st.status = "on"; setMsg(st.host ? "Sala criada. Passe o nome (e a senha) aos amigos." : "Você entrou na sala.", "ok");
           if (st.host) { st.started = false; hostLobby(); } else { send({ t: "hello", name: st.name }); renderLobby(); }
           break;
         case "error": setMsg(m.m || "Erro.", "err"); st.status = "error"; break;
@@ -223,20 +227,13 @@
     }
     // ---------------- UI do lobby ----------------
     function bindUI() {
-      const srv = $("coopServer"); if (!srv) return;
-      try { srv.value = localStorage.getItem("arena-zumbi-server") || ""; } catch (e) {}
-      const auto = serverHost(); if (!srv.value && auto) srv.placeholder = auto + " (automático)";
-      srv.addEventListener("change", () => { try { localStorage.setItem("arena-zumbi-server", srv.value.trim()); } catch (e) {} });
-      $("btnCoopCreate").addEventListener("click", () => { try { localStorage.setItem("arena-zumbi-server", srv.value.trim()); } catch (e) {} open("host", newCode()); });
-      $("btnCoopJoin").addEventListener("click", () => {
-        const c = $("coopCode").value.trim().toUpperCase().replace(/[^A-Z0-9]/g, "");
-        if (c.length < 3) { setMsg("Digite o código da sala.", "err"); return; }
-        try { localStorage.setItem("arena-zumbi-server", srv.value.trim()); } catch (e) {}
-        open("guest", c);
-      });
+      const nm = $("coopName"); if (!nm) return;
+      try { nm.value = localStorage.getItem("arena-zumbi-room") || ""; } catch (e) {}
+      const go = (role) => { try { localStorage.setItem("arena-zumbi-room", nm.value.trim()); } catch (e) {} open(role, nm.value, $("coopPass").value); };
+      $("btnCoopCreate").addEventListener("click", () => go("host"));
+      $("btnCoopJoin").addEventListener("click", () => go("guest"));
       $("btnCoopLeave").addEventListener("click", () => { onToMenu(); leave(); });
-      $("coopCode").addEventListener("keydown", (e) => { e.stopPropagation(); if (e.key === "Enter") $("btnCoopJoin").click(); });
-      srv.addEventListener("keydown", (e) => e.stopPropagation());
+      for (const id of ["coopName", "coopPass"]) $(id).addEventListener("keydown", (e) => { e.stopPropagation(); if (e.key === "Enter") go("guest"); });
       renderLobby();
     }
     return { st, active, ended, attach, afterUpdate, hostStartBroadcast, sendInfo, hud, onToMenu, bindUI, nameOf, slotOf, connected, leave, isHost: () => st.host, inRoom: () => connected(), toast: (m) => setMsg(m, "err"), lobby };

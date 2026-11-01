@@ -14,20 +14,21 @@ const server = http.createServer((req, res) => {
   res.writeHead(200, { "Content-Type": f.endsWith(".html") ? "text/html; charset=utf-8" : "application/octet-stream" }); fs.createReadStream(f).pipe(res);
 });
 server.on("upgrade", (req, sock) => {
-  const u = new URL(req.url, "http://x"), m = u.pathname.match(/^\/ws\/([A-Za-z0-9]{3,8})$/);
+  const u = new URL(req.url, "http://x"), m = u.pathname.match(/^\/ws\/([A-Za-z0-9]{3,16})$/);
   if (!m || !req.headers["sec-websocket-key"]) return sock.destroy();
   const key = crypto.createHash("sha1").update(req.headers["sec-websocket-key"] + "258EAFA5-E914-47DA-95CA-C5AB0DC85B11").digest("base64");
   sock.write("HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Accept: " + key + "\r\n\r\n");
-  const code = m[1].toUpperCase(), role = u.searchParams.get("role") === "host" ? "host" : "guest";
+  const code = m[1].toUpperCase(), role = u.searchParams.get("role") === "host" ? "host" : "guest", pw = (u.searchParams.get("pw") || "").slice(0, 64);
   const room = rooms.get(code) || new Set(), c = { sock, info: null }, peers = [...room], host = peers.find((p) => p.info.host);
   const refuse = (t) => { send(c, { t: "error", m: t }); closeC(c); };
-  if (role === "host" && host) refuse("Essa sala já existe. Escolha outro código.");
-  else if (role === "guest" && !host) refuse("Sala não encontrada. Confira o código.");
+  if (role === "host" && host) refuse("Essa sala já existe. Escolha outro nome.");
+  else if (role === "guest" && !host) refuse("Sala não encontrada. Confira o nome.");
+  else if (role === "guest" && host.info.pw && host.info.pw !== pw) refuse("Senha incorreta.");
   else if (peers.length >= MAX) refuse("Sala cheia (máximo " + MAX + " jogadores).");
   else {
     const used = new Set(peers.map((p) => p.info.id)); let id = "p1";
     if (role === "guest") for (let i = 2; i <= MAX; i++) if (!used.has("p" + i)) { id = "p" + i; break; }
-    c.info = { id, host: role === "host" }; room.add(c); rooms.set(code, room);
+    c.info = { id, host: role === "host", pw: role === "host" ? pw : "" }; room.add(c); rooms.set(code, room);
     send(c, { t: "welcome", id, host: c.info.host, max: MAX });
     if (role === "guest") send(host, { t: "join", id });
   }
