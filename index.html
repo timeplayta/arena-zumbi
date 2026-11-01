@@ -635,6 +635,7 @@ table.sc td:first-child { font-family: var(--font-display); font-size: 22px; col
 const Logic = (function () {
   const ARENA = 22, WALL_H = 3.6, EYE_H = 1.7, CROUCH_DROP = 0.55, PLAYER_R = 0.38, ZOMBIE_R = 0.36;
   const PLAYER_SPEED = 4.6, SPRINT_MULT = 1.65;
+  const CLAW_CD = 1.5;                                        // infecção: intervalo entre ataques do infectado (s)
   const ATTACK_RANGE = 1.25, ZOMBIE_SEP = 0.75, RANGE = 90;
   const BODY_R = 0.34, BODY_H = 1.5, HEAD_Z = 1.67, HEAD_R = 0.21, LEG_H = 0.8;
   const MELEE_RANGE = 1.9, MELEE_CD = 0.75, MELEE_DMG = 55, SWITCH_TIME = 0.45;
@@ -1195,8 +1196,8 @@ const Logic = (function () {
         if (sh) { sh.kills += 1; if (head) sh.hs += 1; if (E) sh.bonus += Math.round(E.coins * D.coin); }
         else { this.kills += 1; if (E) this.bonus += Math.round(E.coins * D.coin); if (head) this.headshots += 1; }
         this.events.push(["kill", z.x, z.y, head, pts, z.brute, z.headGone, z.giant, z.kind]);
-        if (z.puppet) {                                            // infecção: infectado abatido solta 4 kits médicos e 4 caixas de munição
-          for (let i = 0; i < 4; i++) { this.pickups.push(new Pickup("health", z.x, z.y, this.rnd)); this.pickups.push(new Pickup("ammo", z.x, z.y, this.rnd)); }
+        if (z.puppet) {                                            // infecção: infectado abatido solta 2 kits médicos e 2 caixas de munição por jogador da sala
+          for (let i = 0, n = 2 * this.infPlayers().length; i < n; i++) { this.pickups.push(new Pickup("health", z.x, z.y, this.rnd)); this.pickups.push(new Pickup("ammo", z.x, z.y, this.rnd)); }
         }
         else if (z.giant || E) {                                    // gigantes e especiais soltam um tesouro
           const nh = z.giant ? 2 : z.samurai ? 1 : 2, na = z.giant ? 3 : z.samurai ? 2 : 3;
@@ -1952,7 +1953,7 @@ const Logic = (function () {
       if (this.gm !== "infect" || !this.inf || this.inf.ph !== "play") return;
       const q = this.infPlayers().find((k) => k.id === id); if (!q || q.team !== "z" || !q.alive) return;
       const z = this.pz(id); if (!z || (q.p.clawT || 0) > 0) return;
-      q.p.clawT = 0.7; z.clawShow = 0.45; z.attackT = 0;
+      q.p.clawT = this.clawCd || CLAW_CD; z.clawShow = 0.45; z.attackT = 0;
       const [x, y, yaw] = this.posOf(id), fx = -Math.sin(yaw), fy = Math.cos(yaw);
       this.events.push(["claw", x, y]);
       for (const h of this.infPlayers()) {
@@ -7938,7 +7939,7 @@ const Logic = (function () {
     let clawCd = 0;
     function claw(g) {                                                     // jogador zumbi ataca com as garras
       if (g.team !== "z" || !g.alive) return;
-      const now = performance.now(); if (now < clawCd) return; clawCd = now + 700;
+      const now = performance.now(); if (now < clawCd) return; clawCd = now + 1500;
       if (st.host) g.claw(st.id); else send({ t: "claw" });
       Snd.play("melee", 0.8, rand(0.7, 0.85)); g.shake = Math.max(g.shake, 0.25); ZArms.swipe();
     }

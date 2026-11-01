@@ -6,7 +6,8 @@
 - Menu "Co-op online" virou "Online", com dois modos: Co-op e Infecção.
 - Infecção: até 8 jogadores. Após 10 s, um jogador aleatório vira zumbi. Garras infectam os humanos (3 golpes).
 - Infectado: 1000 de vida, mesma velocidade dos humanos e corrida infinita. Não usa armas e volta 4 s depois de abatido.
-- Infectado abatido solta 4 kits médicos e 4 caixas de munição. Só humanos pegam.
+- Infectado abatido solta 2 kits médicos e 2 caixas de munição por jogador da sala (2 jogadores: 4+4; 3: 6+6). Só humanos pegam.
+- Ataque do infectado: 1 a cada 1,5 s (antes 0,7 s). Testado contra 2 s: com 2 s quase todo humano vencia sozinho.
 - Humanos vencem se durarem 3 minutos. Zumbis vencem se infectarem todos.
 
 ## App Android (01/11/2026)

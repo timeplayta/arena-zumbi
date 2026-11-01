@@ -335,7 +335,7 @@
     let clawCd = 0;
     function claw(g) {                                                     // jogador zumbi ataca com as garras
       if (g.team !== "z" || !g.alive) return;
-      const now = performance.now(); if (now < clawCd) return; clawCd = now + 700;
+      const now = performance.now(); if (now < clawCd) return; clawCd = now + 1500;
       if (st.host) g.claw(st.id); else send({ t: "claw" });
       Snd.play("melee", 0.8, rand(0.7, 0.85)); g.shake = Math.max(g.shake, 0.25); ZArms.swipe();
     }
