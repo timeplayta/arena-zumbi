@@ -1,6 +1,7 @@
 # Novidades — Arena Zumbi
 
 ## Dois endereços (01/11/2026)
+- Servidor online: arena-zumbi.playes.workers.dev. Jogo: play.arena-zumbi.play.
 - O jogo e o servidor online agora ficam em projetos separados do Cloudflare. Veja o README.
 
 ## Ajustes (31/10/2026)

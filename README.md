@@ -17,8 +17,8 @@ Funciona sem internet. F11 alterna tela cheia; Ctrl+Q fecha.
 
 | Projeto | O que faz | Pasta raiz | Endereço |
 |---|---|---|---|
-| `arena-zumbi` | Servidor online (salas co-op; depois contas e placares) | `/` | arena-zumbi.sistemasparasaude.workers.dev |
-| `arena-zumbi-play` | O jogo (site estático) | `game` | arena-zumbi-play.sistemasparasaude.workers.dev |
+| `arena-zumbi` | Servidor online (salas co-op; depois contas e placares) | `/` | arena-zumbi.playes.workers.dev |
+| `arena-zumbi-play` | O jogo (site estático) | `game` | arena-zumbi-play.playes.workers.dev |
 
 Em cada projeto: Workers & Pages > Create > Import a repository > este repositório.
 No `arena-zumbi-play`, em Root directory, escreva `game`. Deploy command: `npx wrangler deploy`. Sem build command.
