@@ -1,5 +1,8 @@
 # Novidades — Arena Zumbi
 
+## Botão de tiro automático no celular (01/11/2026)
+- Novo botão AUTO no topo do HUD de toque: liga/desliga o tiro automático. Riscado = desligado. Só aparece no celular.
+
 ## Infecção com 12 jogadores e bots (01/11/2026)
 - Salas de Infecção com até 12 jogadores.
 - Bots completam a sala até 12 (opção no lobby). Quando alguém entra, um bot sai.

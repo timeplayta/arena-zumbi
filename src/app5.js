@@ -246,7 +246,7 @@
   }
   function syncTouchBtns() {
     const set = (act, on) => { const b = touchEl.querySelector('[data-act="' + act + '"]'); if (b) b.classList.toggle("on", on); };
-    set("ads", TS.ads); set("crouch", TS.crouch); set("torch", torchEnabled);
+    set("ads", TS.ads); set("crouch", TS.crouch); set("torch", torchEnabled); set("autofire", !!S.autoFire);
     const md = touchEl.querySelector('[data-act="mode"]');
     if (md) md.hidden = !(game.w().cfg.modes && game.w().cfg.modes.length > 1);
   }
@@ -325,6 +325,7 @@
     else if (act === "crouch") TS.crouch = !TS.crouch;
     else if (act === "mode") game.toggleFireMode();
     else if (act === "torch") torchEnabled = !torchEnabled;
+    else if (act === "autofire") { S.autoFire = !S.autoFire; saveSettings(); feedLine(S.autoFire ? "TIRO AUTOMÁTICO LIGADO" : "TIRO AUTOMÁTICO DESLIGADO", false); }   // só existe no HUD de toque
     else if (act === "pause") { pause(); return; }
     syncTouchBtns();
   }

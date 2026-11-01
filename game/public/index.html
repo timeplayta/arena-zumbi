@@ -298,6 +298,8 @@ table.sc td:first-child { font-family: var(--font-display); font-size: 22px; col
 #touch .md { right: calc(var(--sr) + 246 * var(--u)); bottom: 34px; width: calc(50 * var(--u)); height: calc(50 * var(--u)); font-size: calc(12 * var(--u)); letter-spacing: 0; }
 #touch .ttop { position: absolute; top: 10px; left: 50%; transform: translateX(-50%); display: flex; gap: 14px; }
 #touch .ttop .tb { position: static; width: calc(46 * var(--u)); height: calc(46 * var(--u)); }
+#touch .ttop .af { font-size: calc(12 * var(--u)); letter-spacing: 0.02em; }
+#touch .ttop .af:not(.on) { text-decoration: line-through; color: rgba(233, 237, 242, 0.6); }
 #stick { position: absolute; left: 0; top: 0; width: calc(132 * var(--u)); height: calc(132 * var(--u)); margin: calc(-66 * var(--u)) 0 0 calc(-66 * var(--u));
   border-radius: 50%; border: 2px solid rgba(233, 237, 242, 0.45); background: radial-gradient(circle, rgba(12, 16, 23, 0.25), rgba(12, 16, 23, 0.55)); opacity: 0; pointer-events: none; }
 #stick.show { opacity: var(--ba); }
@@ -437,6 +439,7 @@ table.sc td:first-child { font-family: var(--font-display); font-size: 22px; col
     <button type="button" class="tb md" data-act="mode" aria-label="Modo de tiro">MODO</button>
     <div class="ttop">
       <button type="button" class="tb" data-act="torch" aria-label="Lanterna"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3h6v5l-2 3v10h-2V11L9 8z"/></svg></button>
+      <button type="button" class="tb af" data-act="autofire" aria-label="Tiro automático">AUTO</button>
       <button type="button" class="tb" data-act="pause" aria-label="Pausar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5v14M15 5v14"/></svg></button>
     </div>
     <div id="rotate">Gire o celular para jogar na horizontal</div>
@@ -8987,7 +8990,7 @@ const Logic = (function () {
   }
   function syncTouchBtns() {
     const set = (act, on) => { const b = touchEl.querySelector('[data-act="' + act + '"]'); if (b) b.classList.toggle("on", on); };
-    set("ads", TS.ads); set("crouch", TS.crouch); set("torch", torchEnabled);
+    set("ads", TS.ads); set("crouch", TS.crouch); set("torch", torchEnabled); set("autofire", !!S.autoFire);
     const md = touchEl.querySelector('[data-act="mode"]');
     if (md) md.hidden = !(game.w().cfg.modes && game.w().cfg.modes.length > 1);
   }
@@ -9066,6 +9069,7 @@ const Logic = (function () {
     else if (act === "crouch") TS.crouch = !TS.crouch;
     else if (act === "mode") game.toggleFireMode();
     else if (act === "torch") torchEnabled = !torchEnabled;
+    else if (act === "autofire") { S.autoFire = !S.autoFire; saveSettings(); feedLine(S.autoFire ? "TIRO AUTOMÁTICO LIGADO" : "TIRO AUTOMÁTICO DESLIGADO", false); }   // só existe no HUD de toque
     else if (act === "pause") { pause(); return; }
     syncTouchBtns();
   }
