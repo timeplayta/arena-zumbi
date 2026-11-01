@@ -270,7 +270,7 @@
     function hostAddRemote(id) {
       const L = lobby[id]; if (!L || !game || !game.coop) return;
       game.addRemote(id, L.name, L.info || {}); L.needFull = true;
-      if (game.gm === "infect" && game.inf && game.inf.ph !== "prep") game.becomeZombie(id);   // entrou no meio: já chega zumbi
+      if (game.gm === "infect" && game.inf) game.infectJoin(id);   // colete na preparação; no meio da rodada já chega zumbi
     }
     // ---------------- ligação com o jogo ----------------
     function hostStartBroadcast() { st.started = true; st.over = false; st.diff = S.diff; send({ t: "start", diff: st.diff, gm: st.gm }); hostLobby(); }

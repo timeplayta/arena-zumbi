@@ -1911,8 +1911,8 @@ const Logic = (function () {
       const z = [];
       for (const q of this.zombies) z.push([q.id, r2(q.x), r2(q.y), r2(q.yaw), q.state, Math.round(q.hp), r2(q.hitT), r2(q.deadT), r2(q.phase), r2(q.attackT), q.act, r2(q.actT), r2(q.seqT), r2(q.vis), q.atk, q.combo, q.dodgeDir, q.headGone ? 1 : 0, q.untouch ? 1 : 0, r2(q.shield)]);
       const p = this.pickups.map((k) => [k.id, r2(k.x), r2(k.y), r2(k.h), k.landed ? 1 : 0, r2(k.pull)]);
-      const me = this.coop.id, pl = [[me, r2(this.px), r2(this.py), r2(this.yaw), r2(this.pitch), Math.round(this.hp), this.maxHp, this.alive ? 1 : 0, this.w().cfg.id, this.crouchT > 0.5 ? 1 : 0, this.moving ? 1 : 0, Math.round(this.armor), this.kills, this.headshots, this.bonus, this.team || "h"]];
-      for (const o of this.others) pl.push([o.id, r2(o.x), r2(o.y), r2(o.yaw), r2(o.pitch), Math.round(o.hp), o.maxHp, o.alive ? 1 : 0, o.wi, o.cr, o.mv, Math.round(o.armor), o.kills, o.hs, o.bonus, o.team || "h"]);
+      const me = this.coop.id, pl = [[me, r2(this.px), r2(this.py), r2(this.yaw), r2(this.pitch), Math.round(this.hp), this.maxHp, this.alive ? 1 : 0, this.w().cfg.id, this.crouchT > 0.5 ? 1 : 0, this.moving ? 1 : 0, Math.round(this.armor), this.kills, this.headshots, this.bonus, this.team || "h", this.armorMax]];
+      for (const o of this.others) pl.push([o.id, r2(o.x), r2(o.y), r2(o.yaw), r2(o.pitch), Math.round(o.hp), o.maxHp, o.alive ? 1 : 0, o.wi, o.cr, o.mv, Math.round(o.armor), o.kills, o.hs, o.bonus, o.team || "h", o.armorMax || 0]);
       return { tm: r2(this.time), w: this.wave, zl: this.aliveZombies().length + this.toSpawn, sc: this.score, bw: this.between ? 1 : 0, pt: r2(this.pauseT), bn: this.banner, bs: this.bannerSub, bT: r2(this.bannerT), z, p, pl, zn: newZ, pn: newP, inf: this.inf ? [this.inf.ph, Math.ceil(this.inf.t), this.inf.hu, this.inf.zo, this.inf.win] : 0 };
     }
     // registros estáticos de zumbis e itens novos (enviados uma vez)
@@ -1921,8 +1921,14 @@ const Logic = (function () {
     // ---- MODO INFECÇÃO (anfitrião): um jogador vira zumbi e infecta os outros ----
     infectStart() {
       this.gm = "infect"; this.inf = { ph: "prep", t: 10, hu: 0, zo: 0, win: "" }; this.team = "h";
-      for (const o of this.others) o.team = "h";
+      this.infVest(this);
+      for (const o of this.others) { o.team = "h"; this.infVest(o); }
       this.zombies = []; this.pickups = []; this.toSpawn = 0; this.queue = []; this.giantsLeft = 0; this.between = false; this.wave = 1;
+    }
+    infVest(p) { p.armorMax = Math.max(p.armorMax || 0, 50); p.armor = p.armorMax; }   // infecção: todo humano começa com colete
+    infectJoin(id) {                                                  // jogador entrou na sala de infecção
+      const o = this.remote(id); if (!o) return;
+      if (this.inf.ph === "prep") { o.team = "h"; this.infVest(o); } else this.becomeZombie(id);
     }
     posOf(id) { if (id === this.coop.id) return [this.px, this.py, this.yaw]; const o = this.remote(id); return o ? [o.x, o.y, o.yaw] : [0, 0, 0]; }
     infPlayers() {
@@ -1950,8 +1956,8 @@ const Logic = (function () {
     becomeZombie(id, first) {
       const q = this.infPlayers().find((k) => k.id === id); if (!q || q.team === "z") return;
       const p = q.p; p.team = "z"; p.zDeadT = 0; p.clawT = 0.6;
-      if (q.me) { this.hp = this.maxHp; this.alive = true; this.armor = 0; this.invulnT = 1; }
-      else { p.hp = p.maxHp; p.alive = true; p.armor = 0; p.invulnT = 1; }
+      if (q.me) { this.hp = this.maxHp; this.alive = true; this.armor = 0; this.armorMax = 0; this.invulnT = 1; }
+      else { p.hp = p.maxHp; p.alive = true; p.armor = 0; p.armorMax = 0; p.invulnT = 1; }
       this.spawnPuppet(id, q.x, q.y);
       this.events.push(["infected", id, first ? 1 : 0]);
     }
@@ -2049,7 +2055,7 @@ const Logic = (function () {
       const me = this.coop.id, seenO = new Set();
       for (const a of s.pl) {
         if (a[0] === me) {
-          this.hp = a[5]; this.maxHp = a[6]; this.armor = a[11]; this.kills = a[12]; this.headshots = a[13]; this.bonus = a[14]; this.team = a[15] || "h";
+          this.hp = a[5]; this.maxHp = a[6]; this.armor = a[11]; this.kills = a[12]; this.headshots = a[13]; this.bonus = a[14]; this.team = a[15] || "h"; if (a[16] !== undefined) this.armorMax = a[16];
           const was = this.alive; this.alive = !!a[7]; if (was && !this.alive) this.moving = false;
           continue;
         }
@@ -7880,7 +7886,7 @@ const Logic = (function () {
     function hostAddRemote(id) {
       const L = lobby[id]; if (!L || !game || !game.coop) return;
       game.addRemote(id, L.name, L.info || {}); L.needFull = true;
-      if (game.gm === "infect" && game.inf && game.inf.ph !== "prep") game.becomeZombie(id);   // entrou no meio: já chega zumbi
+      if (game.gm === "infect" && game.inf) game.infectJoin(id);   // colete na preparação; no meio da rodada já chega zumbi
     }
     // ---------------- ligação com o jogo ----------------
     function hostStartBroadcast() { st.started = true; st.over = false; st.diff = S.diff; send({ t: "start", diff: st.diff, gm: st.gm }); hostLobby(); }
