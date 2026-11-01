@@ -31,3 +31,8 @@ Até 4 jogadores. O anfitrião roda a partida; o Cloudflare só repassa mensagen
 Aba "Co-op online" > nome da sala (e senha, se quiser) > Criar sala. Os outros escrevem o mesmo nome e senha > Entrar na sala. O anfitrião clica em Jogar.
 
 Teste local: `node online/dev-server.js` e abra http://localhost:8787
+
+## Android (APK)
+
+Baixe `apk/Arena-Zumbi.apk` e instale no celular (permita "fontes desconhecidas").
+O GitHub Actions compila sozinho a cada mudança em `android/` (o jogo fica em `android/app/src/main/assets/index.html`).

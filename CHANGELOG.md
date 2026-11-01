@@ -1,5 +1,9 @@
 # Novidades — Arena Zumbi
 
+## App Android (01/11/2026)
+- `apk/Arena-Zumbi.apk`. Roda offline, em tela cheia e na horizontal. Co-op online funciona com internet.
+- O GitHub gera o APK sozinho quando a pasta `android/` muda.
+
 ## Celular mais nítido (01/11/2026)
 - A imagem no celular era desenhada em resolução baixa e ficava borrada. Agora usa até 1,75x a densidade da tela.
 
