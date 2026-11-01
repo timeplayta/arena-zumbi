@@ -5,7 +5,7 @@
 - Zumbis-jogadores com pele vermelha, diferentes dos zumbis comuns.
 - Menu "Co-op online" virou "Online", com dois modos: Co-op e Infecção.
 - Infecção: até 8 jogadores. Após 10 s, um jogador aleatório vira zumbi. Garras infectam os humanos (3 golpes).
-- Infectado: 1000 de vida, mesma velocidade dos humanos e corrida infinita. Não usa armas e volta 4 s depois de abatido.
+- Infectado: 1000 de vida, mesma velocidade dos humanos e corrida infinita. Não usa armas e volta 5 s depois de abatido, com contagem na tela ("VOCÊ VOLTA EM 5").
 - Infectado abatido solta 2 kits médicos e 2 caixas de munição por jogador da sala (2 jogadores: 4+4; 3: 6+6). Só humanos pegam.
 - Todo humano começa com colete (50). O infectado não tem colete. Com colete, são 4 golpes para infectar.
 - Ataque do infectado: 1 a cada 1,5 s (antes 0,7 s). Testado contra 2 s: com 2 s quase todo humano vencia sozinho.

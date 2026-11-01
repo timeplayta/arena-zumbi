@@ -2,6 +2,7 @@
 const Logic = (function () {
   const ARENA = 22, WALL_H = 3.6, EYE_H = 1.7, CROUCH_DROP = 0.55, PLAYER_R = 0.38, ZOMBIE_R = 0.36;
   const PLAYER_SPEED = 4.6, SPRINT_MULT = 1.65;
+  const ZOMBIE_RESPAWN = 5;                                   // infecção: segundos até o infectado abatido voltar
   const CLAW_CD = 1.5;                                        // infecção: intervalo entre ataques do infectado (s)
   const ATTACK_RANGE = 1.25, ZOMBIE_SEP = 0.75, RANGE = 90;
   const BODY_R = 0.34, BODY_H = 1.5, HEAD_Z = 1.67, HEAD_R = 0.21, LEG_H = 0.8;
@@ -1347,9 +1348,9 @@ const Logic = (function () {
         q.p.clawT = Math.max(0, (q.p.clawT || 0) - dt);
         if (q.team !== "z") continue;
         let z = this.pz(q.id);
-        if (!z) {                                                       // zumbi abatido: volta em 4 s longe dos humanos
+        if (!z) {                                                       // zumbi abatido: volta em 5 s longe dos humanos
           q.p.alive = false; q.p.zDeadT = (q.p.zDeadT || 0) + dt;
-          if (q.p.zDeadT >= 4) {
+          if (q.p.zDeadT >= ZOMBIE_RESPAWN) {
             const sp = this.zSpawnPoint(); q.p.zDeadT = 0; q.p.alive = true;
             if (q.me) { this.px = sp[0]; this.py = sp[1]; this.kvx = this.kvy = 0; this.hp = this.maxHp; }
             else { q.p.x = sp[0]; q.p.y = sp[1]; this.fx(q.id, ["respawn", sp[0], sp[1]]); }
@@ -1466,7 +1467,7 @@ const Logic = (function () {
 
   return {
     Game, Zombie, Pickup, buildSlot, rangeFactor, damageAt, weaponStats, recoilPattern, pushOut, insideAny, clamp, wrapAngle, BOXES, OBSTACLES, LAMPS, WEAPONS, WEAPON_ORDER, DIFF, DIFF_ORDER, ELITE, SAM,
-    C: { ARENA, WALL_H, EYE_H, CROUCH_DROP, PLAYER_R, RADAR_RANGE: 18, SWITCH_TIME, MELEE_CD, PICK_TTL },
+    C: { ZOMBIE_RESPAWN, ARENA, WALL_H, EYE_H, CROUCH_DROP, PLAYER_R, RADAR_RANGE: 18, SWITCH_TIME, MELEE_CD, PICK_TTL },
   };
 })();
 // ==LOGIC-END==
