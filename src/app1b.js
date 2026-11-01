@@ -790,7 +790,7 @@
     const [c, x] = wdCv(512, 256), r = wdR(88);
     const hex = (n) => [(n >> 16) & 255, (n >> 8) & 255, n & 255];
     const hor = hex(env.fog);
-    const spec = env === ENVS.dusk ? { top: [30, 32, 64], mid: [118, 58, 52], glow: [226, 120, 64] }
+    const spec = env === ENVS.tarde ? { top: [70, 120, 190], mid: [214, 170, 130], glow: [255, 200, 130] } : env === ENVS.dusk ? { top: [30, 32, 64], mid: [118, 58, 52], glow: [226, 120, 64] }
       : env === ENVS.fog ? { top: [58, 66, 76], mid: [52, 60, 68], glow: null }
         : env === ENVS.storm ? { top: [10, 14, 22], mid: [22, 28, 40], glow: null }
           : { top: [4, 7, 18], mid: [12, 19, 38], glow: null };
@@ -820,8 +820,8 @@
       if (!wdSkyCache[key]) wdSkyCache[key] = wdSkyTex(e);
       wdSky.material.map = wdSkyCache[key]; wdSky.material.needsUpdate = true;
     }
-    wdMoon.visible = key === "night" || key === "dusk";
-    wdMoon.material.color.setHex(key === "dusk" ? 0xffb070 : 0xffffff);
+    wdMoon.visible = key === "night" || key === "dusk" || key === "tarde";
+    wdMoon.material.color.setHex(key === "dusk" ? 0xffb070 : key === "tarde" ? 0xfff0c8 : 0xffffff);
     wdMoon.material.opacity = key === "dusk" ? 0.9 : 1;
     const lit = key === "fog" ? 0.25 : key === "dusk" ? 0.6 : 1;
     for (const m of [WD.bldgDark, WD.bldgDark2]) m.emissive.setScalar(lit);
@@ -844,10 +844,16 @@
     });
   }
 
-  try { wdBuildWorld(); wdPlaceLamps(); }
-  catch (err) {
-    if (window.console) console.error("mundo realista falhou, usando o simples", err);
-    wdFallback();
+  const worldArena = new THREE.Group(); scene.add(worldArena);           // a vila da Infecção fica em outro grupo (italiaview.js)
+  {
+    const realAdd = scene.add, keep = new Set();
+    scene.add = function () { for (const o of arguments) (o === wdSky || o === wdMoon || o.isLight ? keep : worldArena).add(o); return this; };
+    try { wdBuildWorld(); wdPlaceLamps(); }
+    catch (err) {
+      if (window.console) console.error("mundo realista falhou, usando o simples", err);
+      wdFallback();
+    } finally { scene.add = realAdd; }
+    for (const o of keep) if (o === wdSky || o === wdMoon) scene.add(o); else worldArena.add(o);
   }
   function wdFallback() {
     const fl = new THREE.Mesh(new THREE.PlaneGeometry(2 * ARENA + 4, 2 * ARENA + 4), new THREE.MeshLambertMaterial({ color: 0x2a2b30 }));

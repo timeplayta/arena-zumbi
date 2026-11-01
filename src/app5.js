@@ -94,6 +94,7 @@
       let v = zviews.get(z.id);
       if (!v) { v = z.tank ? new TankView(z) : z.samurai ? new SamuraiView(z) : z.wraith ? new WraithView(z) : new ZombieView(z); if (z.puppet) redSkin(v); zviews.set(z.id, v); }
       v.update(z);
+      if (z.gz && v.root) { v.root.position.y += z.gz; if (v.shadow) v.shadow.position.y += z.gz; }   // morros e escadas (vila da Infecção)
     }
     for (const [id, v] of zviews) if (!seen.has(id)) { v.destroy(); zviews.delete(id); }
   }
@@ -104,6 +105,8 @@
       let v = pviews.get(p);
       if (!v) { v = new PickupView(p.kind); pviews.set(p, v); }
       v.update(p, g.time);
+      if (p.gz === undefined) p.gz = Logic.groundAt(p.x, p.y, 99);
+      v.root.position.y = p.gz;
     }
     for (const [p, v] of pviews) if (!seen.has(p)) { v.destroy(); pviews.delete(p); }
   }
@@ -141,6 +144,7 @@
     const ro = runOpts(); runUsed = ro.used; burnFlash = 0;
     game = new Game({ loadout: loadoutSel(), diff: Coop.inRoom() && !Coop.isHost() ? Coop.st.diff : S.diff, perks: ro.perks, melee: ro.melee });
     clearAllies(); Coop.attach(game); Coop.sendInfo(ro);
+    useMap(game.gm === "infect" ? "italia" : "arena");                            // Infecção: vila italiana; resto: arena
     setMeleeModel(wallet.melee); updateWho();
     vmKey = ""; setViewGun(game.w());
     adsT = 0; sprintBlend = 0; hfov = S.fov; dmgT = 0; $("feed").innerHTML = "";
@@ -168,7 +172,7 @@
   }
   function toMenu() {
     try { document.exitPointerLock(); } catch (e) {}
-    canvas.style.cursor = ""; state = "menu"; Coop.onToMenu(); payRun(game, runUsed); clearViews(); resetFx(); menuGame = makeMenuGame(); hfov = 70;
+    canvas.style.cursor = ""; state = "menu"; Coop.onToMenu(); payRun(game, runUsed); useMap("arena"); clearViews(); resetFx(); menuGame = makeMenuGame(); hfov = 70;
     $("menu").hidden = false; $("hud").hidden = true; $("pause").hidden = true; $("dead").hidden = true; $("scope").style.opacity = "0";
     $("view").classList.remove("low"); $("fx-low").style.opacity = "0"; $("fx-hurt").style.opacity = "0";
     applyEnv(); renderAll(); showTab(ui.tab); resetTouch(); applyTouchUI();
@@ -520,7 +524,7 @@
     animateGun(dt, g); if (zm) knife.visible = false; ZArms.update(g, dt);
     flickerT -= dt;
     if (flickerT <= 0) { flickerT = rand(0.04, 0.2); lampLights[2].intensity = env.lamp * (Math.random() < 0.25 ? rand(0, 0.5) : 1); }
-    syncZombies(g); syncPickups(g); syncCracks(g); updateShocks(dt); syncAllies(g, dt);
+    syncZombies(g); syncPickups(g); syncCracks(g); updateShocks(dt); syncAllies(g, dt); syncBoosts(g);
     fxBlood.update(dt); fxSpark.update(dt); fxBrass.update(dt); fxShell.update(dt); fxSmoke.update(dt); fxTrace.update(dt); updatePools(dt); updateDropped(dt);
   }
 
@@ -564,6 +568,8 @@
           break;
         }
         case "claw": spatial("melee", ev[1], ev[2], 0.9, rand(0.65, 0.8), 0.1, 25); break;
+        case "boost": spatial("pickup", ev[2], ev[3], 0.7, ev[1] === "speed" ? 1.4 : 1, 0.2, 30); break;
+        case "boost_me": feedLine(ev[1] === "speed" ? "VELOCIDADE +40% POR 8 s" : "VIDA RECUPERADA", true, "hp"); Snd.play("pickup", 1, ev[1] === "speed" ? 1.5 : 1.1); buzz(30); break;
         case "zrespawn": if (ev[1] === Coop.st.id) feedLine("VOCÊ VOLTOU", false); break;
         case "inf_end": Snd.play("horn", 1, ev[1] === "h" ? 1.1 : 0.6, 0, 0); break;
         case "ally_down": feedLine((Coop.nameOf(ev[1]) || "ALIADO").toUpperCase() + " CAIU", true); break;

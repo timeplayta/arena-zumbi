@@ -1,5 +1,13 @@
 # Novidades — Arena Zumbi
 
+## Mapa da Infecção: vila italiana (01/11/2026)
+- A Infecção agora acontece numa vila italiana de 120 x 120 m. Co-op e solo continuam na arena.
+- Praça com chafariz, 18 lojas com fachada (pizzarias, gelateria, trattoria, caffè...), 7 casas com interior e móveis.
+- Dois morros com escadas: terraços com oliveiras e casa no alto; morro da capela com torre do sino.
+- Carroças, barracas, caixas, barris e feno como cobertura. Janelas: dá para atirar, não para passar.
+- 12 boosters para humanos e infectados: raio = velocidade +40% por 8 s; cruz = vida (+50 humano, +400 infectado). Voltam em 25 s.
+- Sempre de tarde, com céu dourado.
+
 ## Celular: menus e controles (01/11/2026)
 - Menu na horizontal: abas numa coluna lateral, todas visíveis. Sem barras de rolagem.
 - HUD 20% menor no celular. Novo ajuste "Tamanho do HUD" (50% a 120%).

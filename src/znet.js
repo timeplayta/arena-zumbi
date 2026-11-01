@@ -87,7 +87,7 @@
       let v = allyViews.get(o.id);
       const nm = o.name || Coop.nameOf(o.id);
       if (!v || v.name !== nm) { if (v) { scene.remove(v.root); } v = makeAlly(Coop.shirtOf(o.id), nm); allyViews.set(o.id, v); }
-      v.root.position.set(o.x, 0, -o.y); v.root.rotation.y = o.yaw; v.body.position.x = 0;
+      v.root.position.set(o.x, o.gz || 0, -o.y); v.root.rotation.y = o.yaw; v.body.position.x = 0;
       v.aim.rotation.x = clamp(o.pitch || 0, -1, 1);
       v.step += (o.mv ? 8 : 0) * dt; const sw = o.mv && o.alive ? Math.sin(v.step) * 0.6 : 0;
       v.legs[0].rotation.x = sw; v.legs[1].rotation.x = -sw;
@@ -173,7 +173,7 @@
     const st = { ws: null, id: null, host: false, code: "", status: "off", msg: "", players: [], stamp: "0", gm: "coop", gmSel: "coop", started: false, diff: "normal", starting: false, over: false, name: "" };
     const lobby = {};                       // anfitrião: id -> { name, info, full }
     let acc = 0, sAcc = 0, sentZ = new Set(), sentP = new Set(), pingT = 0, game0 = null;
-    const WORLD = /^(wave|giant|elite|kill|clear|wall|hit|rshot|ally_down|infected|claw|inf_end|zrespawn|tank_|sam_|wraith_)/;
+    const WORLD = /^(wave|giant|elite|kill|clear|wall|hit|rshot|ally_down|infected|claw|inf_end|zrespawn|boost$|tank_|sam_|wraith_)/;
     const setMsg = (m, cls) => { st.msg = m; const e = $("coopStatus"); if (e) { e.textContent = m; e.className = "coop-status " + (cls || ""); } };
     const DEFAULT_SERVER = "arena-zumbi.playes.workers.dev";       // servidor online (salas co-op); o jogo pode ficar em outro endereço
     function serverHost() {
@@ -296,7 +296,7 @@
     function guestSend(g, dt) {
       if (g.lastShot) { const s = g.lastShot; g.lastShot = null; send({ t: "shot", s: s.s, o: s.o, d: s.d }); }
       for (const e of g.events) if (e[0] === "melee_swing") send({ t: "melee" });
-      acc += dt; if (acc >= 0.05) { acc = 0; send({ t: "s", x: +g.px.toFixed(2), y: +g.py.toFixed(2), yaw: +g.yaw.toFixed(3), pitch: +g.pitch.toFixed(3), cr: g.crouchT > 0.5 ? 1 : 0, w: g.w().cfg.id }); }
+      acc += dt; if (acc >= 0.05) { acc = 0; send({ t: "s", x: +g.px.toFixed(2), y: +g.py.toFixed(2), z: +(g.gz || 0).toFixed(2), yaw: +g.yaw.toFixed(3), pitch: +g.pitch.toFixed(3), cr: g.crouchT > 0.5 ? 1 : 0, w: g.w().cfg.id }); }
     }
     function hostRelay(g, dt) {
       const ids = Object.keys(lobby).filter((id) => lobby[id].full);
@@ -359,6 +359,7 @@
           if (!g._zDownAt) g._zDownAt = g.time;
           t = "VOCÊ VOLTA EM " + Math.max(1, Math.ceil(Logic.C.ZOMBIE_RESPAWN - (g.time - g._zDownAt)));
         } else { g._zDownAt = 0; if (g.team === "z") t = "VOCÊ É ZUMBI · " + t; }
+        if (g.boostT > 0) t += " · VELOCIDADE " + Math.ceil(g.boostT) + " s";
       }
       if (t !== infKey) { infKey = t; e.textContent = t; e.hidden = !t; e.classList.toggle("z", g.team === "z"); }
     }

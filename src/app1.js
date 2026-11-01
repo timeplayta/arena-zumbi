@@ -72,6 +72,7 @@
     ghost: { n: "Espectral", c: 0x9be8ff, m: 0.4, r: 0.3, em: 0x1f6a7c, prem: 1, price: 900 },
   };
   const ENVS = {
+    tarde: { n: "Tarde italiana", sub: "Sol baixo e céu dourado.", fog: 0x9c8466, dens: 0.011, hemi: [0xffe6c0, 0x5a4636, 1.2], moon: [0xffd9a0, 1.15], lamp: 0.7 },
     night: { n: "Noite", sub: "Escuridão e lâmpadas âmbar.", fog: 0x06080d, dens: 0.03, hemi: [0x5a6aa0, 0x1c1612, 0.75], moon: [0x8fa4d8, 0.55], lamp: 1.7 },
     dusk: { n: "Crepúsculo", sub: "Céu alaranjado, visão mais longa.", fog: 0x2a1812, dens: 0.02, hemi: [0xd8935f, 0x20140e, 1.05], moon: [0xffa060, 0.8], lamp: 1.1 },
     fog: { n: "Névoa densa", sub: "Os zumbis surgem do nada.", fog: 0x2c333b, dens: 0.075, hemi: [0x7080a0, 0x181818, 0.95], moon: [0xaab8cc, 0.4], lamp: 1.9 },
@@ -166,7 +167,7 @@
   rain.frustumCulled = false; rain.visible = false; scene.add(rain);
 
   function applyEnv() {
-    env = ENVS[S.env] || ENVS.night;
+    env = (L.getMap() === "italia" ? ENVS.tarde : ENVS[S.env]) || ENVS.night;          // a vila da Infecção é sempre de tarde
     scene.fog.color.setHex(env.fog); scene.fog.density = env.dens;
     renderer.setClearColor(env.fog);
     hemi.color.setHex(env.hemi[0]); hemi.groundColor.setHex(env.hemi[1]); hemi.intensity = env.hemi[2];
