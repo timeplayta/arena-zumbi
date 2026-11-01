@@ -887,6 +887,32 @@
     bgw.onmessage = bgTick;
   } catch (e) {}
 
+  // ---------------- atualizações ----------------
+  // Novidades: aparece uma vez quando a versão sobe (site, .exe e APK). No site, avisa se publicaram versão nova com a aba aberta.
+  const UPD_HOST = "https://arena-zumbi.playes.workers.dev/";
+  (function () {
+    if (typeof GAME_VERSION === "undefined") return;
+    const KEY = "arena-zumbi-ver";
+    let seen = 0; try { seen = Number(localStorage.getItem(KEY)) || 0; } catch (e) {}
+    const show = (title, notes, btn, fn) => {
+      const o = $("upd"); if (!o) return;
+      $("updTitle").textContent = title;
+      $("updBody").innerHTML = "<b>" + String(notes.t || "").replace(/[<>&]/g, "") + "</b>" + (notes.b || []).map((l) => "<div>• " + String(l).replace(/[<>&`*]/g, "") + "</div>").join("");
+      $("updOk").textContent = btn; $("updOk").onclick = () => { o.hidden = true; if (fn) fn(); };
+      o.hidden = false;
+    };
+    if (seen && GAME_VERSION > seen) setTimeout(() => show("Jogo atualizado!", GAME_NOTES || {}, "OK"), 900);
+    try { localStorage.setItem(KEY, String(GAME_VERSION)); } catch (e) {}
+    if (!/^https?:$/.test(location.protocol) || /^(localhost|127\.)/.test(location.hostname)) return;   // apps: atualizam ao abrir
+    const check = () => {
+      if (state !== "menu") return;
+      fetch(UPD_HOST + "version.json?t=" + Date.now(), { cache: "no-store" }).then((r) => r.json()).then((j) => {
+        if (j && j.v > GAME_VERSION) show("Nova versão disponível", j.notes || {}, "Atualizar agora", () => location.reload());
+      }).catch(() => {});
+    };
+    setTimeout(check, 4000); setInterval(check, 10 * 60 * 1000);
+  })();
+
   // ---------------- início ----------------
   window.__arena = { get game() { return game; }, get state() { return state; }, S, startGame, toMenu, TS, touchOn, get pvPivot() { return pvPivot; }, showTab, renderArsenal, ui };
   hfov = 70;

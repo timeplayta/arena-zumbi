@@ -1,5 +1,11 @@
 # Novidades — Arena Zumbi
 
+## Atualização automática (01/11/2026)
+- Ao abrir, o .exe e o app de Android procuram versão nova e se atualizam sozinhos (baixa só o jogo, cerca de 1,5 MB).
+- Depois de atualizar, o jogo mostra as novidades da versão.
+- No site, se sair versão nova com a página aberta, aparece o aviso "Atualizar agora".
+- Sem internet, abre a última versão baixada.
+
 ## Teclas configuráveis no PC (01/11/2026)
 - Controles > Teclado: clique na tecla de uma ação e aperte a nova. Tecla repetida troca de lugar com a outra ação. Esc cancela.
 - 15 ações: andar (4), correr, agachar, recarregar, arma 1, arma 2, trocar arma, faca, modo de tiro, lanterna, som, pausar.

@@ -74,6 +74,9 @@ button { font-family: inherit; color: inherit; }
 #dmgdir i { position: absolute; left: -70px; top: -190px; width: 140px; height: 60px; background: radial-gradient(ellipse at 50% 100%, rgba(255, 40, 30, 0.9), transparent 70%); }
 .btn { background: var(--panel, #161b22); color: var(--fg); border: 1px solid rgba(255,255,255,0.22); padding: 10px 22px; font-family: var(--font-display); font-size: 22px; letter-spacing: 0.08em; text-transform: uppercase; cursor: pointer; }
 .btn:hover { border-color: var(--amber); color: var(--amber); }
+.upd-card { max-width: 520px; background: #0d1117; border: 1px solid var(--amber); padding: 20px 24px; box-shadow: 0 10px 40px rgba(0,0,0,0.7); } .upd-body { display: flex; flex-direction: column; gap: 6px; margin: 10px 0 16px; font-size: 15px; color: #cfd6e0; line-height: 1.4; }
+.upd-body b { color: var(--amber); font-family: var(--font-display); font-size: 20px; letter-spacing: 0.06em; }
+#upd { z-index: 1000; }
 .btn-tog.on { border-color: var(--amber); color: #1a1205; background: var(--amber); }
 .coop-room { display: flex; align-items: baseline; gap: 14px; margin-bottom: 12px; }
 .coop-room span { font-size: 14px; color: var(--muted); letter-spacing: 0.2em; }
@@ -639,6 +642,10 @@ table.sc td:first-child { font-family: var(--font-display); font-size: 22px; col
     </form>
   </div>
 
+  <div class="overlay" id="upd" hidden>
+    <div class="card upd-card"><h2 id="updTitle">Jogo atualizado!</h2><div id="updBody" class="upd-body"></div>
+      <div class="row"><button type="button" class="play" id="updOk">OK</button></div></div>
+  </div>
   <div class="overlay" id="pause" hidden>
     <div class="card">
       <div class="kicker">Jogo pausado</div>

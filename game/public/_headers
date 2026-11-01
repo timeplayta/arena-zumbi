@@ -1,0 +1,8 @@
+/version.json
+  Access-Control-Allow-Origin: *
+  Cache-Control: no-cache
+/index-offline.html
+  Access-Control-Allow-Origin: *
+  Cache-Control: no-cache
+/index.html
+  Cache-Control: no-cache

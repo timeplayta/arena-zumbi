@@ -1,17 +1,32 @@
 package com.arenazumbi.app;
 
 import android.app.Activity;
+import android.graphics.Color;
 import android.os.Bundle;
+import android.view.Gravity;
 import android.view.View;
 import android.view.WindowManager;
 import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.TextView;
 
-// Arena Zumbi: o jogo inteiro roda numa WebView, offline (assets/index.html).
+import org.json.JSONObject;
+
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+
+// Arena Zumbi: o jogo roda numa WebView. Ao abrir, procura versão nova no Cloudflare;
+// se houver, baixa o jogo offline (index-offline.html) e já abre a versão nova.
 public class MainActivity extends Activity {
+    private static final String BASE = "https://arena-zumbi.playes.workers.dev/";
     private WebView web;
+    private TextView splash;
 
     @Override
     protected void onCreate(Bundle saved) {
@@ -27,10 +42,51 @@ public class MainActivity extends Activity {
         web.setWebChromeClient(new WebChromeClient());
         web.setWebViewClient(new WebViewClient());
         web.setBackgroundColor(0xFF07090D);
-        setContentView(web);
+        splash = new TextView(this);
+        splash.setText("ARENA ZUMBI\n\nProcurando atualização...");
+        splash.setTextColor(Color.rgb(255, 178, 74));
+        splash.setTextSize(22);
+        splash.setGravity(Gravity.CENTER);
+        splash.setBackgroundColor(0xFF07090D);
+        setContentView(splash);
         hideBars();
-        if (saved != null) web.restoreState(saved);
-        else web.loadUrl("file:///android_asset/index.html");
+        if (saved != null) { setContentView(web); web.restoreState(saved); return; }
+        new Thread(this::chooseGame).start();
+    }
+
+    private static String get(String url, int timeoutMs) throws Exception {
+        HttpURLConnection c = (HttpURLConnection) new URL(url + "?t=" + System.currentTimeMillis()).openConnection();
+        c.setConnectTimeout(timeoutMs); c.setReadTimeout(timeoutMs); c.setUseCaches(false);
+        if (c.getResponseCode() != 200) throw new Exception("http " + c.getResponseCode());
+        InputStream in = c.getInputStream(); ByteArrayOutputStream out = new ByteArrayOutputStream();
+        byte[] b = new byte[16384]; int n; while ((n = in.read(b)) > 0) out.write(b, 0, n);
+        in.close(); return out.toString("UTF-8");
+    }
+    private static long ver(String json) { try { return new JSONObject(json).getLong("v"); } catch (Exception e) { return 0; } }
+    private String readAsset(String name) { try { InputStream in = getAssets().open(name); ByteArrayOutputStream out = new ByteArrayOutputStream(); byte[] b = new byte[8192]; int n; while ((n = in.read(b)) > 0) out.write(b, 0, n); in.close(); return out.toString("UTF-8"); } catch (Exception e) { return ""; } }
+    private String readFile(File f) { try { InputStream in = new java.io.FileInputStream(f); ByteArrayOutputStream out = new ByteArrayOutputStream(); byte[] b = new byte[8192]; int n; while ((n = in.read(b)) > 0) out.write(b, 0, n); in.close(); return out.toString("UTF-8"); } catch (Exception e) { return ""; } }
+    private static void write(File f, String s) throws Exception { FileOutputStream o = new FileOutputStream(f); o.write(s.getBytes("UTF-8")); o.close(); }
+
+    private void chooseGame() {
+        File dir = new File(getFilesDir(), "jogo"), html = new File(dir, "index.html"), vf = new File(dir, "version.json");
+        long bundled = ver(readAsset("version.json")), cached = html.exists() ? ver(readFile(vf)) : 0;
+        String url = "file:///android_asset/index.html"; long cur = bundled;
+        if (cached > bundled) { url = "file://" + html.getAbsolutePath(); cur = cached; }
+        try {
+            String rv = get(BASE + "version.json", 5000);
+            if (ver(rv) > cur) {
+                runOnUiThread(() -> splash.setText("ARENA ZUMBI\n\nBaixando atualização..."));
+                String h = get(BASE + "index-offline.html", 60000);
+                if (h.length() > 200000 && h.contains("GAME_VERSION")) {
+                    dir.mkdirs(); File tmp = new File(dir, "index.tmp"); write(tmp, h);
+                    if (html.exists()) html.delete();
+                    tmp.renameTo(html); write(vf, rv);
+                    url = "file://" + html.getAbsolutePath();
+                }
+            }
+        } catch (Exception e) { /* sem internet: abre a versão local */ }
+        final String go = url;
+        runOnUiThread(() -> { setContentView(web); hideBars(); web.loadUrl(go); });
     }
 
     private void hideBars() {

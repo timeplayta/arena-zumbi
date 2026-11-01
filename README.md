@@ -40,3 +40,9 @@ O GitHub Actions compila sozinho a cada mudança em `android/` (o jogo fica em `
 ## Ferramentas
 
 `tools/mdl2json.py PASTA saida.json`: converte um modelo Source (`h.mdl`, `h.vvd`, `h.vtx` na PASTA) em malha + ossos + animações para o jogo.
+
+## Atualização automática
+
+`sh build.sh` gera `game/public/version.json` (versão = data/hora) e `game/public/index-offline.html`.
+O `.exe` (`windows/app/main.js`) e o APK (`MainActivity.java`) comparam com a versão embutida ao abrir e baixam o jogo novo do Cloudflare.
+O jogo mostra as novidades (primeira seção do CHANGELOG) uma vez depois de atualizar.
