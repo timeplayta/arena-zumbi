@@ -3,7 +3,7 @@
 ## Kits do infectado (01/11/2026)
 - Infectado abatido solta 2 kits e 2 caixas para cada humano.
 - Cada jogador vê e pega só os seus itens.
-- Limite: no máximo 2 kits e 2 caixas seus no chão.
+- Cada infectado abatido soma mais 2 kits e 2 caixas para cada um.
 - Itens dos outros nem chegam ao seu jogo: menos peso.
 
 ## Bots mais espertos (01/11/2026)
