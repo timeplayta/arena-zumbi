@@ -1,5 +1,9 @@
 # Novidades — Arena Zumbi
 
+## Garra do infectado (01/11/2026)
+- Um golpe não infecta mais: cada golpe tira 8.
+- Segurando o ataque, infecta em cerca de 1 segundo.
+
 ## Kits do infectado (01/11/2026)
 - Infectado abatido solta 2 kits e 2 caixas para cada humano.
 - Cada jogador vê e pega só os seus itens.
