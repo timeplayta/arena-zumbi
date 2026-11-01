@@ -682,7 +682,9 @@ const Logic = (function () {
         else { this.kills += 1; if (E) this.bonus += Math.round(E.coins * D.coin); if (head) this.headshots += 1; }
         this.events.push(["kill", z.x, z.y, head, pts, z.brute, z.headGone, z.giant, z.kind]);
         if (z.puppet) {                                            // infecção: infectado abatido solta 2 kits médicos e 2 caixas de munição por jogador da sala
-          for (let i = 0, n = 2 * this.infPlayers().length; i < n; i++) for (const k of ["health", "ammo"]) { const pk = new Pickup(k, z.x, z.y, this.rnd); pk.gz = z.gz || 0; this.pickups.push(pk); }
+          for (const q of this.infPlayers()) if (q.team === "h") for (let i = 0; i < 2; i++) for (const k of ["health", "ammo"]) {   // cada humano vê e pega só os seus 2 + 2
+            const pk = new Pickup(k, z.x, z.y, this.rnd); pk.gz = z.gz || 0; pk.own = q.id; this.pickups.push(pk);
+          }
         }
         else if (z.giant || E) {                                    // gigantes e especiais soltam um tesouro
           const nh = z.giant ? 2 : z.samurai ? 1 : 2, na = z.giant ? 3 : z.samurai ? 2 : 3;
@@ -1231,14 +1233,14 @@ const Logic = (function () {
         }
         const d = Math.hypot(p.x - this.px, p.y - this.py);
         let rb = null, rd = 1e9;                                    // co-op: aliado mais perto que pode pegar o item
-        if (this.others.length && p.age > 0.35) for (const o of this.others) if (o.alive && o.team !== "z" && (p.kind !== "health" || o.hp < o.maxHp)) { const dd = Math.hypot(p.x - o.x, p.y - o.y); if (dd < rd) { rd = dd; rb = o; } }
+        if (this.others.length && p.age > 0.35) for (const o of this.others) if (o.alive && o.team !== "z" && (!p.own || p.own === o.id) && (p.kind !== "health" || o.hp < o.maxHp)) { const dd = Math.hypot(p.x - o.x, p.y - o.y); if (dd < rd) { rd = dd; rb = o; } }
         if (rb && rd < PICK_R) { this.takeRemote(rb, p); continue; }
-        if (rb && !(this.alive && d <= rd) && rd < MAGNET_R) {     // ímã do aliado
+        if (rb && !(this.alive && this.mine(p) && d <= rd) && rd < MAGNET_R) {     // ímã do aliado
           p.pull = Math.min(1, p.pull + dt * 2.5);
           const sp = (2.5 + 7 * p.pull) * dt, k = Math.min(1, sp / Math.max(rd, 1e-3));
           p.x += (rb.x - p.x) * k; p.y += (rb.y - p.y) * k;
           if (p.landed) p.h = Math.min(0.25, p.h + dt);
-        } else if (this.alive && this.team !== "z" && p.age > 0.35) {
+        } else if (this.alive && this.team !== "z" && p.age > 0.35 && this.mine(p)) {
           const ok = this.canTake(p);
           if (d < PICK_R && ok) { this.takePickup(p); continue; }
           if (ok && d < MAGNET_R * this.magnetK) {              // ímã: o item desliza até você
@@ -1403,7 +1405,8 @@ const Logic = (function () {
     }
     // registros estáticos de zumbis e itens novos (enviados uma vez)
     staticZombie(q) { return { id: q.id, x: q.x, y: q.y, hp: q.maxHp, sp: q.speed, k: q.kind, v: q.variant, dm: q.dmgMul, s: q.s, tn: q.tint, lm: q.limp ? 1 : 0, ap: q.armPose, ph: q.phase, pu: q.puppet || "" }; }
-    staticPickup(k) { return { id: k.id, k: k.kind, x: k.x, y: k.y }; }
+    staticPickup(k) { return { id: k.id, k: k.kind, x: k.x, y: k.y, ow: k.own || "" }; }
+    mine(p) { return !p.own || !this.coop || p.own === this.coop.id; }          // item pessoal (infecção): só o dono vê
     // ---- MODO INFECÇÃO (anfitrião): um jogador vira zumbi e infecta os outros ----
     infectStart() {
       this.gm = "infect"; this.inf = { ph: "prep", t: 10, hu: 0, zo: 0, win: "" }; this.team = "h";
@@ -1716,7 +1719,7 @@ const Logic = (function () {
     }
     mirrorAddPickup(r) {
       if (this.pmap.has(r.id)) return;
-      const k = new Pickup(r.k, r.x, r.y, () => 0.5); k.id = r.id; k.ttl = 99; k.landed = true; k.h = 0; k.vx = k.vy = k.vz = 0;
+      const k = new Pickup(r.k, r.x, r.y, () => 0.5); k.id = r.id; k.own = r.ow || ""; k.ttl = 99; k.landed = true; k.h = 0; k.vx = k.vy = k.vz = 0;
       this.pickups.push(k); this.pmap.set(k.id, k);
     }
     applySnapshot(s, dt) {

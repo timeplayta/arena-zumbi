@@ -101,6 +101,7 @@
   function syncPickups(g) {
     const seen = new Set();
     for (const p of g.pickups) {
+      if (!g.mine(p)) continue;                                   // item de outro jogador: invisível
       seen.add(p);
       let v = pviews.get(p);
       if (!v) { v = new PickupView(p.kind); pviews.set(p, v); }
@@ -766,7 +767,7 @@
       if (z.wraith) { rctx.globalAlpha = z.vis > 0.3 ? 1 : 0.25 + 0.2 * Math.sin(g.time * 9); dot(z.x, z.y, "#7ffcff", 7); rctx.globalAlpha = 1; }
       else dot(z.x, z.y, z.tank ? "#b9dc4a" : z.samurai ? "#4ac8ff" : z.giant ? "#ff2ec8" : z.brute ? "#ff8a2e" : "#ff3b2e", z.tank ? 11 : z.giant ? 10 : z.samurai ? 6 : z.brute ? 7 : 5);
     }
-    for (const p of g.pickups) dot(p.x, p.y, p.kind === "health" ? "#4ddc84" : "#ffc020", 4);
+    for (const p of g.pickups) if (g.mine(p)) dot(p.x, p.y, p.kind === "health" ? "#4ddc84" : "#ffc020", 4);
     rctx.fillStyle = "#fff"; rctx.fillRect(h - 6, h - 6, 12, 12); rctx.fillRect(h - 2, h - 22, 4, 14);
   }
   const hudLast = {};
