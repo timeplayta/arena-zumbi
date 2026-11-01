@@ -561,7 +561,7 @@ table.sc td:first-child { font-family: var(--font-display); font-size: 22px; col
         <div class="sec" id="coopModes"><h3>Modo</h3>
           <div class="opts">
             <button type="button" class="opt" data-gm="coop"><b>Co-op</b><span>Até 4 jogadores contra as ondas de zumbis, juntos. Quem cair renasce na próxima onda.</span></button>
-            <button type="button" class="opt" data-gm="infect"><b>Infecção</b><span>Até 8 jogadores, na vila italiana (casas, morros, boosters). Um vira zumbi e infecta os outros. Humanos vencem se durarem 3 minutos.</span></button>
+            <button type="button" class="opt" data-gm="infect"><b>Infecção</b><span>Até 12 jogadores na vila italiana (casas, morros, boosters). Bots completam a sala. Um a cada 6 começa zumbi e infecta os outros. Humanos vencem se durarem 3 minutos.</span></button>
           </div>
           <p>Quem cria a sala escolhe o modo. Quem entra segue o modo da sala.</p></div>
         <div id="coopOff" class="sec">
@@ -569,7 +569,8 @@ table.sc td:first-child { font-family: var(--font-display); font-size: 22px; col
             <div class="field"><label for="coopName">Nome da sala</label><input type="text" id="coopName" maxlength="16" autocomplete="off" spellcheck="false" placeholder="ex.: Turma do Zé"></div>
             <div class="field"><label for="coopPass">Senha (opcional)</label><input type="password" id="coopPass" maxlength="16" autocomplete="off" placeholder="deixe vazio para sala aberta"></div>
           </div>
-          <div class="row" style="margin-top:14px"><button type="button" class="btn" id="btnCoopCreate">Criar sala</button><button type="button" class="btn" id="btnCoopJoin">Entrar na sala</button></div>
+          <button type="button" class="tog on" id="coopBots"><span>Infecção: completar a sala com bots (até 12)</span><i></i></button>
+          <div class="row" style="margin-top:14px"><button type="button" class="btn" id="btnCoopCreate">Criar sala</button><button type="button" class="btn" id="btnCoopJoin">Entrar na sala</button><button type="button" class="btn" id="btnCoopOffline">Infecção offline (bots)</button></div>
         </div>
         <div id="coopOn" class="sec" hidden>
           <h3>Sala</h3>

@@ -1,5 +1,13 @@
 # Novidades — Arena Zumbi
 
+## Infecção com 12 jogadores e bots (01/11/2026)
+- Salas de Infecção com até 12 jogadores.
+- Bots completam a sala até 12 (opção no lobby). Quando alguém entra, um bot sai.
+- Bots humanos andam pelo mapa, atiram nos infectados e fogem quando eles chegam perto (cansam ao correr).
+- Bots infectados perseguem o humano mais perto e atacam com as garras.
+- 1 infectado inicial a cada 6 jogadores (12 jogadores = 2).
+- Novo botão "Infecção offline (bots)": joga sem internet, você + 11 bots.
+
 ## Mapa da Infecção: vila italiana (01/11/2026)
 - A Infecção agora acontece numa vila italiana de 120 x 120 m. Co-op e solo continuam na arena.
 - Praça com chafariz, 18 lojas com fachada (pizzarias, gelateria, trattoria, caffè...), 7 casas com interior e móveis.

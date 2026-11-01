@@ -10,7 +10,7 @@ export class Room {
   peers() { return this.state.getWebSockets().map((ws) => ({ ws, info: ws.deserializeAttachment() || {} })); }
   async fetch(request) {
     if (request.headers.get("Upgrade") !== "websocket") return new Response("Use WebSocket", { status: 426 });
-    const q = new URL(request.url).searchParams, role = q.get("role") === "host" ? "host" : "guest", pw = (q.get("pw") || "").slice(0, 64), max = Math.min(8, Math.max(2, parseInt(q.get("max"), 10) || 4));
+    const q = new URL(request.url).searchParams, role = q.get("role") === "host" ? "host" : "guest", pw = (q.get("pw") || "").slice(0, 64), max = Math.min(12, Math.max(2, parseInt(q.get("max"), 10) || 4));
     const pair = new WebSocketPair();
     const [client, server] = Object.values(pair);
     const peers = this.peers(), host = peers.find((p) => p.info.host);
@@ -22,7 +22,7 @@ export class Room {
     else if (role === "guest" && peers.length >= (host.info.max || 4)) refuse("Sala cheia (máximo " + (host.info.max || 4) + " jogadores).");
     else {
       const used = new Set(peers.map((p) => p.info.id));
-      let id = "p1"; if (role === "guest") for (let i = 2; i <= 8; i++) if (!used.has("p" + i)) { id = "p" + i; break; }
+      let id = "p1"; if (role === "guest") for (let i = 2; i <= 12; i++) if (!used.has("p" + i)) { id = "p" + i; break; }
       server.serializeAttachment({ id, host: role === "host", pw: role === "host" ? pw : "", max: role === "host" ? max : 0 });
       send(server, { t: "welcome", id, host: role === "host", max: role === "host" ? max : host.info.max || 4 });
       if (role === "guest") send(host.ws, { t: "join", id });

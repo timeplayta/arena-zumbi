@@ -561,7 +561,7 @@ table.sc td:first-child { font-family: var(--font-display); font-size: 22px; col
         <div class="sec" id="coopModes"><h3>Modo</h3>
           <div class="opts">
             <button type="button" class="opt" data-gm="coop"><b>Co-op</b><span>Até 4 jogadores contra as ondas de zumbis, juntos. Quem cair renasce na próxima onda.</span></button>
-            <button type="button" class="opt" data-gm="infect"><b>Infecção</b><span>Até 8 jogadores, na vila italiana (casas, morros, boosters). Um vira zumbi e infecta os outros. Humanos vencem se durarem 3 minutos.</span></button>
+            <button type="button" class="opt" data-gm="infect"><b>Infecção</b><span>Até 12 jogadores na vila italiana (casas, morros, boosters). Bots completam a sala. Um a cada 6 começa zumbi e infecta os outros. Humanos vencem se durarem 3 minutos.</span></button>
           </div>
           <p>Quem cria a sala escolhe o modo. Quem entra segue o modo da sala.</p></div>
         <div id="coopOff" class="sec">
@@ -569,7 +569,8 @@ table.sc td:first-child { font-family: var(--font-display); font-size: 22px; col
             <div class="field"><label for="coopName">Nome da sala</label><input type="text" id="coopName" maxlength="16" autocomplete="off" spellcheck="false" placeholder="ex.: Turma do Zé"></div>
             <div class="field"><label for="coopPass">Senha (opcional)</label><input type="password" id="coopPass" maxlength="16" autocomplete="off" placeholder="deixe vazio para sala aberta"></div>
           </div>
-          <div class="row" style="margin-top:14px"><button type="button" class="btn" id="btnCoopCreate">Criar sala</button><button type="button" class="btn" id="btnCoopJoin">Entrar na sala</button></div>
+          <button type="button" class="tog on" id="coopBots"><span>Infecção: completar a sala com bots (até 12)</span><i></i></button>
+          <div class="row" style="margin-top:14px"><button type="button" class="btn" id="btnCoopCreate">Criar sala</button><button type="button" class="btn" id="btnCoopJoin">Entrar na sala</button><button type="button" class="btn" id="btnCoopOffline">Infecção offline (bots)</button></div>
         </div>
         <div id="coopOn" class="sec" hidden>
           <h3>Sala</h3>
@@ -2140,7 +2141,7 @@ const Logic = (function () {
       for (const q of this.zombies) z.push([q.id, r2(q.x), r2(q.y), r2(q.yaw), q.state, Math.round(q.hp), r2(q.hitT), r2(q.deadT), r2(q.phase), r2(q.attackT), q.act, r2(q.actT), r2(q.seqT), r2(q.vis), q.atk, q.combo, q.dodgeDir, q.headGone ? 1 : 0, q.untouch ? 1 : 0, r2(q.shield), r2(q.gz || 0)]);
       const p = this.pickups.map((k) => [k.id, r2(k.x), r2(k.y), r2(k.h), k.landed ? 1 : 0, r2(k.pull)]);
       const me = this.coop.id, pl = [[me, r2(this.px), r2(this.py), r2(this.yaw), r2(this.pitch), Math.round(this.hp), this.maxHp, this.alive ? 1 : 0, this.w().cfg.id, this.crouchT > 0.5 ? 1 : 0, this.moving ? 1 : 0, Math.round(this.armor), this.kills, this.headshots, this.bonus, this.team || "h", this.armorMax, r2(this.gz)]];
-      for (const o of this.others) pl.push([o.id, r2(o.x), r2(o.y), r2(o.yaw), r2(o.pitch), Math.round(o.hp), o.maxHp, o.alive ? 1 : 0, o.wi, o.cr, o.mv, Math.round(o.armor), o.kills, o.hs, o.bonus, o.team || "h", o.armorMax || 0, r2(o.gz || 0)]);
+      for (const o of this.others) pl.push([o.id, r2(o.x), r2(o.y), r2(o.yaw), r2(o.pitch), Math.round(o.hp), o.maxHp, o.alive ? 1 : 0, o.wi, o.cr, o.mv, Math.round(o.armor), o.kills, o.hs, o.bonus, o.team || "h", o.armorMax || 0, r2(o.gz || 0), o.bot ? o.name : ""]);
       return { tm: r2(this.time), w: this.wave, zl: this.aliveZombies().length + this.toSpawn, sc: this.score, bw: this.between ? 1 : 0, pt: r2(this.pauseT), bn: this.banner, bs: this.bannerSub, bT: r2(this.bannerT), z, p, pl, zn: newZ, pn: newP, inf: this.inf ? [this.inf.ph, Math.ceil(this.inf.t), this.inf.hu, this.inf.zo, this.inf.win] : 0, bo: this.boosts ? this.boosts.map((b) => (b.on ? 1 : 0)) : 0 };
     }
     // registros estáticos de zumbis e itens novos (enviados uma vez)
@@ -2151,12 +2152,91 @@ const Logic = (function () {
       this.gm = "infect"; this.inf = { ph: "prep", t: 10, hu: 0, zo: 0, win: "" }; this.team = "h";
       this.infVest(this);
       for (const o of this.others) { o.team = "h"; this.infVest(o); }
+      const sp0 = this.ringSpot(0); this.px = sp0[0]; this.py = sp0[1];
       this.zombies = []; this.pickups = []; this.toSpawn = 0; this.queue = []; this.giantsLeft = 0; this.between = false; this.wave = 1;
     }
     infVest(p) { p.armorMax = Math.max(p.armorMax || 0, 50); p.armor = p.armorMax; }   // infecção: todo humano começa com colete
     infectJoin(id) {                                                  // jogador entrou na sala de infecção
       const o = this.remote(id); if (!o) return;
-      if (this.inf.ph === "prep") { o.team = "h"; this.infVest(o); } else this.becomeZombie(id);
+      if (this.inf.ph === "prep") {
+        o.team = "h"; this.infVest(o);
+        const sp = this.ringSpot(this.others.indexOf(o) + 1); o.x = sp[0]; o.y = sp[1]; o.gz = 0;
+        if (!o.bot) this.fx(id, ["respawn", sp[0], sp[1]]);
+      } else this.becomeZombie(id);
+    }
+    ringSpot(i) { const a = i * 2.39996 + 0.4, r = 7.5 + (i % 3) * 1.6; return [Math.cos(a) * r, Math.sin(a) * r]; }   // em volta do chafariz
+    // ---------- bots (anfitrião controla; para os outros parecem jogadores) ----------
+    addBot(id, name) {
+      const W = ["ax4", "smg", "brutus", "ax4", "p45", "revolver", "smg"], w = W[this.randint(W.length)];
+      const o = this.addRemote(id, name, { loadout: [{ id: w, a: {} }, { id: "p45", a: {} }] });
+      o.bot = { stam: 100, tired: false, t: 0, wp: null, stuck: 0, detourT: 0, detour: 0, shootT: 0.5 + this.rnd(), aimErr: 0.03 + this.rnd() * 0.05, lastX: o.x, lastY: o.y, lastD: 0 };
+      o.gz = 0; o.vz = 0; o.boostT = 0;
+      if (this.gm === "infect") this.infectJoin(id);
+      return o;
+    }
+    botLos(o, x, y, h) {
+      const ex = o.x, ey = o.y, ez = (o.gz || 0) + 1.6, dx = x - ex, dy = y - ey, dz = h - ez, L = Math.hypot(dx, dy, dz) || 1;
+      const r = this.cast(ex, ey, ez, dx / L, dy / L, dz / L, null, L + 0.5);
+      return r.kind === "zombie" || r.t >= L - 0.3;
+    }
+    botMove(o, ang, spd, dt) {
+      const B = o.bot;
+      if (B.detourT > 0) { B.detourT -= dt; ang += B.detour; }
+      const mx = -Math.sin(ang), my = Math.cos(ang);
+      const nx = o.x + mx * spd * dt, ny = o.y + my * spd * dt;
+      const q = pushOut(nx, ny, PLAYER_R, o.gz || 0);
+      const moved = Math.hypot(q[0] - o.x, q[1] - o.y);
+      o.x = q[0]; o.y = q[1]; o.mv = moved > 0.002 ? 1 : 0;
+      const g = groundAt(o.x, o.y, o.gz || 0);                                   // escadas e beiradas
+      if (g >= (o.gz || 0)) { o.gz = g; o.vz = 0; } else { o.vz = (o.vz || 0) - 22 * dt; o.gz = Math.max(g, o.gz + o.vz * dt); }
+      if (moved < spd * dt * 0.35) { B.stuck += dt; if (B.stuck > 0.5) { B.stuck = 0; B.detour = (this.rnd() < 0.5 ? -1 : 1) * (0.9 + this.rnd() * 1.2); B.detourT = 0.8 + this.rnd() * 1.2; B.wp = null; } }
+      else B.stuck = Math.max(0, B.stuck - dt);
+    }
+    updateBots(dt) {
+      const ps = this.infPlayers();
+      for (const o of this.others) {
+        const B = o.bot; if (!B || !o.alive) continue;
+        o.boostT = Math.max(0, (o.boostT || 0) - dt);
+        const sp = PLAYER_SPEED * (o.boostT > 0 ? 1.4 : 1);
+        if ((o.team || "h") === "z") {                                           // infectado: persegue o humano mais perto e ataca
+          let tg = null, bd = 1e9;
+          for (const q of ps) if (q.team === "h" && q.alive) { const d = Math.hypot(q.x - o.x, q.y - o.y) + Math.abs(q.gz - (o.gz || 0)) * 3; if (d < bd) { bd = d; tg = q; } }
+          if (!tg) continue;
+          const ang = Math.atan2(-(tg.x - o.x), tg.y - o.y);
+          o.yaw = ang;
+          if (bd > 1.5) this.botMove(o, ang, sp * SPRINT_MULT, dt);           // infectado corre sem cansar
+          else { o.mv = 0; if (this.inf && this.inf.ph === "play") this.claw(o.id); }
+          continue;
+        }
+        // humano: foge do infectado perto, atira se ele estiver à vista, senão anda pelo mapa
+        let zt = null, zd = 1e9;
+        for (const z of this.zombies) if (z.state !== "dead") { const d = Math.hypot(z.x - o.x, z.y - o.y); if (d < zd) { zd = d; zt = z; } }
+        let moveAng = null, spd = sp;
+        let sprint = false;
+        if (zt && zd < 7) { moveAng = Math.atan2(-(o.x - zt.x), o.y - zt.y) + Math.sin(this.time * 1.3 + o.x) * 0.6; sprint = zd < 4.5 && !B.tired; }
+        else {
+          if (!B.wp || Math.hypot(B.wp[0] - o.x, B.wp[1] - o.y) < 2 || (B.t -= dt) <= 0) { const A = ARENA - 4; B.wp = [(this.rnd() * 2 - 1) * A, (this.rnd() * 2 - 1) * A]; B.t = 8 + this.rnd() * 8; }
+          moveAng = Math.atan2(-(B.wp[0] - o.x), B.wp[1] - o.y); spd = sp * 0.75;
+        }
+        if (sprint) { spd = sp * SPRINT_MULT; B.stam -= 22 * dt; if (B.stam <= 0) { B.stam = 0; B.tired = true; } }   // humano cansa como o jogador
+        else { B.stam = Math.min(100, B.stam + 14 * dt); if (B.tired && B.stam > 25) B.tired = false; }
+        B.shootT -= dt;
+        if (zt && zd < 26 && this.inf && this.inf.ph === "play") {
+          const hz = (zt.gz || 0) + 1.2;
+          if (B.shootT <= 0 && this.botLos(o, zt.x, zt.y, hz)) {
+            const c = o.cfgs[0], ex = o.x, ey = o.y, ez = (o.gz || 0) + 1.6;
+            const yaw = Math.atan2(-(zt.x - ex), zt.y - ey) + (this.rnd() - 0.5) * B.aimErr * 2, pit = Math.atan2(hz - ez, zd) + (this.rnd() - 0.5) * B.aimErr * 2;
+            o.yaw = yaw; o.pitch = pit;
+            const cp = Math.cos(pit), dirs = [];
+            for (let k = 0; k < c.pellets; k++) { const j = c.pellets > 1 ? 0.06 : 0; dirs.push([-Math.sin(yaw + (this.rnd() - 0.5) * j) * cp, Math.cos(yaw + (this.rnd() - 0.5) * j) * cp, Math.sin(pit)]); }
+            this.remoteShot(o.id, { s: 0, o: [ex, ey, ez], d: dirs });
+            B.shootT = Math.max(c.delay, 0.12) * (1 + this.rnd() * 1.5);
+            if (zd > 6) { o.mv = 0; continue; }                                  // longe: para e atira
+          }
+        }
+        this.botMove(o, moveAng, spd, dt);
+        if (!(zt && zd < 26)) o.yaw = moveAng;
+      }
     }
     posOf(id) { if (id === this.coop.id) return [this.px, this.py, this.yaw, this.gz]; const o = this.remote(id); return o ? [o.x, o.y, o.yaw, o.gz || 0] : [0, 0, 0, 0]; }
     infPlayers() {
@@ -2215,6 +2295,7 @@ const Logic = (function () {
       this.events.push(["inf_end", w]);
     }
     updateInfect(dt) {
+      this.updateBots(dt);
       const I = this.inf, ps = this.infPlayers();
       for (const q of ps) {
         q.p.clawT = Math.max(0, (q.p.clawT || 0) - dt);
@@ -2239,8 +2320,9 @@ const Logic = (function () {
       if (I.ph === "prep") {
         I.t -= dt; this.banner = "INFECÇÃO EM " + Math.max(1, Math.ceil(I.t)); this.bannerSub = "Corra e se espalhe!"; this.bannerT = 0.4;
         if (I.t <= 0) {
-          const c = ps.filter((q) => q.alive), pick = c[this.randint(c.length)];
-          I.ph = "play"; I.t = 180; this.becomeZombie(pick.id, true);
+          const c = ps.filter((q) => q.alive), nz = Math.max(1, Math.round(c.length / 6));   // 1 infectado a cada 6 jogadores
+          I.ph = "play"; I.t = 180;
+          for (let k = 0; k < nz && c.length; k++) { const pick = c.splice(this.randint(c.length), 1)[0]; this.becomeZombie(pick.id, true); }
           this.banner = "A INFECÇÃO COMEÇOU"; this.bannerSub = "Fuja dos zumbis por 3 minutos"; this.bannerT = 3; this.events.push(["wave", 1]);
         }
       } else if (I.ph === "play") {
@@ -2260,7 +2342,7 @@ const Logic = (function () {
         if (!b.on) { b.t -= dt; if (b.t <= 0) b.on = true; continue; }
         for (const q of ps) {
           if (!q.alive || Math.hypot(q.x - b.x, q.y - b.y) > 1.3 || Math.abs(q.gz - b.z) > 1.2) continue;
-          if (b.k === "speed") { if (q.me) { this.boostT = 8; this.events.push(["boost_me", "speed"]); } else this.fx(q.id, ["boost", "speed", 8]); }
+          if (b.k === "speed") { if (q.me) { this.boostT = 8; this.events.push(["boost_me", "speed"]); } else if (q.p.bot) q.p.boostT = 8; else this.fx(q.id, ["boost", "speed", 8]); }
           else if (q.team === "z") { const z = this.pz(q.id); if (z) z.hp = Math.min(z.maxHp, z.hp + 400); if (q.me) this.events.push(["boost_me", "health"]); else this.fx(q.id, ["boost", "health", 0]); }
           else { q.p.hp = Math.min(q.p.maxHp, q.p.hp + 50); if (q.me) this.events.push(["boost_me", "health"]); else this.fx(q.id, ["boost", "health", 0]); }
           b.on = false; b.t = 25; this.events.push(["boost", b.k, b.x, b.y]);
@@ -2317,7 +2399,7 @@ const Logic = (function () {
         seenO.add(a[0]);
         let o = this.others.find((q) => q.id === a[0]);
         if (!o) { o = { id: a[0], name: "", x: a[1], y: a[2], yaw: a[3], pitch: 0, hp: 100, maxHp: 100, alive: true, wi: "ax4", cr: 0, mv: 0, flash: 0, tx: a[1], ty: a[2], tyaw: a[3] }; this.others.push(o); }
-        o.tx = a[1]; o.ty = a[2]; o.tyaw = a[3]; o.pitch = a[4]; o.hp = a[5]; o.maxHp = a[6]; o.alive = !!a[7]; o.wi = a[8]; o.cr = a[9]; o.mv = a[10]; o.team = a[15] || "h"; o.gz = a[17] || 0;
+        o.tx = a[1]; o.ty = a[2]; o.tyaw = a[3]; o.pitch = a[4]; o.hp = a[5]; o.maxHp = a[6]; o.alive = !!a[7]; o.wi = a[8]; o.cr = a[9]; o.mv = a[10]; o.team = a[15] || "h"; o.gz = a[17] || 0; if (a[18]) o.name = a[18];
       }
       if (s.bo) { if (!this.boosts) this.initBoosts(); s.bo.forEach((v, i) => { if (this.boosts[i]) this.boosts[i].on = !!v; }); }
       if (s.inf) { this.gm = "infect"; this.inf = { ph: s.inf[0], t: s.inf[1], hu: s.inf[2], zo: s.inf[3], win: s.inf[4] }; }
@@ -8421,7 +8503,7 @@ const Logic = (function () {
   }
 
   const Coop = (() => {
-    const st = { ws: null, id: null, host: false, code: "", status: "off", msg: "", players: [], stamp: "0", gm: "coop", gmSel: "coop", started: false, diff: "normal", starting: false, over: false, name: "" };
+    const st = { ws: null, id: null, host: false, code: "", status: "off", msg: "", players: [], stamp: "0", gm: "coop", gmSel: "coop", bots: true, local: false, started: false, diff: "normal", starting: false, over: false, name: "" };
     const lobby = {};                       // anfitrião: id -> { name, info, full }
     let acc = 0, sAcc = 0, sentZ = new Set(), sentP = new Set(), pingT = 0, game0 = null;
     const WORLD = /^(wave|giant|elite|kill|clear|wall|hit|rshot|ally_down|infected|claw|inf_end|zrespawn|boost$|tank_|sam_|wraith_)/;
@@ -8438,7 +8520,7 @@ const Logic = (function () {
       catch (e) { let h = 5381; for (const c of "arena-zumbi:" + pw) h = ((h * 33) ^ c.charCodeAt(0)) >>> 0; return "x" + h.toString(16); }
     }
     function send(o, to) { if (!st.ws || st.ws.readyState !== 1) return; if (to) o.to = to; try { st.ws.send(JSON.stringify(o)); } catch (e) {} }
-    const connected = () => !!st.ws && st.status === "on";
+    const connected = () => !!(st.ws || st.local) && st.status === "on";
     function nameOf(id) { const p = st.players.find((q) => q.id === id); return p ? p.name : id === "p1" ? "Anfitrião" : "Jogador"; }
     function shirtOf(id) {                                                  // cada jogador tem uma das 4 cores; a ordem é sorteada por sala
       let h = 2166136261; for (const c of st.code + "|" + st.stamp) h = Math.imul(h ^ c.charCodeAt(0), 16777619) >>> 0;
@@ -8452,7 +8534,7 @@ const Logic = (function () {
       $("coopOff").hidden = on; $("coopOn").hidden = !on; $("coopModes").hidden = on;
       if (on) {
         $("coopRoom").textContent = st.label || st.code;
-        $("coopMode").textContent = st.gm === "infect" ? "Infecção · até 8 jogadores" : "Co-op · até 4 jogadores";
+        $("coopMode").textContent = st.local ? "Infecção offline · você + 11 bots" : st.gm === "infect" ? "Infecção · até 12 jogadores" + (st.bots ? " · bots completam a sala" : "") : "Co-op · até 4 jogadores";
         e.innerHTML = st.players.map((p, i) => '<div class="coop-p"><i style="background:' + colorHex(shirtOf(p.id)) + '"></i><b>' + p.name.replace(/[<>&]/g, "") + "</b>" + (p.id === "p1" ? "<span>anfitrião</span>" : "") + (p.id === st.id ? "<span>você</span>" : "") + "</div>").join("");
         $("coopHint").textContent = st.host ? (st.started ? "Partida em andamento. Quem entrar agora cai direto no jogo." : "Quando todos entrarem, clique em Jogar (embaixo) para começar.") : (st.started ? "Partida em andamento." : "Aguardando o anfitrião iniciar a partida.");
       }
@@ -8470,7 +8552,7 @@ const Logic = (function () {
       const h = serverHost(), pw = await hashPw(pass);
       st.name = (S.name || "Sobrevivente").slice(0, 14); st.code = code; st.label = String(label).trim().slice(0, 16); st.host = role === "host"; if (st.host) st.gm = st.gmSel; st.status = "connecting"; setMsg("Conectando...");
       const local = /^(localhost|127\.|192\.168\.|10\.)/.test(h);
-      let ws; try { ws = new WebSocket((local ? "ws://" : "wss://") + h + "/ws/" + code + "?role=" + role + (pw ? "&pw=" + pw : "") + (role === "host" ? "&max=" + (st.gmSel === "infect" ? 8 : 4) : "")); } catch (e) { setMsg("Não consegui conectar ao servidor.", "err"); st.status = "off"; return; }
+      let ws; try { ws = new WebSocket((local ? "ws://" : "wss://") + h + "/ws/" + code + "?role=" + role + (pw ? "&pw=" + pw : "") + (role === "host" ? "&max=" + (st.gmSel === "infect" ? 12 : 4) : "")); } catch (e) { setMsg("Não consegui conectar ao servidor.", "err"); st.status = "off"; return; }
       st.ws = ws;
       ws.onopen = () => { pingT = performance.now(); };
       ws.onmessage = (ev) => { if (ws !== st.ws) return; if (ev.data === "pong") return; let m; try { m = JSON.parse(ev.data); } catch (e) { return; } onMsg(m); };
@@ -8480,7 +8562,7 @@ const Logic = (function () {
       ws.onerror = () => {};
     }
     function leave(silent) {
-      const ws = st.ws; st.ws = null; st.status = "off"; st.started = false; st.players = []; st.over = false; for (const k in lobby) delete lobby[k];
+      const ws = st.ws; st.ws = null; st.local = false; st.status = "off"; st.started = false; st.players = []; st.over = false; for (const k in lobby) delete lobby[k];
       if (ws) { try { ws.close(); } catch (e) {} }
       if (!silent) setMsg("");
       renderLobby();
@@ -8518,8 +8600,18 @@ const Logic = (function () {
       }
     }
     function endMatchForGuest() { if (state === "run" || state === "pause") { st.over = true; } }
+    const BOT_NAMES = ["Marco", "Giulia", "Luca", "Sofia", "Matteo", "Chiara", "Paolo", "Elena", "Franco", "Rosa", "Dario", "Bianca"];
+    const MAX_INF = 12;
+    function fillBots(g) {                                                    // completa a sala de infecção com bots
+      let n = 1 + g.others.length, k = 0;
+      while (n < MAX_INF) { k++; const id = "b" + k; if (g.remote(id)) continue; g.addBot(id, BOT_NAMES[(k - 1) % BOT_NAMES.length] + " (bot)"); n++; }
+    }
     function hostAddRemote(id) {
       const L = lobby[id]; if (!L || !game || !game.coop) return;
+      if (game.gm === "infect" && 1 + game.others.length >= MAX_INF) {            // jogador de verdade entrou: sai um bot
+        const b = game.others.filter((o) => o.bot && o.id !== id).sort((a, c) => (a.team === "h") - (c.team === "h"))[0];
+        if (b) game.removeRemote(b.id);
+      }
       game.addRemote(id, L.name, L.info || {}); L.needFull = true;
       if (game.gm === "infect" && game.inf) game.infectJoin(id);   // colete na preparação; no meio da rodada já chega zumbi
     }
@@ -8530,6 +8622,7 @@ const Logic = (function () {
       g.enableCoop(st.host ? "host" : "guest", st.id); game0 = g; acc = sAcc = 0; sentZ = new Set(); sentP = new Set(); st.over = false;
       if (st.host && st.gm === "infect") g.infectStart(); else if (!st.host) g.gm = st.gm === "infect" ? "infect" : "";
       if (st.host) { for (const id in lobby) if (lobby[id].info) hostAddRemote(id); }
+      if (st.host && st.gm === "infect" && st.bots) fillBots(g);
     }
     const active = () => connected() && !!game && !!game.coop;
     function ended() { return !active() || (st.host ? !!game.over : st.over); }
@@ -8542,7 +8635,7 @@ const Logic = (function () {
     function afterUpdate(g, dt) {
       if (!active()) return;
       if (st.host) hostRelay(g, dt); else guestSend(g, dt);
-      if (performance.now() - pingT > 15000) { pingT = performance.now(); try { st.ws.send("ping"); } catch (e) {} }
+      if (st.ws && performance.now() - pingT > 15000) { pingT = performance.now(); try { st.ws.send("ping"); } catch (e) {} }
     }
     function guestSend(g, dt) {
       if (g.lastShot) { const s = g.lastShot; g.lastShot = null; send({ t: "shot", s: s.s, o: s.o, d: s.d }); }
@@ -8554,7 +8647,7 @@ const Logic = (function () {
       if (g.over && !st.overSent) { st.overSent = true; send({ t: "over" }); }
       if (!g.over) st.overSent = false;
       const fx = g.popOut();
-      if (!ids.length) return;
+      if (!ids.length || !st.ws) return;
       // efeitos para cada convidado
       const list = [];
       for (const e of g.events) {
@@ -8568,7 +8661,7 @@ const Logic = (function () {
         if (mine.length) send({ t: "ev", e: mine }, id);
       }
       const per = {}; for (const f of fx) (per[f[0]] = per[f[0]] || []).push(f[1]);
-      for (const id in per) send({ t: "fx", e: per[id] }, id);
+      for (const id in per) if (lobby[id]) send({ t: "fx", e: per[id] }, id);        // bots não recebem mensagens
       // estado do mundo ~15 vezes por segundo
       sAcc += dt; if (sAcc < 1 / 15) return; sAcc = 0;
       const nz = [], np = [];
@@ -8633,6 +8726,12 @@ const Logic = (function () {
       paint();
       const go = (role) => { try { localStorage.setItem("arena-zumbi-room", nm.value.trim()); } catch (e) {} open(role, nm.value, $("coopPass").value); };
       $("btnCoopCreate").addEventListener("click", () => go("host"));
+      const bt = $("coopBots"); if (bt) { bt.classList.toggle("on", st.bots); bt.addEventListener("click", () => { st.bots = !st.bots; bt.classList.toggle("on", st.bots); renderLobby(); }); }
+      $("btnCoopOffline").addEventListener("click", () => {                      // infecção sem internet: você contra/ao lado de 11 bots
+        leave(true); st.local = true; st.status = "on"; st.host = true; st.id = "p1"; st.gm = "infect"; st.bots = true; st.code = "OFFLINE"; st.label = "Offline";
+        st.name = (S.name || "Sobrevivente").slice(0, 14); st.players = [{ id: "p1", name: st.name }]; st.started = false; setMsg("Sala offline com bots.", "ok"); renderLobby();
+        startGame();
+      });
       $("btnCoopJoin").addEventListener("click", () => go("guest"));
       $("btnCoopLeave").addEventListener("click", () => { onToMenu(); leave(); });
       for (const id of ["coopName", "coopPass"]) $(id).addEventListener("keydown", (e) => { e.stopPropagation(); if (e.key === "Enter") go("guest"); });

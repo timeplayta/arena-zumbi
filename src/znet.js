@@ -170,7 +170,7 @@
   }
 
   const Coop = (() => {
-    const st = { ws: null, id: null, host: false, code: "", status: "off", msg: "", players: [], stamp: "0", gm: "coop", gmSel: "coop", started: false, diff: "normal", starting: false, over: false, name: "" };
+    const st = { ws: null, id: null, host: false, code: "", status: "off", msg: "", players: [], stamp: "0", gm: "coop", gmSel: "coop", bots: true, local: false, started: false, diff: "normal", starting: false, over: false, name: "" };
     const lobby = {};                       // anfitrião: id -> { name, info, full }
     let acc = 0, sAcc = 0, sentZ = new Set(), sentP = new Set(), pingT = 0, game0 = null;
     const WORLD = /^(wave|giant|elite|kill|clear|wall|hit|rshot|ally_down|infected|claw|inf_end|zrespawn|boost$|tank_|sam_|wraith_)/;
@@ -187,7 +187,7 @@
       catch (e) { let h = 5381; for (const c of "arena-zumbi:" + pw) h = ((h * 33) ^ c.charCodeAt(0)) >>> 0; return "x" + h.toString(16); }
     }
     function send(o, to) { if (!st.ws || st.ws.readyState !== 1) return; if (to) o.to = to; try { st.ws.send(JSON.stringify(o)); } catch (e) {} }
-    const connected = () => !!st.ws && st.status === "on";
+    const connected = () => !!(st.ws || st.local) && st.status === "on";
     function nameOf(id) { const p = st.players.find((q) => q.id === id); return p ? p.name : id === "p1" ? "Anfitrião" : "Jogador"; }
     function shirtOf(id) {                                                  // cada jogador tem uma das 4 cores; a ordem é sorteada por sala
       let h = 2166136261; for (const c of st.code + "|" + st.stamp) h = Math.imul(h ^ c.charCodeAt(0), 16777619) >>> 0;
@@ -201,7 +201,7 @@
       $("coopOff").hidden = on; $("coopOn").hidden = !on; $("coopModes").hidden = on;
       if (on) {
         $("coopRoom").textContent = st.label || st.code;
-        $("coopMode").textContent = st.gm === "infect" ? "Infecção · até 8 jogadores" : "Co-op · até 4 jogadores";
+        $("coopMode").textContent = st.local ? "Infecção offline · você + 11 bots" : st.gm === "infect" ? "Infecção · até 12 jogadores" + (st.bots ? " · bots completam a sala" : "") : "Co-op · até 4 jogadores";
         e.innerHTML = st.players.map((p, i) => '<div class="coop-p"><i style="background:' + colorHex(shirtOf(p.id)) + '"></i><b>' + p.name.replace(/[<>&]/g, "") + "</b>" + (p.id === "p1" ? "<span>anfitrião</span>" : "") + (p.id === st.id ? "<span>você</span>" : "") + "</div>").join("");
         $("coopHint").textContent = st.host ? (st.started ? "Partida em andamento. Quem entrar agora cai direto no jogo." : "Quando todos entrarem, clique em Jogar (embaixo) para começar.") : (st.started ? "Partida em andamento." : "Aguardando o anfitrião iniciar a partida.");
       }
@@ -219,7 +219,7 @@
       const h = serverHost(), pw = await hashPw(pass);
       st.name = (S.name || "Sobrevivente").slice(0, 14); st.code = code; st.label = String(label).trim().slice(0, 16); st.host = role === "host"; if (st.host) st.gm = st.gmSel; st.status = "connecting"; setMsg("Conectando...");
       const local = /^(localhost|127\.|192\.168\.|10\.)/.test(h);
-      let ws; try { ws = new WebSocket((local ? "ws://" : "wss://") + h + "/ws/" + code + "?role=" + role + (pw ? "&pw=" + pw : "") + (role === "host" ? "&max=" + (st.gmSel === "infect" ? 8 : 4) : "")); } catch (e) { setMsg("Não consegui conectar ao servidor.", "err"); st.status = "off"; return; }
+      let ws; try { ws = new WebSocket((local ? "ws://" : "wss://") + h + "/ws/" + code + "?role=" + role + (pw ? "&pw=" + pw : "") + (role === "host" ? "&max=" + (st.gmSel === "infect" ? 12 : 4) : "")); } catch (e) { setMsg("Não consegui conectar ao servidor.", "err"); st.status = "off"; return; }
       st.ws = ws;
       ws.onopen = () => { pingT = performance.now(); };
       ws.onmessage = (ev) => { if (ws !== st.ws) return; if (ev.data === "pong") return; let m; try { m = JSON.parse(ev.data); } catch (e) { return; } onMsg(m); };
@@ -229,7 +229,7 @@
       ws.onerror = () => {};
     }
     function leave(silent) {
-      const ws = st.ws; st.ws = null; st.status = "off"; st.started = false; st.players = []; st.over = false; for (const k in lobby) delete lobby[k];
+      const ws = st.ws; st.ws = null; st.local = false; st.status = "off"; st.started = false; st.players = []; st.over = false; for (const k in lobby) delete lobby[k];
       if (ws) { try { ws.close(); } catch (e) {} }
       if (!silent) setMsg("");
       renderLobby();
@@ -267,8 +267,18 @@
       }
     }
     function endMatchForGuest() { if (state === "run" || state === "pause") { st.over = true; } }
+    const BOT_NAMES = ["Marco", "Giulia", "Luca", "Sofia", "Matteo", "Chiara", "Paolo", "Elena", "Franco", "Rosa", "Dario", "Bianca"];
+    const MAX_INF = 12;
+    function fillBots(g) {                                                    // completa a sala de infecção com bots
+      let n = 1 + g.others.length, k = 0;
+      while (n < MAX_INF) { k++; const id = "b" + k; if (g.remote(id)) continue; g.addBot(id, BOT_NAMES[(k - 1) % BOT_NAMES.length] + " (bot)"); n++; }
+    }
     function hostAddRemote(id) {
       const L = lobby[id]; if (!L || !game || !game.coop) return;
+      if (game.gm === "infect" && 1 + game.others.length >= MAX_INF) {            // jogador de verdade entrou: sai um bot
+        const b = game.others.filter((o) => o.bot && o.id !== id).sort((a, c) => (a.team === "h") - (c.team === "h"))[0];
+        if (b) game.removeRemote(b.id);
+      }
       game.addRemote(id, L.name, L.info || {}); L.needFull = true;
       if (game.gm === "infect" && game.inf) game.infectJoin(id);   // colete na preparação; no meio da rodada já chega zumbi
     }
@@ -279,6 +289,7 @@
       g.enableCoop(st.host ? "host" : "guest", st.id); game0 = g; acc = sAcc = 0; sentZ = new Set(); sentP = new Set(); st.over = false;
       if (st.host && st.gm === "infect") g.infectStart(); else if (!st.host) g.gm = st.gm === "infect" ? "infect" : "";
       if (st.host) { for (const id in lobby) if (lobby[id].info) hostAddRemote(id); }
+      if (st.host && st.gm === "infect" && st.bots) fillBots(g);
     }
     const active = () => connected() && !!game && !!game.coop;
     function ended() { return !active() || (st.host ? !!game.over : st.over); }
@@ -291,7 +302,7 @@
     function afterUpdate(g, dt) {
       if (!active()) return;
       if (st.host) hostRelay(g, dt); else guestSend(g, dt);
-      if (performance.now() - pingT > 15000) { pingT = performance.now(); try { st.ws.send("ping"); } catch (e) {} }
+      if (st.ws && performance.now() - pingT > 15000) { pingT = performance.now(); try { st.ws.send("ping"); } catch (e) {} }
     }
     function guestSend(g, dt) {
       if (g.lastShot) { const s = g.lastShot; g.lastShot = null; send({ t: "shot", s: s.s, o: s.o, d: s.d }); }
@@ -303,7 +314,7 @@
       if (g.over && !st.overSent) { st.overSent = true; send({ t: "over" }); }
       if (!g.over) st.overSent = false;
       const fx = g.popOut();
-      if (!ids.length) return;
+      if (!ids.length || !st.ws) return;
       // efeitos para cada convidado
       const list = [];
       for (const e of g.events) {
@@ -317,7 +328,7 @@
         if (mine.length) send({ t: "ev", e: mine }, id);
       }
       const per = {}; for (const f of fx) (per[f[0]] = per[f[0]] || []).push(f[1]);
-      for (const id in per) send({ t: "fx", e: per[id] }, id);
+      for (const id in per) if (lobby[id]) send({ t: "fx", e: per[id] }, id);        // bots não recebem mensagens
       // estado do mundo ~15 vezes por segundo
       sAcc += dt; if (sAcc < 1 / 15) return; sAcc = 0;
       const nz = [], np = [];
@@ -382,6 +393,12 @@
       paint();
       const go = (role) => { try { localStorage.setItem("arena-zumbi-room", nm.value.trim()); } catch (e) {} open(role, nm.value, $("coopPass").value); };
       $("btnCoopCreate").addEventListener("click", () => go("host"));
+      const bt = $("coopBots"); if (bt) { bt.classList.toggle("on", st.bots); bt.addEventListener("click", () => { st.bots = !st.bots; bt.classList.toggle("on", st.bots); renderLobby(); }); }
+      $("btnCoopOffline").addEventListener("click", () => {                      // infecção sem internet: você contra/ao lado de 11 bots
+        leave(true); st.local = true; st.status = "on"; st.host = true; st.id = "p1"; st.gm = "infect"; st.bots = true; st.code = "OFFLINE"; st.label = "Offline";
+        st.name = (S.name || "Sobrevivente").slice(0, 14); st.players = [{ id: "p1", name: st.name }]; st.started = false; setMsg("Sala offline com bots.", "ok"); renderLobby();
+        startGame();
+      });
       $("btnCoopJoin").addEventListener("click", () => go("guest"));
       $("btnCoopLeave").addEventListener("click", () => { onToMenu(); leave(); });
       for (const id of ["coopName", "coopPass"]) $(id).addEventListener("keydown", (e) => { e.stopPropagation(); if (e.key === "Enter") go("guest"); });
