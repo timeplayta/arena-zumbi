@@ -704,6 +704,7 @@ const Logic = (function () {
       if (ln > 1) { mx /= ln; my /= ln; }
       // fôlego e stamina
       this.sprinting = !!inp.sprint && fwd > 0 && !this.ads && !this.exhausted && this.stamina > 0 && this.crouchT < 0.4 && this.moving;
+      if (this.team === "z") { this.stamina = 100; this.exhausted = false; }      // infectado: corrida infinita
       if (this.sprinting) { this.stamina -= 22 * this.stamK * dt; if (this.stamina <= 0) { this.stamina = 0; this.exhausted = true; this.events.push(["winded"]); } }
       else { this.stamina = Math.min(100, this.stamina + (this.moving ? 14 : 22) * dt); if (this.exhausted && this.stamina > 25) this.exhausted = false; }
       const wantHold = !!inp.hold && this.ads && c.scope;
@@ -714,7 +715,6 @@ const Logic = (function () {
       if (this.ads) speed *= c.adsSpeed;
       speed *= 1 - 0.45 * this.crouchT;
       speed *= this.crackSlow;
-      if (this.team === "z") speed *= 1.22;
       if (this.moving) {
         this.px += mx * speed * dt; this.py += my * speed * dt;
         [this.px, this.py] = pushOut(this.px, this.py, PLAYER_R);
@@ -1290,8 +1290,7 @@ const Logic = (function () {
     }
     pz(id) { return this.zombies.find((z) => z.puppet === id && z.state !== "dead") || null; }
     spawnPuppet(id, x, y) {
-      const hu = this.infPlayers().filter((q) => q.team === "h").length;
-      const z = new Zombie(x, y, 400 + 120 * Math.max(1, hu), 0, "walker", this.randint(3), this, 1);
+      const z = new Zombie(x, y, 1000, 0, "walker", this.randint(3), this, 1);
       z.puppet = id; z.s = 1.12; z.limp = false; z.clawShow = 0;
       this.zombies.push(z); return z;
     }
