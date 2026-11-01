@@ -102,52 +102,58 @@
   }
   function clearAllies() { for (const v of allyViews.values()) scene.remove(v.root); allyViews.clear(); }
 
+  function buildZArms(THREE, J, opts) {
+    opts = opts || {};
+    const g = new THREE.BufferGeometry();
+    g.setAttribute("position", new THREE.Float32BufferAttribute(J.pos, 3));
+    g.setAttribute("normal", new THREE.Float32BufferAttribute(J.nrm, 3));
+    g.setAttribute("uv", new THREE.Float32BufferAttribute(J.uv, 2));
+    const n = J.pos.length / 3, si = new Uint16Array(n * 4), sw = new Float32Array(n * 4);
+    for (let i = 0; i < n; i++) for (let j = 0; j < 3; j++) { si[i * 4 + j] = J.si[i * 3 + j]; sw[i * 4 + j] = J.sw[i * 3 + j]; }
+    g.setAttribute("skinIndex", new THREE.Uint16BufferAttribute(si, 4));
+    g.setAttribute("skinWeight", new THREE.Float32BufferAttribute(sw, 4));
+    const keys = Object.keys(J.groups), idx = [];
+    keys.forEach((k, m) => { g.addGroup(idx.length, J.groups[k].length, m); for (const v of J.groups[k]) idx.push(v); });
+    g.setIndex(idx);
+    const mats = keys.map((k) => new THREE.MeshStandardMaterial({ color: opts.colors ? opts.colors[k] : 0xa01c24, roughness: 0.55, skinning: true, side: THREE.DoubleSide }));
+    const mesh = new THREE.SkinnedMesh(g, mats);
+    const bones = J.bones.map((b) => { const o = new THREE.Bone(); o.position.set(b[1], b[2], b[3]); o.quaternion.set(b[4], b[5], b[6], b[7]); return o; });
+    J.bones.forEach((b, i) => { if (b[0] >= 0) bones[b[0]].add(bones[i]); else mesh.add(bones[i]); });
+    mesh.updateMatrixWorld(true);
+    mesh.bind(new THREE.Skeleton(bones));
+    mesh.frustumCulled = false;
+    const conv = new THREE.Group();                 // Source (x frente, y esquerda, z cima, polegadas) -> three (−z frente, y cima, metros)
+    const m4 = new THREE.Matrix4().set(0, -1, 0, 0, 0, 0, 1, 0, -1, 0, 0, 0, 0, 0, 0, 1);
+    conv.quaternion.setFromRotationMatrix(m4); conv.scale.setScalar(0.0254); conv.add(mesh);
+    const qa = new THREE.Quaternion(), qb = new THREE.Quaternion();
+    function pose(name, t, loop) {               // t em segundos
+      const A = J.anims[name]; if (!A) return 0;
+      const nf = A.f.length, ft = t * A.fps;
+      let f0 = Math.floor(ft), k = ft - f0;
+      if (loop) f0 = ((f0 % nf) + nf) % nf; else if (f0 >= nf - 1) { f0 = nf - 1; k = 0; }
+      const f1 = loop ? (f0 + 1) % nf : Math.min(nf - 1, f0 + 1), a = A.f[f0], b = A.f[f1];
+      for (let i = 0; i < bones.length; i++) {
+        const o = i * 7, B = bones[i];
+        B.position.set(a[o] + (b[o] - a[o]) * k, a[o + 1] + (b[o + 1] - a[o + 1]) * k, a[o + 2] + (b[o + 2] - a[o + 2]) * k);
+        qa.set(a[o + 3], a[o + 4], a[o + 5], a[o + 6]); qb.set(b[o + 3], b[o + 4], b[o + 5], b[o + 6]);
+        B.quaternion.copy(qa).slerp(qb, k);
+      }
+      return nf / A.fps;
+    }
+    return { root: conv, mesh, pose, dur: (name) => J.anims[name] ? J.anims[name].f.length / J.anims[name].fps : 0 };
+  }
   // ---------- braços de zumbi em primeira pessoa (modo Infecção) ----------
   const ZArms = (() => {
-    let root = null, swipeT = 1, side = 1;
-    const arms = [];
-    function build() {
-      root = new THREE.Group(); root.visible = false; camera.add(root);
-      const skin = new THREE.MeshStandardMaterial({ color: 0x8c141c, roughness: 0.6 });
-      const vein = new THREE.MeshStandardMaterial({ color: 0x5e0b12, roughness: 0.7 });
-      const claw = new THREE.MeshStandardMaterial({ color: 0x2a0a0c, roughness: 0.35, metalness: 0.2 });
-      const limb = (a, b, r0, r1, m, p) => {
-        const A = new THREE.Vector3(...a), B = new THREE.Vector3(...b), d = B.clone().sub(A), L = d.length();
-        const o = new THREE.Mesh(new THREE.CylinderGeometry(r1, r0, L, 10), m); o.position.copy(A).add(B).multiplyScalar(0.5);
-        o.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), d.normalize()); p.add(o); return o;
-      };
-      for (const sx of [-1, 1]) {
-        const arm = new THREE.Group(); root.add(arm);
-        const pivot = new THREE.Group(); arm.add(pivot);
-        // antebraço vindo do canto da tela até a mão
-        limb([0.34 * sx, -0.5, -0.12], [0.2 * sx, -0.26, -0.5], 0.075, 0.055, skin, pivot);
-        limb([0.33 * sx, -0.47, -0.16], [0.21 * sx, -0.27, -0.47], 0.02, 0.015, vein, pivot).position.x += 0.035 * sx;
-        const hand = new THREE.Group(); hand.position.set(0.2 * sx, -0.25, -0.52); pivot.add(hand);
-        const palm = new THREE.Mesh(new THREE.SphereGeometry(0.06, 12, 8), skin); palm.scale.set(1.2, 0.7, 1.1); hand.add(palm);
-        // 4 garras longas e curvas (3 dedos + polegar)
-        const fingers = [[-0.04, 0.02, -0.25], [0, 0.03, -0.05], [0.04, 0.02, 0.15], [0.06 * -sx, -0.02, -0.6]];
-        fingers.forEach((f, i) => {
-          const fg = new THREE.Group(); fg.position.set(f[0] * sx, f[1], -0.03); fg.rotation.set(0.6, f[2] * sx * 0.8, 0); hand.add(fg);
-          const L1 = i === 3 ? 0.06 : 0.08;
-          limb([0, 0, 0], [0, 0.02, -L1], 0.016, 0.013, skin, fg);
-          const tip = new THREE.Group(); tip.position.set(0, 0.02, -L1); tip.rotation.x = -0.35; fg.add(tip);
-          const c1 = new THREE.Mesh(new THREE.ConeGeometry(0.014, i === 3 ? 0.09 : 0.14, 7), claw); c1.rotation.x = -Math.PI / 2; c1.position.z = -(i === 3 ? 0.045 : 0.07); tip.add(c1);
-        });
-        arms.push({ arm, pivot, sx });
-      }
-    }
-    function swipe() { swipeT = 0; side = -side; }
+    let Z = null, act = "", actT = 0, side = 0, idleT = 0;
+    function swipe() { act = side ? "light_miss2" : "light_miss1"; side ^= 1; actT = 0; }
     function update(g, dt) {
       const on = g.team === "z" && g.alive;
-      if (!root) { if (!on) return; build(); }
-      root.visible = on; if (!on) return;
-      swipeT = Math.min(1, swipeT + dt / 0.38);
-      const t = g.time, bob = g.moving ? Math.sin(g.bob * 0.9) : 0;
-      for (const a of arms) {
-        const act = a.sx === side ? swipeT : 1, k = Math.sin(Math.PI * act);    // golpe: o braço cruza a tela
-        a.pivot.position.set(-a.sx * 0.13 * k, 0.012 * Math.sin(t * 2 + a.sx) + 0.02 * bob * a.sx + 0.07 * k, -0.06 * k);
-        a.pivot.rotation.set(-0.15 * k, 0, a.sx * 0.28 * k + 0.02 * Math.sin(t * 1.7));
-      }
+      if (!Z) { if (!on) return; Z = buildZArms(THREE, ZARMS_DATA, { colors: { 0: 0x1e1416, 1: 0x9a1b22 } }); Z.root.position.set(0, -0.02, 0); camera.add(Z.root); }
+      Z.root.visible = on; if (!on) return;
+      idleT += dt;
+      if (act) { actT += dt; if (actT >= Z.dur(act)) act = ""; else { Z.pose(act, actT, false); return; } }
+      Z.pose("idle1", idleT, true);
+      Z.root.position.y = -0.02 + (g.moving ? Math.sin(g.bob * 0.9) * 0.008 : 0);
     }
     return { swipe, update };
   })();

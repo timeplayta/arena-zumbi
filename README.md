@@ -36,3 +36,7 @@ Teste local: `node online/dev-server.js` e abra http://localhost:8787
 
 Baixe `apk/Arena-Zumbi.apk` e instale no celular (permita "fontes desconhecidas").
 O GitHub Actions compila sozinho a cada mudança em `android/` (o jogo fica em `android/app/src/main/assets/index.html`).
+
+## Ferramentas
+
+`tools/mdl2json.py PASTA saida.json`: converte um modelo Source (`h.mdl`, `h.vvd`, `h.vtx` na PASTA) em malha + ossos + animações para o jogo.
