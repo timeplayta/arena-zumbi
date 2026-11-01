@@ -761,6 +761,19 @@
     if (state === "menu" && ui.tab === "arsenal" && pvRenderer) { pvPivot.rotation.y += dt * 0.7; pvRenderer.render(pvScene, pvCam); }
   }
 
+  // co-op: aba em segundo plano não recebe quadros; um timer de Worker mantém o mundo do anfitrião rodando
+  let bgLast = performance.now();
+  function bgTick() {
+    const now = performance.now(), dt = Math.min((now - bgLast) / 1000, 0.1); bgLast = now;
+    if (!document.hidden || !Coop.active() || (state !== "run" && state !== "pause")) return;
+    last = now; game.update(dt, {}); Coop.afterUpdate(game, dt); processEvents();
+    if (Coop.ended()) onDeath();
+  }
+  try {
+    const bgw = new Worker(URL.createObjectURL(new Blob(["setInterval(function(){postMessage(0)},50)"], { type: "text/javascript" })));
+    bgw.onmessage = bgTick;
+  } catch (e) {}
+
   // ---------------- início ----------------
   window.__arena = { get game() { return game; }, get state() { return state; }, S, startGame, toMenu, TS, touchOn, get pvPivot() { return pvPivot; }, showTab, renderArsenal, ui };
   hfov = 70;

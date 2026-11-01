@@ -1,6 +1,7 @@
 # Novidades — Arena Zumbi
 
 ## Co-op online (31/10/2026)
+- Correção: o mundo do anfitrião não congela mais com a aba em segundo plano.
 - Até 4 jogadores por sala, com código de 5 letras.
 - Anfitrião roda a partida. Cloudflare Worker repassa as mensagens.
 - Aliados aparecem no jogo, no radar e na lista do time.
