@@ -674,7 +674,7 @@ table.sc td:first-child { font-family: var(--font-display); font-size: 22px; col
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
-const GAME_VERSION = 202611012123, GAME_NOTES = {"t": "Kits do infectado (01/11/2026)", "b": ["Infectado abatido solta 2 kits e 2 caixas para cada humano.", "Cada jogador vê e pega só os seus itens.", "Limite: no máximo 2 kits e 2 caixas seus no chão."]};
+const GAME_VERSION = 202611012129, GAME_NOTES = {"t": "Kits do infectado (01/11/2026)", "b": ["Infectado abatido solta 2 kits e 2 caixas para cada humano.", "Cada jogador vê e pega só os seus itens.", "Limite: no máximo 2 kits e 2 caixas seus no chão.", "Itens dos outros nem chegam ao seu jogo: menos peso."]};
 // ==MAPA ITÁLIA== (só o protótipo do modo Infecção)
 // Coordenadas lógicas: x = leste, y = norte, z = altura (m). Caixas sólidas: [x0, x1, y0, y1, topo, base, tipo, extra]
 const ITALIA = (function () {
@@ -1537,7 +1537,7 @@ const Logic = (function () {
         else { this.kills += 1; if (E) this.bonus += Math.round(E.coins * D.coin); if (head) this.headshots += 1; }
         this.events.push(["kill", z.x, z.y, head, pts, z.brute, z.headGone, z.giant, z.kind]);
         if (z.puppet) {                                            // infecção: infectado abatido solta 2 kits médicos e 2 caixas de munição por jogador da sala
-          for (const q of this.infPlayers()) if (q.team === "h") for (const k of ["health", "ammo"]) {   // cada humano vê e pega só os seus: no máximo 2 + 2 no chão
+          for (const q of this.infPlayers()) if (q.team === "h" && !q.p.bot) for (const k of ["health", "ammo"]) {   // bots não ganham itens (menos coisa no mapa)   // cada humano vê e pega só os seus: no máximo 2 + 2 no chão
             const tem = this.pickups.filter((p) => p.own === q.id && p.kind === k).length;
             for (let i = tem; i < 2; i++) { const pk = new Pickup(k, z.x, z.y, this.rnd); pk.gz = z.gz || 0; pk.own = q.id; this.pickups.push(pk); }
           }
@@ -8892,10 +8892,16 @@ const Logic = (function () {
       if (sentZ.size > 400) { const live = new Set(g.zombies.map((q) => q.id)); sentZ = new Set([...sentZ].filter((i) => live.has(i))); }
       if (sentP.size > 400) { const live = new Set(g.pickups.map((q) => q.id)); sentP = new Set([...sentP].filter((i) => live.has(i))); }
       const snap = g.makeSnapshot(nz, np); snap.t = "snap";
+      // itens pessoais (Infecção): cada jogador só recebe os seus
+      const own = g.pickups.map((k) => k.own || ""), pessoal = own.some((o) => o);
+      const forId = (S, id) => (pessoal ? Object.assign({}, S, { p: S.p.filter((_, i) => !own[i] || own[i] === id), pn: S.pn && S.pn.filter((r) => !r.ow || r.ow === id) }) : S);
       const fullIds = ids.filter((id) => lobby[id].needFull), rest = ids.filter((id) => !lobby[id].needFull);
-      if (rest.length) { const s = JSON.stringify(snap); for (const id of rest) { try { st.ws.send(JSON.stringify({ t: "snap", to: id }).slice(0, -1) + "," + s.slice(1)); } catch (e) {} } }
+      if (rest.length) {
+        const s0 = pessoal ? "" : JSON.stringify(snap);
+        for (const id of rest) { const s = s0 || JSON.stringify(forId(snap, id)); try { st.ws.send(JSON.stringify({ t: "snap", to: id }).slice(0, -1) + "," + s.slice(1)); } catch (e) {} }
+      }
       for (const id of fullIds) {
-        const full = g.makeSnapshot(g.zombies.map((q) => g.staticZombie(q)), g.pickups.map((p) => g.staticPickup(p))); full.t = "snap"; send(full, id); lobby[id].needFull = false;
+        const full = g.makeSnapshot(g.zombies.map((q) => g.staticZombie(q)), g.pickups.map((p) => g.staticPickup(p))); full.t = "snap"; send(forId(full, id), id); lobby[id].needFull = false;
       }
     }
     let clawCd = 0;

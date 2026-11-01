@@ -340,10 +340,16 @@
       if (sentZ.size > 400) { const live = new Set(g.zombies.map((q) => q.id)); sentZ = new Set([...sentZ].filter((i) => live.has(i))); }
       if (sentP.size > 400) { const live = new Set(g.pickups.map((q) => q.id)); sentP = new Set([...sentP].filter((i) => live.has(i))); }
       const snap = g.makeSnapshot(nz, np); snap.t = "snap";
+      // itens pessoais (Infecção): cada jogador só recebe os seus
+      const own = g.pickups.map((k) => k.own || ""), pessoal = own.some((o) => o);
+      const forId = (S, id) => (pessoal ? Object.assign({}, S, { p: S.p.filter((_, i) => !own[i] || own[i] === id), pn: S.pn && S.pn.filter((r) => !r.ow || r.ow === id) }) : S);
       const fullIds = ids.filter((id) => lobby[id].needFull), rest = ids.filter((id) => !lobby[id].needFull);
-      if (rest.length) { const s = JSON.stringify(snap); for (const id of rest) { try { st.ws.send(JSON.stringify({ t: "snap", to: id }).slice(0, -1) + "," + s.slice(1)); } catch (e) {} } }
+      if (rest.length) {
+        const s0 = pessoal ? "" : JSON.stringify(snap);
+        for (const id of rest) { const s = s0 || JSON.stringify(forId(snap, id)); try { st.ws.send(JSON.stringify({ t: "snap", to: id }).slice(0, -1) + "," + s.slice(1)); } catch (e) {} }
+      }
       for (const id of fullIds) {
-        const full = g.makeSnapshot(g.zombies.map((q) => g.staticZombie(q)), g.pickups.map((p) => g.staticPickup(p))); full.t = "snap"; send(full, id); lobby[id].needFull = false;
+        const full = g.makeSnapshot(g.zombies.map((q) => g.staticZombie(q)), g.pickups.map((p) => g.staticPickup(p))); full.t = "snap"; send(forId(full, id), id); lobby[id].needFull = false;
       }
     }
     let clawCd = 0;
