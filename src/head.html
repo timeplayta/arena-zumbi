@@ -74,6 +74,7 @@ button { font-family: inherit; color: inherit; }
 #dmgdir i { position: absolute; left: -70px; top: -190px; width: 140px; height: 60px; background: radial-gradient(ellipse at 50% 100%, rgba(255, 40, 30, 0.9), transparent 70%); }
 .btn { background: var(--panel, #161b22); color: var(--fg); border: 1px solid rgba(255,255,255,0.22); padding: 10px 22px; font-family: var(--font-display); font-size: 22px; letter-spacing: 0.08em; text-transform: uppercase; cursor: pointer; }
 .btn:hover { border-color: var(--amber); color: var(--amber); }
+.btn-tog.on { border-color: var(--amber); color: #1a1205; background: var(--amber); }
 .coop-room { display: flex; align-items: baseline; gap: 14px; margin-bottom: 12px; }
 .coop-room span { font-size: 14px; color: var(--muted); letter-spacing: 0.2em; }
 .coop-room b { font-family: var(--font-display); font-size: 44px; letter-spacing: 0.08em; word-break: break-word; color: var(--amber); user-select: text; -webkit-user-select: text; }
@@ -564,7 +565,7 @@ table.sc td:first-child { font-family: var(--font-display); font-size: 22px; col
         <div class="sec" id="coopModes"><h3>Modo</h3>
           <div class="opts">
             <button type="button" class="opt" data-gm="coop"><b>Co-op</b><span>Até 4 jogadores contra as ondas de zumbis, juntos. Quem cair renasce na próxima onda.</span></button>
-            <button type="button" class="opt" data-gm="infect"><b>Infecção</b><span>Até 12 jogadores na vila italiana (casas, morros, boosters). Bots completam a sala. Um a cada 6 começa zumbi e infecta os outros. Humanos vencem se durarem 3 minutos.</span></button>
+            <button type="button" class="opt" data-gm="infect"><b>Infecção</b><span>Até 12 jogadores na vila italiana (casas, morros, boosters), com bots opcionais. Um a cada 6 começa zumbi e infecta os outros. Humanos vencem se durarem 3 minutos.</span></button>
           </div>
           <p>Quem cria a sala escolhe o modo. Quem entra segue o modo da sala.</p></div>
         <div id="coopOff" class="sec">
@@ -572,8 +573,7 @@ table.sc td:first-child { font-family: var(--font-display); font-size: 22px; col
             <div class="field"><label for="coopName">Nome da sala</label><input type="text" id="coopName" maxlength="16" autocomplete="off" spellcheck="false" placeholder="ex.: Turma do Zé"></div>
             <div class="field"><label for="coopPass">Senha (opcional)</label><input type="password" id="coopPass" maxlength="16" autocomplete="off" placeholder="deixe vazio para sala aberta"></div>
           </div>
-          <button type="button" class="tog on" id="coopBots"><span>Infecção: completar a sala com bots (até 12)</span><i></i></button>
-          <div class="row" style="margin-top:14px"><button type="button" class="btn" id="btnCoopCreate">Criar sala</button><button type="button" class="btn" id="btnCoopJoin">Entrar na sala</button><button type="button" class="btn" id="btnCoopOffline">Infecção offline (bots)</button></div>
+          <div class="row" style="margin-top:14px"><button type="button" class="btn" id="btnCoopCreate">Criar sala</button><button type="button" class="btn" id="btnCoopJoin">Entrar na sala</button><button type="button" class="btn btn-tog" id="coopBots" hidden>Completar com bots: desativado</button><button type="button" class="btn" id="btnCoopOffline" hidden>Infecção offline (bots)</button></div>
         </div>
         <div id="coopOn" class="sec" hidden>
           <h3>Sala</h3>

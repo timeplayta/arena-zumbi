@@ -74,6 +74,7 @@ button { font-family: inherit; color: inherit; }
 #dmgdir i { position: absolute; left: -70px; top: -190px; width: 140px; height: 60px; background: radial-gradient(ellipse at 50% 100%, rgba(255, 40, 30, 0.9), transparent 70%); }
 .btn { background: var(--panel, #161b22); color: var(--fg); border: 1px solid rgba(255,255,255,0.22); padding: 10px 22px; font-family: var(--font-display); font-size: 22px; letter-spacing: 0.08em; text-transform: uppercase; cursor: pointer; }
 .btn:hover { border-color: var(--amber); color: var(--amber); }
+.btn-tog.on { border-color: var(--amber); color: #1a1205; background: var(--amber); }
 .coop-room { display: flex; align-items: baseline; gap: 14px; margin-bottom: 12px; }
 .coop-room span { font-size: 14px; color: var(--muted); letter-spacing: 0.2em; }
 .coop-room b { font-family: var(--font-display); font-size: 44px; letter-spacing: 0.08em; word-break: break-word; color: var(--amber); user-select: text; -webkit-user-select: text; }
@@ -564,7 +565,7 @@ table.sc td:first-child { font-family: var(--font-display); font-size: 22px; col
         <div class="sec" id="coopModes"><h3>Modo</h3>
           <div class="opts">
             <button type="button" class="opt" data-gm="coop"><b>Co-op</b><span>Até 4 jogadores contra as ondas de zumbis, juntos. Quem cair renasce na próxima onda.</span></button>
-            <button type="button" class="opt" data-gm="infect"><b>Infecção</b><span>Até 12 jogadores na vila italiana (casas, morros, boosters). Bots completam a sala. Um a cada 6 começa zumbi e infecta os outros. Humanos vencem se durarem 3 minutos.</span></button>
+            <button type="button" class="opt" data-gm="infect"><b>Infecção</b><span>Até 12 jogadores na vila italiana (casas, morros, boosters), com bots opcionais. Um a cada 6 começa zumbi e infecta os outros. Humanos vencem se durarem 3 minutos.</span></button>
           </div>
           <p>Quem cria a sala escolhe o modo. Quem entra segue o modo da sala.</p></div>
         <div id="coopOff" class="sec">
@@ -572,8 +573,7 @@ table.sc td:first-child { font-family: var(--font-display); font-size: 22px; col
             <div class="field"><label for="coopName">Nome da sala</label><input type="text" id="coopName" maxlength="16" autocomplete="off" spellcheck="false" placeholder="ex.: Turma do Zé"></div>
             <div class="field"><label for="coopPass">Senha (opcional)</label><input type="password" id="coopPass" maxlength="16" autocomplete="off" placeholder="deixe vazio para sala aberta"></div>
           </div>
-          <button type="button" class="tog on" id="coopBots"><span>Infecção: completar a sala com bots (até 12)</span><i></i></button>
-          <div class="row" style="margin-top:14px"><button type="button" class="btn" id="btnCoopCreate">Criar sala</button><button type="button" class="btn" id="btnCoopJoin">Entrar na sala</button><button type="button" class="btn" id="btnCoopOffline">Infecção offline (bots)</button></div>
+          <div class="row" style="margin-top:14px"><button type="button" class="btn" id="btnCoopCreate">Criar sala</button><button type="button" class="btn" id="btnCoopJoin">Entrar na sala</button><button type="button" class="btn btn-tog" id="coopBots" hidden>Completar com bots: desativado</button><button type="button" class="btn" id="btnCoopOffline" hidden>Infecção offline (bots)</button></div>
         </div>
         <div id="coopOn" class="sec" hidden>
           <h3>Sala</h3>
@@ -8506,7 +8506,7 @@ const Logic = (function () {
   }
 
   const Coop = (() => {
-    const st = { ws: null, id: null, host: false, code: "", status: "off", msg: "", players: [], stamp: "0", gm: "coop", gmSel: "coop", bots: true, local: false, started: false, diff: "normal", starting: false, over: false, name: "" };
+    const st = { ws: null, id: null, host: false, code: "", status: "off", msg: "", players: [], stamp: "0", gm: "coop", gmSel: "coop", bots: false, local: false, started: false, diff: "normal", starting: false, over: false, name: "" };
     const lobby = {};                       // anfitrião: id -> { name, info, full }
     let acc = 0, sAcc = 0, sentZ = new Set(), sentP = new Set(), pingT = 0, game0 = null;
     const WORLD = /^(wave|giant|elite|kill|clear|wall|hit|rshot|ally_down|infected|claw|inf_end|zrespawn|boost$|tank_|sam_|wraith_)/;
@@ -8625,7 +8625,7 @@ const Logic = (function () {
       g.enableCoop(st.host ? "host" : "guest", st.id); game0 = g; acc = sAcc = 0; sentZ = new Set(); sentP = new Set(); st.over = false;
       if (st.host && st.gm === "infect") g.infectStart(); else if (!st.host) g.gm = st.gm === "infect" ? "infect" : "";
       if (st.host) { for (const id in lobby) if (lobby[id].info) hostAddRemote(id); }
-      if (st.host && st.gm === "infect" && st.bots) fillBots(g);
+      if (st.host && st.gm === "infect" && (st.bots || st.local)) fillBots(g);   // bots só na Infecção (online: se ativado; offline: sempre)
     }
     const active = () => connected() && !!game && !!game.coop;
     function ended() { return !active() || (st.host ? !!game.over : st.over); }
@@ -8724,14 +8724,20 @@ const Logic = (function () {
       const nm = $("coopName"); if (!nm) return;
       try { nm.value = localStorage.getItem("arena-zumbi-room") || ""; } catch (e) {}
       const modes = document.querySelectorAll("[data-gm]");
-      const paint = () => modes.forEach((b) => b.classList.toggle("on", b.getAttribute("data-gm") === st.gmSel));
+      const bt = $("coopBots");
+      const paintBots = () => { bt.classList.toggle("on", st.bots); bt.textContent = "Completar com bots: " + (st.bots ? "ativado" : "desativado"); };
+      const paint = () => {
+        modes.forEach((b) => b.classList.toggle("on", b.getAttribute("data-gm") === st.gmSel));
+        const inf = st.gmSel === "infect"; bt.hidden = !inf; $("btnCoopOffline").hidden = !inf;   // bots só existem na Infecção
+      };
+      bt.addEventListener("click", () => { st.bots = !st.bots; paintBots(); });
+      paintBots();
       modes.forEach((b) => b.addEventListener("click", () => { st.gmSel = b.getAttribute("data-gm"); paint(); }));
       paint();
       const go = (role) => { try { localStorage.setItem("arena-zumbi-room", nm.value.trim()); } catch (e) {} open(role, nm.value, $("coopPass").value); };
       $("btnCoopCreate").addEventListener("click", () => go("host"));
-      const bt = $("coopBots"); if (bt) { bt.classList.toggle("on", st.bots); bt.addEventListener("click", () => { st.bots = !st.bots; bt.classList.toggle("on", st.bots); renderLobby(); }); }
       $("btnCoopOffline").addEventListener("click", () => {                      // infecção sem internet: você contra/ao lado de 11 bots
-        leave(true); st.local = true; st.status = "on"; st.host = true; st.id = "p1"; st.gm = "infect"; st.bots = true; st.code = "OFFLINE"; st.label = "Offline";
+        leave(true); st.local = true; st.status = "on"; st.host = true; st.id = "p1"; st.gm = "infect"; st.code = "OFFLINE"; st.label = "Offline";
         st.name = (S.name || "Sobrevivente").slice(0, 14); st.players = [{ id: "p1", name: st.name }]; st.started = false; setMsg("Sala offline com bots.", "ok"); renderLobby();
         startGame();
       });

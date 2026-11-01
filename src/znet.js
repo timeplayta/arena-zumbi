@@ -170,7 +170,7 @@
   }
 
   const Coop = (() => {
-    const st = { ws: null, id: null, host: false, code: "", status: "off", msg: "", players: [], stamp: "0", gm: "coop", gmSel: "coop", bots: true, local: false, started: false, diff: "normal", starting: false, over: false, name: "" };
+    const st = { ws: null, id: null, host: false, code: "", status: "off", msg: "", players: [], stamp: "0", gm: "coop", gmSel: "coop", bots: false, local: false, started: false, diff: "normal", starting: false, over: false, name: "" };
     const lobby = {};                       // anfitrião: id -> { name, info, full }
     let acc = 0, sAcc = 0, sentZ = new Set(), sentP = new Set(), pingT = 0, game0 = null;
     const WORLD = /^(wave|giant|elite|kill|clear|wall|hit|rshot|ally_down|infected|claw|inf_end|zrespawn|boost$|tank_|sam_|wraith_)/;
@@ -289,7 +289,7 @@
       g.enableCoop(st.host ? "host" : "guest", st.id); game0 = g; acc = sAcc = 0; sentZ = new Set(); sentP = new Set(); st.over = false;
       if (st.host && st.gm === "infect") g.infectStart(); else if (!st.host) g.gm = st.gm === "infect" ? "infect" : "";
       if (st.host) { for (const id in lobby) if (lobby[id].info) hostAddRemote(id); }
-      if (st.host && st.gm === "infect" && st.bots) fillBots(g);
+      if (st.host && st.gm === "infect" && (st.bots || st.local)) fillBots(g);   // bots só na Infecção (online: se ativado; offline: sempre)
     }
     const active = () => connected() && !!game && !!game.coop;
     function ended() { return !active() || (st.host ? !!game.over : st.over); }
@@ -388,14 +388,20 @@
       const nm = $("coopName"); if (!nm) return;
       try { nm.value = localStorage.getItem("arena-zumbi-room") || ""; } catch (e) {}
       const modes = document.querySelectorAll("[data-gm]");
-      const paint = () => modes.forEach((b) => b.classList.toggle("on", b.getAttribute("data-gm") === st.gmSel));
+      const bt = $("coopBots");
+      const paintBots = () => { bt.classList.toggle("on", st.bots); bt.textContent = "Completar com bots: " + (st.bots ? "ativado" : "desativado"); };
+      const paint = () => {
+        modes.forEach((b) => b.classList.toggle("on", b.getAttribute("data-gm") === st.gmSel));
+        const inf = st.gmSel === "infect"; bt.hidden = !inf; $("btnCoopOffline").hidden = !inf;   // bots só existem na Infecção
+      };
+      bt.addEventListener("click", () => { st.bots = !st.bots; paintBots(); });
+      paintBots();
       modes.forEach((b) => b.addEventListener("click", () => { st.gmSel = b.getAttribute("data-gm"); paint(); }));
       paint();
       const go = (role) => { try { localStorage.setItem("arena-zumbi-room", nm.value.trim()); } catch (e) {} open(role, nm.value, $("coopPass").value); };
       $("btnCoopCreate").addEventListener("click", () => go("host"));
-      const bt = $("coopBots"); if (bt) { bt.classList.toggle("on", st.bots); bt.addEventListener("click", () => { st.bots = !st.bots; bt.classList.toggle("on", st.bots); renderLobby(); }); }
       $("btnCoopOffline").addEventListener("click", () => {                      // infecção sem internet: você contra/ao lado de 11 bots
-        leave(true); st.local = true; st.status = "on"; st.host = true; st.id = "p1"; st.gm = "infect"; st.bots = true; st.code = "OFFLINE"; st.label = "Offline";
+        leave(true); st.local = true; st.status = "on"; st.host = true; st.id = "p1"; st.gm = "infect"; st.code = "OFFLINE"; st.label = "Offline";
         st.name = (S.name || "Sobrevivente").slice(0, 14); st.players = [{ id: "p1", name: st.name }]; st.started = false; setMsg("Sala offline com bots.", "ok"); renderLobby();
         startGame();
       });

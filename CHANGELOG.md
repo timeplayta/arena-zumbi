@@ -5,7 +5,7 @@
 
 ## Infecção com 12 jogadores e bots (01/11/2026)
 - Salas de Infecção com até 12 jogadores.
-- Bots completam a sala até 12 (opção no lobby). Quando alguém entra, um bot sai.
+- Bots só na Infecção: botão "Completar com bots" ao lado de "Entrar na sala" (aparece só com Infecção escolhida; começa desativado). Quando alguém entra, um bot sai.
 - Bots humanos andam pelo mapa, atiram nos infectados e fogem quando eles chegam perto (cansam ao correr).
 - Bots infectados perseguem o humano mais perto e atacam com as garras.
 - 1 infectado inicial a cada 6 jogadores (12 jogadores = 2).
