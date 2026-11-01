@@ -1,5 +1,10 @@
 # Novidades — Arena Zumbi
 
+## Celular: menus e controles (01/11/2026)
+- Menu na horizontal: abas numa coluna lateral, todas visíveis. Sem barras de rolagem.
+- HUD 20% menor no celular. Novo ajuste "Tamanho do HUD" (50% a 120%).
+- Ajustes > "Posicionar botões na tela": arraste cada botão de toque para onde quiser. "Restaurar" volta ao padrão.
+
 ## Modo Infecção (01/11/2026)
 - Zumbi em primeira pessoa: braços com garras do modelo `v_zombie_hands` (Source), com animação de espera e dois golpes alternados. Ajustados para o campo de visão do jogo: o corte dos braços não aparece mais no golpe.
 - Zumbis-jogadores com pele vermelha, diferentes dos zumbis comuns.

@@ -27,7 +27,7 @@
     // som
     muted: false, volSfx: 100, volVoice: 100, volAmb: 70,
     // gráficos
-    shadows: "torch", res: 100, fx: "med", rainFx: true, sharp1: false, fpsCap: "0", showFps: false,
+    shadows: "torch", res: 100, fx: "med", rainFx: true, sharp1: false, hudSize: 100, hud1: false, tpos: "", fpsCap: "0", showFps: false,
     // celular / toque
     touch: "auto", touchSens: 12, btnSize: 100, btnAlpha: 70, autoFire: true, vibrate: true, fullscreen: true,
   };
@@ -57,6 +57,7 @@
   }
   loadSettings();
   if (!hadSaved && IS_TOUCH) Object.assign(S, { quality: "low", shadows: "off", res: 100, fx: "low", fov: 80 });   // celular: começa leve
+  if (IS_TOUCH && !S.hud1) { S.hud1 = true; if (S.hudSize === 100) S.hudSize = 80; try { localStorage.setItem(STORE, JSON.stringify(S)); } catch (e) {} }   // celular: HUD menor
   if (IS_TOUCH && !S.sharp1) { S.sharp1 = true; if (S.res < 100) S.res = 100; try { localStorage.setItem(STORE, JSON.stringify(S)); } catch (e) {} }   // corrige imagem borrada de versões antigas
   const touchOn = () => S.touch === "on" || (S.touch === "auto" && IS_TOUCH);
 

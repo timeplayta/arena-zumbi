@@ -356,6 +356,33 @@ table.sc td:first-child { font-family: var(--font-display); font-size: 22px; col
   .pvbox { height: 150px; }
 }
 
+/* ---------- HUD com escala ajustável (Ajustes > Tamanho do HUD) ---------- */
+.hud .stats, .hud .vital, .hud .ammo, .hud .radar-box, #team, #inf, #boss { zoom: var(--hs, 1); }
+/* ---------- editor de posição dos botões de toque ---------- */
+#tedit { position: absolute; top: 10px; left: 50%; transform: translateX(-50%); z-index: 7; display: flex; align-items: center; gap: 10px; padding: 6px 10px;
+  background: rgba(7, 9, 13, 0.85); border: 1px solid var(--amber); font-size: 14px; white-space: nowrap; }
+#tedit .btn { font-size: 16px; padding: 4px 12px; }
+#touch.editing .tb { opacity: 1; outline: 2px dashed rgba(255, 178, 74, 0.7); outline-offset: 3px; }
+#touch.editing .ttop { display: none; }
+/* ---------- celular: menus sem barra de rolagem ---------- */
+#stage.touchmode *, #stage.touchmode { scrollbar-width: none; }
+#stage.touchmode *::-webkit-scrollbar { display: none; width: 0; height: 0; }
+/* ---------- celular na horizontal: menu lateral compacto (todas as abas visíveis, sem rolar para o lado) ---------- */
+@media (max-height: 520px) and (orientation: landscape) {
+  #menu { grid-template-columns: 158px minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) auto; gap: 0 14px;
+    padding: 8px max(12px, env(safe-area-inset-right, 0px)) 8px max(12px, env(safe-area-inset-left, 0px)); }
+  .m-side { grid-row: 1 / span 2; flex-direction: column; align-items: stretch; gap: 6px; overflow: hidden; }
+  .brand .kicker { display: none; }
+  .brand h1 { font-size: 25px; line-height: 0.95; } .brand h1 br { display: inline; }
+  #nav { flex-direction: column; flex-wrap: nowrap; overflow: visible; flex: none; gap: 0; }
+  #nav button { font-size: 16px; padding: 3px 8px 2px; border-bottom: 0; border-left: 3px solid transparent; white-space: nowrap; }
+  #nav button.on { border-left-color: var(--amber); background: linear-gradient(90deg, var(--amber-soft), transparent); }
+  .who { padding: 4px 8px; gap: 1px; } .who b { font-size: 17px; } .who span { font-size: 12px; } .who .coin { font-size: 15px; }
+  .m-main, .m-dock { grid-column: 2; }
+  .panel > h2 { display: none; }
+  .m-dock { padding-top: 6px; margin-top: 6px; } .m-dock .sum { font-size: 16px; } .m-dock .sum small { font-size: 11px; }
+  button.play { font-size: 22px; padding: 4px 22px 2px; }
+}
 </style>
 
 <div id="stage">
@@ -414,6 +441,7 @@ table.sc td:first-child { font-family: var(--font-display); font-size: 22px; col
     </div>
     <div id="rotate">Gire o celular para jogar na horizontal</div>
   </div>
+  <div id="tedit" hidden><span>Arraste os botões para onde quiser</span><button type="button" class="btn" id="btnTeditReset">Restaurar</button><button type="button" class="btn" id="btnTeditDone">Pronto</button></div>
   <div id="menu">
     <div class="m-side">
       <div class="brand"><div class="kicker">Tiro em primeira pessoa · 3D</div><h1>Arena <br>Zumbi</h1></div>
@@ -505,6 +533,8 @@ table.sc td:first-child { font-family: var(--font-display); font-size: 22px; col
           <div class="rng"><label for="rTsens">Sensibilidade do toque</label><input type="range" id="rTsens" min="3" max="30" data-range="touchSens"><output id="oTsens"></output></div>
           <div class="rng"><label for="rBsize">Tamanho dos botões</label><input type="range" id="rBsize" min="70" max="140" step="5" data-range="btnSize"><output id="oBsize"></output></div>
           <div class="rng"><label for="rBalpha">Opacidade dos botões</label><input type="range" id="rBalpha" min="25" max="100" step="5" data-range="btnAlpha"><output id="oBalpha"></output></div>
+          <div class="rng"><label for="rHud">Tamanho do HUD</label><input type="range" id="rHud" min="50" max="120" step="5" data-range="hudSize"><output id="oHud"></output></div>
+          <div class="row"><button type="button" class="btn" id="btnTouchEdit">Posicionar botões na tela</button></div>
           <button type="button" class="tog" data-toggle="autoFire"><span>Tiro automático quando a mira passa num zumbi</span><i></i></button>
           <button type="button" class="tog" data-toggle="vibrate"><span>Vibrar ao levar dano</span><i></i></button>
           <button type="button" class="tog" data-toggle="fullscreen"><span>Tela cheia ao começar</span><i></i></button>
@@ -2139,7 +2169,7 @@ const Logic = (function () {
     // som
     muted: false, volSfx: 100, volVoice: 100, volAmb: 70,
     // gráficos
-    shadows: "torch", res: 100, fx: "med", rainFx: true, sharp1: false, fpsCap: "0", showFps: false,
+    shadows: "torch", res: 100, fx: "med", rainFx: true, sharp1: false, hudSize: 100, hud1: false, tpos: "", fpsCap: "0", showFps: false,
     // celular / toque
     touch: "auto", touchSens: 12, btnSize: 100, btnAlpha: 70, autoFire: true, vibrate: true, fullscreen: true,
   };
@@ -2169,6 +2199,7 @@ const Logic = (function () {
   }
   loadSettings();
   if (!hadSaved && IS_TOUCH) Object.assign(S, { quality: "low", shadows: "off", res: 100, fx: "low", fov: 80 });   // celular: começa leve
+  if (IS_TOUCH && !S.hud1) { S.hud1 = true; if (S.hudSize === 100) S.hudSize = 80; try { localStorage.setItem(STORE, JSON.stringify(S)); } catch (e) {} }   // celular: HUD menor
   if (IS_TOUCH && !S.sharp1) { S.sharp1 = true; if (S.res < 100) S.res = 100; try { localStorage.setItem(STORE, JSON.stringify(S)); } catch (e) {} }   // corrige imagem borrada de versões antigas
   const touchOn = () => S.touch === "on" || (S.touch === "auto" && IS_TOUCH);
 
@@ -7217,9 +7248,9 @@ const Logic = (function () {
     '<button type="button" class="opt' + (on ? " on" : "") + '" data-set="' + key + '" data-val="' + val + '"><b>' + esc(label) + "</b>" + (sub ? "<span>" + esc(sub) + "</span>" : "") + "</button>";
   const pct = (v) => v + "%";
   const RANGE_FMT = { fov: (v) => v + "°", sens: (v) => v, adsSens: pct, vol: pct, crossSize: (v) => v, res: pct, volSfx: pct, volVoice: pct, volAmb: pct,
-    touchSens: (v) => v, btnSize: pct, btnAlpha: pct };
+    touchSens: (v) => v, btnSize: pct, btnAlpha: pct, hudSize: pct };
   const RANGE_OUT = { fov: "oFov", sens: "oSens", adsSens: "oAds", vol: "oVol", crossSize: "oCrossSize", res: "oRes", volSfx: "oSfx", volVoice: "oVoice",
-    volAmb: "oAmb", touchSens: "oTsens", btnSize: "oBsize", btnAlpha: "oBalpha" };
+    volAmb: "oAmb", touchSens: "oTsens", btnSize: "oBsize", btnAlpha: "oBalpha", hudSize: "oHud" };
 
   // aplica na hora o efeito de cada ajuste
   function applySound() { Snd.setVolume(S.vol / 100); Snd.setMuted(S.muted); Snd.setMix(S.volSfx / 100, S.volVoice / 100, S.volAmb / 100); }
@@ -7231,7 +7262,7 @@ const Logic = (function () {
     else if (k === "vol" || k === "muted" || k === "volSfx" || k === "volVoice" || k === "volAmb") applySound();
     else if (k === "radar") $("hud").querySelector(".radar-box").hidden = !S.radar;
     else if (k === "showFps") $("fps").hidden = !S.showFps;
-    else if (k === "touch" || k === "btnSize" || k === "btnAlpha") applyTouchUI();
+    else if (k === "touch" || k === "btnSize" || k === "btnAlpha" || k === "hudSize") applyTouchUI();
     else if (k === "camo") vmKey = "";
     if (k === "camo" || k === "crossStyle" || k === "crossColor" || k === "crossSize") applyCrosshair();
   }
@@ -8259,9 +8290,59 @@ const Logic = (function () {
     touchEl.hidden = !(on && state === "run");
     touchEl.style.setProperty("--bs", String(S.btnSize / 100));
     touchEl.style.setProperty("--ba", String(S.btnAlpha / 100));
+    $("stage").style.setProperty("--hs", String(clamp(S.hudSize || 100, 50, 120) / 100));
     $("tzone").hidden = !(state === "run" && game.time < 12);
     syncTouchBtns();
+    if (tEdit) { touchEl.hidden = false; $("tzone").hidden = false; }
+    if (!touchEl.hidden) applyTouchPos();
   }
+  // ---------------- editor: posição de cada botão de toque (Ajustes > Posicionar botões) ----------------
+  let tEdit = null;
+  const TPOS_ACTS = ["fire", "ads", "reload", "swap", "melee", "crouch", "mode"];
+  function tposGet() { try { return JSON.parse(S.tpos || "{}") || {}; } catch (e) { return {}; } }
+  function applyTouchPos() {
+    const P = tposGet(), r = touchEl.getBoundingClientRect();
+    for (const a of TPOS_ACTS) {
+      const b = touchEl.querySelector('.tb[data-act="' + a + '"]'); if (!b) continue;
+      const p = P[a];
+      if (p && r.width) { b.style.left = p[0] * r.width - b.offsetWidth / 2 + "px"; b.style.top = p[1] * r.height - b.offsetHeight / 2 + "px"; b.style.right = "auto"; b.style.bottom = "auto"; }
+      else b.style.left = b.style.top = b.style.right = b.style.bottom = "";
+    }
+  }
+  function openTouchEdit() {
+    tEdit = { drag: null }; $("menu").hidden = true; $("tedit").hidden = false;
+    touchEl.classList.add("editing"); applyTouchUI();
+  }
+  function closeTouchEdit() {
+    tEdit = null; touchEl.classList.remove("editing"); $("tedit").hidden = true; $("menu").hidden = false; applyTouchUI();
+  }
+  touchEl.addEventListener("pointerdown", (e) => {
+    if (!tEdit) return;
+    e.preventDefault(); e.stopImmediatePropagation();
+    const b = e.target.closest && e.target.closest(".tb[data-act]"); if (!b || b.closest(".ttop")) return;
+    try { touchEl.setPointerCapture(e.pointerId); } catch (err) {}
+    const br = b.getBoundingClientRect();
+    tEdit.drag = { id: e.pointerId, b, dx: e.clientX - (br.left + br.width / 2), dy: e.clientY - (br.top + br.height / 2) };
+    b.classList.add("press");
+  }, true);
+  touchEl.addEventListener("pointermove", (e) => {
+    if (!tEdit) return; e.stopImmediatePropagation();
+    const d = tEdit.drag; if (!d || d.id !== e.pointerId) return;
+    const r = touchEl.getBoundingClientRect(), w = d.b.offsetWidth, h = d.b.offsetHeight;
+    const cx = clamp(e.clientX - d.dx - r.left, w / 2, r.width - w / 2), cy = clamp(e.clientY - d.dy - r.top, h / 2, r.height - h / 2);
+    d.b.style.left = cx - w / 2 + "px"; d.b.style.top = cy - h / 2 + "px"; d.b.style.right = "auto"; d.b.style.bottom = "auto"; d.cx = cx / r.width; d.cy = cy / r.height;
+  }, true);
+  const tEditUp = (e) => {
+    if (!tEdit) return; e.stopImmediatePropagation();
+    const d = tEdit.drag; if (!d || d.id !== e.pointerId) return;
+    d.b.classList.remove("press"); tEdit.drag = null;
+    if (d.cx !== undefined) { const P = tposGet(); P[d.b.getAttribute("data-act")] = [+d.cx.toFixed(4), +d.cy.toFixed(4)]; S.tpos = JSON.stringify(P); saveSettings(); }
+  };
+  touchEl.addEventListener("pointerup", tEditUp, true); touchEl.addEventListener("pointercancel", tEditUp, true);
+  $("btnTouchEdit").addEventListener("click", openTouchEdit);
+  $("btnTeditDone").addEventListener("click", closeTouchEdit);
+  $("btnTeditReset").addEventListener("click", () => { S.tpos = ""; saveSettings(); applyTouchPos(); });
+  window.addEventListener("resize", () => { if (!touchEl.hidden) applyTouchPos(); });
   function goFullscreen() {
     if (!S.fullscreen) return;
     const d = document.documentElement, fn = d.requestFullscreen || d.webkitRequestFullscreen;

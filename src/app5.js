@@ -252,9 +252,59 @@
     touchEl.hidden = !(on && state === "run");
     touchEl.style.setProperty("--bs", String(S.btnSize / 100));
     touchEl.style.setProperty("--ba", String(S.btnAlpha / 100));
+    $("stage").style.setProperty("--hs", String(clamp(S.hudSize || 100, 50, 120) / 100));
     $("tzone").hidden = !(state === "run" && game.time < 12);
     syncTouchBtns();
+    if (tEdit) { touchEl.hidden = false; $("tzone").hidden = false; }
+    if (!touchEl.hidden) applyTouchPos();
   }
+  // ---------------- editor: posição de cada botão de toque (Ajustes > Posicionar botões) ----------------
+  let tEdit = null;
+  const TPOS_ACTS = ["fire", "ads", "reload", "swap", "melee", "crouch", "mode"];
+  function tposGet() { try { return JSON.parse(S.tpos || "{}") || {}; } catch (e) { return {}; } }
+  function applyTouchPos() {
+    const P = tposGet(), r = touchEl.getBoundingClientRect();
+    for (const a of TPOS_ACTS) {
+      const b = touchEl.querySelector('.tb[data-act="' + a + '"]'); if (!b) continue;
+      const p = P[a];
+      if (p && r.width) { b.style.left = p[0] * r.width - b.offsetWidth / 2 + "px"; b.style.top = p[1] * r.height - b.offsetHeight / 2 + "px"; b.style.right = "auto"; b.style.bottom = "auto"; }
+      else b.style.left = b.style.top = b.style.right = b.style.bottom = "";
+    }
+  }
+  function openTouchEdit() {
+    tEdit = { drag: null }; $("menu").hidden = true; $("tedit").hidden = false;
+    touchEl.classList.add("editing"); applyTouchUI();
+  }
+  function closeTouchEdit() {
+    tEdit = null; touchEl.classList.remove("editing"); $("tedit").hidden = true; $("menu").hidden = false; applyTouchUI();
+  }
+  touchEl.addEventListener("pointerdown", (e) => {
+    if (!tEdit) return;
+    e.preventDefault(); e.stopImmediatePropagation();
+    const b = e.target.closest && e.target.closest(".tb[data-act]"); if (!b || b.closest(".ttop")) return;
+    try { touchEl.setPointerCapture(e.pointerId); } catch (err) {}
+    const br = b.getBoundingClientRect();
+    tEdit.drag = { id: e.pointerId, b, dx: e.clientX - (br.left + br.width / 2), dy: e.clientY - (br.top + br.height / 2) };
+    b.classList.add("press");
+  }, true);
+  touchEl.addEventListener("pointermove", (e) => {
+    if (!tEdit) return; e.stopImmediatePropagation();
+    const d = tEdit.drag; if (!d || d.id !== e.pointerId) return;
+    const r = touchEl.getBoundingClientRect(), w = d.b.offsetWidth, h = d.b.offsetHeight;
+    const cx = clamp(e.clientX - d.dx - r.left, w / 2, r.width - w / 2), cy = clamp(e.clientY - d.dy - r.top, h / 2, r.height - h / 2);
+    d.b.style.left = cx - w / 2 + "px"; d.b.style.top = cy - h / 2 + "px"; d.b.style.right = "auto"; d.b.style.bottom = "auto"; d.cx = cx / r.width; d.cy = cy / r.height;
+  }, true);
+  const tEditUp = (e) => {
+    if (!tEdit) return; e.stopImmediatePropagation();
+    const d = tEdit.drag; if (!d || d.id !== e.pointerId) return;
+    d.b.classList.remove("press"); tEdit.drag = null;
+    if (d.cx !== undefined) { const P = tposGet(); P[d.b.getAttribute("data-act")] = [+d.cx.toFixed(4), +d.cy.toFixed(4)]; S.tpos = JSON.stringify(P); saveSettings(); }
+  };
+  touchEl.addEventListener("pointerup", tEditUp, true); touchEl.addEventListener("pointercancel", tEditUp, true);
+  $("btnTouchEdit").addEventListener("click", openTouchEdit);
+  $("btnTeditDone").addEventListener("click", closeTouchEdit);
+  $("btnTeditReset").addEventListener("click", () => { S.tpos = ""; saveSettings(); applyTouchPos(); });
+  window.addEventListener("resize", () => { if (!touchEl.hidden) applyTouchPos(); });
   function goFullscreen() {
     if (!S.fullscreen) return;
     const d = document.documentElement, fn = d.requestFullscreen || d.webkitRequestFullscreen;

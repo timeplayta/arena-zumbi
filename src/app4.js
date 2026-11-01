@@ -8,9 +8,9 @@
     '<button type="button" class="opt' + (on ? " on" : "") + '" data-set="' + key + '" data-val="' + val + '"><b>' + esc(label) + "</b>" + (sub ? "<span>" + esc(sub) + "</span>" : "") + "</button>";
   const pct = (v) => v + "%";
   const RANGE_FMT = { fov: (v) => v + "°", sens: (v) => v, adsSens: pct, vol: pct, crossSize: (v) => v, res: pct, volSfx: pct, volVoice: pct, volAmb: pct,
-    touchSens: (v) => v, btnSize: pct, btnAlpha: pct };
+    touchSens: (v) => v, btnSize: pct, btnAlpha: pct, hudSize: pct };
   const RANGE_OUT = { fov: "oFov", sens: "oSens", adsSens: "oAds", vol: "oVol", crossSize: "oCrossSize", res: "oRes", volSfx: "oSfx", volVoice: "oVoice",
-    volAmb: "oAmb", touchSens: "oTsens", btnSize: "oBsize", btnAlpha: "oBalpha" };
+    volAmb: "oAmb", touchSens: "oTsens", btnSize: "oBsize", btnAlpha: "oBalpha", hudSize: "oHud" };
 
   // aplica na hora o efeito de cada ajuste
   function applySound() { Snd.setVolume(S.vol / 100); Snd.setMuted(S.muted); Snd.setMix(S.volSfx / 100, S.volVoice / 100, S.volAmb / 100); }
@@ -22,7 +22,7 @@
     else if (k === "vol" || k === "muted" || k === "volSfx" || k === "volVoice" || k === "volAmb") applySound();
     else if (k === "radar") $("hud").querySelector(".radar-box").hidden = !S.radar;
     else if (k === "showFps") $("fps").hidden = !S.showFps;
-    else if (k === "touch" || k === "btnSize" || k === "btnAlpha") applyTouchUI();
+    else if (k === "touch" || k === "btnSize" || k === "btnAlpha" || k === "hudSize") applyTouchUI();
     else if (k === "camo") vmKey = "";
     if (k === "camo" || k === "crossStyle" || k === "crossColor" || k === "crossSize") applyCrosshair();
   }
