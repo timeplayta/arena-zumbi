@@ -167,6 +167,7 @@ input[type="text"], input[type="password"], input[type="number"] { background: v
 .who { display: flex; flex-direction: column; gap: 4px; padding: 8px 10px; border: 1px solid var(--line); background: var(--surface); font-family: var(--font-display); letter-spacing: 0.08em; min-width: 0; }
 .who b { font-size: 24px; font-weight: 600; line-height: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .who span { font-size: 17px; color: var(--muted); } .who .coin { color: var(--amber); font-size: 22px; }
+.who .accid { margin-top: -2px; font-family: var(--font-body, system-ui, sans-serif); font-size: 13px; letter-spacing: 0.08em; color: var(--muted); user-select: all; }
 .coin::before { content: "◉ "; }
 .bal { flex-direction: row; align-items: center; justify-content: space-between; gap: 18px; flex-wrap: wrap; }
 .bal > div { font-family: var(--font-display); font-size: 20px; letter-spacing: 0.14em; color: var(--muted); text-transform: uppercase; }
@@ -403,7 +404,7 @@ table.sc td:first-child { font-family: var(--font-display); font-size: 22px; col
   #nav { flex-direction: column; flex-wrap: nowrap; overflow: visible; flex: none; gap: 0; }
   #nav button { font-size: 16px; padding: 3px 8px 2px; border-bottom: 0; border-left: 3px solid transparent; white-space: nowrap; }
   #nav button.on { border-left-color: var(--amber); background: linear-gradient(90deg, var(--amber-soft), transparent); }
-  .who { padding: 4px 8px; gap: 1px; } .who b { font-size: 17px; } .who span { font-size: 12px; } .who .coin { font-size: 15px; }
+  .who { padding: 4px 8px; gap: 1px; } .who b { font-size: 17px; } .who span { font-size: 12px; } .who .coin { font-size: 15px; } .who .accid { font-size: 11px; margin-top: 0; }
   .m-main, .m-dock { grid-column: 2; }
   .panel > h2 { display: none; }
   .m-dock { padding-top: 6px; margin-top: 6px; } .m-dock .sum { font-size: 16px; } .m-dock .sum small { font-size: 11px; }
@@ -692,7 +693,7 @@ table.sc td:first-child { font-family: var(--font-display); font-size: 22px; col
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
-const GAME_VERSION = 202611021513, GAME_NOTES = {"t": "Entrega automática da loja (02/11/2026)", "b": ["Moedas compradas no site caem sozinhas na sua conta depois do pagamento.", "No site de compras, informe o nome da sua conta: ele confere se a conta existe."]};
+const GAME_VERSION = 202611021544, GAME_NOTES = {"t": "ID da conta (02/11/2026)", "b": ["Cada conta tem um ID de 6 números, mostrado embaixo do nome no menu.", "No site de moedas, use o nome ou o ID (#123456) para receber as moedas."]};
 // ==MAPA ITÁLIA== (só o protótipo do modo Infecção)
 // Coordenadas lógicas: x = leste, y = norte, z = altura (m). Caixas sólidas: [x0, x1, y0, y1, topo, base, tipo, extra]
 const ITALIA = (function () {
@@ -8546,7 +8547,7 @@ const Logic = (function () {
   } catch (e) {}
   const API = /^(localhost|127\.)/.test(location.hostname) ? location.origin + "/api/" : "https://arena-zumbi.playes.workers.dev/api/";
   let session = null;                                                    // { name, token }
-  try { const o = JSON.parse(localStorage.getItem(SESSION_KEY) || "null"); if (o && o.token && o.name) session = { name: String(o.name).slice(0, 14), token: String(o.token) }; } catch (e) {}
+  try { const o = JSON.parse(localStorage.getItem(SESSION_KEY) || "null"); if (o && o.token && o.name) session = { name: String(o.name).slice(0, 14), token: String(o.token), id: /^\d{6}$/.test(o.id || "") ? o.id : "" }; } catch (e) {}
   async function api(path, body) {
     const r = await fetch(API + path, { method: body ? "POST" : "GET", headers: Object.assign({ "content-type": "application/json" }, session ? { authorization: "Bearer " + session.token } : {}), body: body ? JSON.stringify(body) : undefined });
     let j = null; try { j = await r.json(); } catch (e) {}
@@ -8587,12 +8588,16 @@ const Logic = (function () {
   sanitizeOwned();
 
   // ---------------- perfil ----------------
-  const profile = { name: session ? session.name : "" };
+  const profile = { name: session ? session.name : "", id: session ? session.id : "" };
+  function setId(id) {                                                  // id da conta (6 números): usado na loja de moedas
+    profile.id = /^\d{6}$/.test(String(id || "")) ? String(id) : "";
+    if (session) { session.id = profile.id; try { localStorage.setItem(SESSION_KEY, JSON.stringify(session)); } catch (e) {} }
+  }
   function updateWho() {
     const w = $("who");
     if (!profile.name) { w.hidden = true; return; }
     w.hidden = false;
-    w.innerHTML = "<b>" + esc(profile.name) + '</b><button type="button" class="coinbtn" data-shop title="Comprar moedas"><span class="coin">' + wallet.coins + '</span><i>+ comprar</i></button><button type="button" class="linkbtn" id="btnLogout">' + (session ? "Sair da conta" : "Entrar numa conta") + "</button>";
+    w.innerHTML = "<b>" + esc(profile.name) + "</b>" + (profile.id ? '<small class="accid" title="Use este id na loja de moedas">ID #' + profile.id + "</small>" : "") + '<button type="button" class="coinbtn" data-shop title="Comprar moedas"><span class="coin">' + wallet.coins + '</span><i>+ comprar</i></button><button type="button" class="linkbtn" id="btnLogout">' + (session ? "Sair da conta" : "Entrar numa conta") + "</button>";
     $("storeCoins").textContent = String(wallet.coins);
   }
   // ---------------- tela de entrada ----------------
@@ -8619,7 +8624,7 @@ const Logic = (function () {
   }
   function logout(expired) {
     if (session && !expired) api("logout", {}).catch(() => {});
-    session = null; profile.name = ""; clearTimeout(pushT); dirty = false;
+    session = null; profile.name = ""; profile.id = ""; clearTimeout(pushT); dirty = false;
     try { localStorage.removeItem(SESSION_KEY); localStorage.removeItem(WALLET_KEY); } catch (e) {}
     applyServerWallet(""); updateWho(); setGate(true);
     $("gName").value = ""; $("gPass").value = "";
@@ -8643,8 +8648,8 @@ const Logic = (function () {
     gateBusy(true, kind === "register" ? "Criando conta..." : "Entrando...");
     try {
       const j = await api(kind, { name, pass });
-      session = { name: j.name, token: j.token };
-      try { localStorage.setItem(SESSION_KEY, JSON.stringify(session)); } catch (e) {}
+      session = { name: j.name, token: j.token, id: "" };
+      setId(j.id);
       applyServerWallet(j.wallet || "");
       if (kind === "register") pushWallet();
       $("gPass").value = "";
@@ -8657,14 +8662,14 @@ const Logic = (function () {
   }
   $("btnOffline").addEventListener("click", () => {                  // sem internet: joga com o progresso deste aparelho
     const name = $("gName").value.replace(/\s+/g, " ").trim().slice(0, 14) || "Sobrevivente";
-    session = null; $("btnOffline").hidden = true; enter(name, true);
+    session = null; profile.id = ""; $("btnOffline").hidden = true; enter(name, true);
   });
   gateForm.addEventListener("submit", (e) => { e.preventDefault(); doAuth("login"); });
   $("btnRegister").addEventListener("click", () => doAuth("register"));
   // já tem sessão: entra direto com o progresso da conta (sem internet, usa o que está salvo no aparelho)
   if (session) {
     $("gName").value = session.name; gateBusy(true, "Entrando como " + session.name + "...");
-    api("me").then((j) => { applyServerWallet(j.wallet || ""); enter(j.name, false); })
+    api("me").then((j) => { setId(j.id); applyServerWallet(j.wallet || ""); enter(j.name, false); })
       .catch((e) => { if (e.status === 401) logout(true); else enter(session.name, true); });
   } else setTimeout(() => { try { $("gName").focus(); } catch (e) {} }, 60);
 

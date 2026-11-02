@@ -1,5 +1,9 @@
 # Novidades — Arena Zumbi
 
+## ID da conta (02/11/2026)
+- Cada conta tem um ID de 6 números, mostrado embaixo do nome no menu.
+- No site de moedas, use o nome ou o ID (#123456) para receber as moedas.
+
 ## Entrega automática da loja (02/11/2026)
 - Moedas compradas no site caem sozinhas na sua conta depois do pagamento.
 - No site de compras, informe o nome da sua conta: ele confere se a conta existe.

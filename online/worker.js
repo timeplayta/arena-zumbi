@@ -144,6 +144,29 @@ const NOT_PAID = /pend|aguard|wait|cancel|refund|reemb|estorn|chargeback|expir|f
 
 export class Accounts {
   constructor(state) { this.st = state.storage; }
+  // cada conta tem um id de 6 números (aparece no jogo embaixo do nome); a loja e o painel aceitam nome ou id
+  async ensureId(u) {
+    if (u.id) return u;
+    for (let i = 0; i < 40; i++) {
+      const n = String(100000 + (crypto.getRandomValues(new Uint32Array(1))[0] % 900000));
+      if (await this.st.get("id:" + n)) continue;
+      u.id = n; await this.st.put("id:" + n, u.key); await this.st.put("u:" + u.key, u); return u;
+    }
+    return u;
+  }
+  async migrateIds() {
+    if (this.idsDone || await this.st.get("idsdone")) { this.idsDone = true; return; }
+    const all = await this.st.list({ prefix: "u:" });
+    for (const [, u] of all) if (!u.id) await this.ensureId(u);
+    await this.st.put("idsdone", Date.now()); this.idsDone = true;
+  }
+  async findAcc(q) {                                                  // "#123456" = id; "Juan" = nome; "123456" = nome, senão id
+    const t = cleanName(q).replace(/^#\s*/, ""), isId = /^\d{6}$/.test(t);
+    if (/^#/.test(cleanName(q)) && isId) { const k = await this.st.get("id:" + t); return k ? await this.st.get("u:" + k) : null; }
+    if (NAME_OK.test(t)) { const u = await this.st.get("u:" + t.toLowerCase()); if (u) return u; }
+    if (isId) { const k = await this.st.get("id:" + t); return k ? await this.st.get("u:" + k) : null; }
+    return null;
+  }
   async zpay(raw, secret) {
     if (!same(await sha256(secret), ZPAY_HOOK_SHA)) return J({ error: "Não encontrado." }, 404);
     let p = {}; try { p = JSON.parse(raw || "{}"); } catch (e) { return J({ error: "JSON inválido." }, 400); }
@@ -163,7 +186,7 @@ export class Accounts {
       hits.forEach((i) => { i.used = now; }); await this.st.put("zint", ints);
       s.account = hits[0].name; via = " (pela loja)";
     }
-    const u = await this.st.get("u:" + s.account.toLowerCase());
+    const u = await this.findAcc(s.account);
     if (!u) return done("conta não encontrada", 200);
     u.credit = (Number(u.credit) || 0) + s.coins; await this.st.put("u:" + u.key, u);
     await this.st.put("zs:" + s.id, { at: Date.now(), name: u.name, coins: s.coins });
@@ -172,14 +195,15 @@ export class Accounts {
   }
   async fetch(request) {
     const url = new URL(request.url), path = url.pathname.replace(/^\/api\//, "");
+    await this.migrateIds();
     if (path === "exists" && request.method === "GET") {              // loja ZPAY: confere a conta por imagem (2px de largura = existe, 1px = não)
-      const n = cleanName(url.searchParams.get("n")), ok = NAME_OK.test(n) && !!(await this.st.get("u:" + n.toLowerCase()));
+      const ok = !!(await this.findAcc(url.searchParams.get("n") || ""));
       const gif = ok ? "R0lGODdhAgABAIEAAAAAAAAAAAAAAAAAACwAAAAAAgABAAAIBQABAAgIADs=" : "R0lGODdhAQABAIEAAAAAAAAAAAAAAAAAACwAAAAAAQABAAAIBAABBAQAOw==";
       return new Response(Uint8Array.from(atob(gif), (c) => c.charCodeAt(0)), { headers: { "content-type": "image/gif", "cache-control": "no-store", ...CORS } });
     }
     if (path === "zintent" && request.method === "GET") {             // loja ZPAY: "esta conta clicou em Comprar neste pacote" (imagem 1px)
-      const n = cleanName(url.searchParams.get("n")), coins = ZPAY_COINS[url.searchParams.get("p") || ""];
-      if (NAME_OK.test(n) && coins && await this.st.get("u:" + n.toLowerCase())) {
+      const acc = await this.findAcc(url.searchParams.get("n") || ""), coins = ZPAY_COINS[url.searchParams.get("p") || ""], n = acc ? acc.name : "";
+      if (acc && coins) {
         const now = Date.now(), ints = ((await this.st.get("zint")) || []).filter((i) => now - i.at < 1800000);
         const prev = ints.find((i) => !i.used && i.coins === coins && i.name.toLowerCase() === n.toLowerCase());
         if (prev) prev.at = now; else ints.unshift({ at: now, name: n, coins });
@@ -207,9 +231,9 @@ export class Accounts {
       const key = name.toLowerCase();
       if (await this.st.get("u:" + key)) return J({ error: "Esse nome já tem conta. Use Entrar ou escolha outro nome." }, 409);
       const salt = rand(16), u = { key, name, salt, hash: await hashPass(pass, salt), wallet: "", created: Date.now() };
-      await this.st.put("u:" + key, u);
+      await this.st.put("u:" + key, u); await this.ensureId(u);
       await applyGifts(this.st, u);
-      return J({ token: await session(u), name, wallet: u.wallet || "" });
+      return J({ token: await session(u), name, id: u.id || "", wallet: u.wallet || "" });
     }
     if (path === "login" && request.method === "POST") {
       const name = cleanName(body.name), pass = String(body.pass || ""), key = name.toLowerCase();
@@ -225,9 +249,10 @@ export class Accounts {
       await this.st.delete("f:" + key);
       await applyGifts(this.st, u);
       if (deliver(u)) await this.st.put("u:" + u.key, u);
-      return J({ token: await session(u), name: u.name, wallet: u.wallet || "" });
+      await this.ensureId(u);
+      return J({ token: await session(u), name: u.name, id: u.id || "", wallet: u.wallet || "" });
     }
-    if (path === "me") { const u = await who(); if (u) { await applyGifts(this.st, u); if (deliver(u)) await this.st.put("u:" + u.key, u); } return u ? J({ name: u.name, wallet: u.wallet || "" }) : J({ error: "Sessão expirada. Entre de novo." }, 401); }
+    if (path === "me") { const u = await who(); if (u) { await applyGifts(this.st, u); if (deliver(u)) await this.st.put("u:" + u.key, u); await this.ensureId(u); } return u ? J({ name: u.name, id: u.id || "", wallet: u.wallet || "" }) : J({ error: "Sessão expirada. Entre de novo." }, 401); }
     if (path === "save" && request.method === "POST") {
       const u = await who(); if (!u) return J({ error: "Sessão expirada. Entre de novo." }, 401);
       const w = typeof body.wallet === "string" ? body.wallet : ""; if (w.length > 30000) return J({ error: "Dados grandes demais." }, 413);
@@ -248,14 +273,14 @@ export class Accounts {
     if (cmd === "check") return J({ ok: true });
     if (cmd === "list") {
       const all = await this.st.list({ prefix: "u:" }), out = [];
-      for (const [, u] of all) { const w = walletOf(u); out.push({ name: u.name, coins: (Number(w.coins) || 0) + (Number(u.credit) || 0), pending: Number(u.credit) || 0, created: u.created || 0, saved: u.saved || 0 }); }
+      for (const [, u] of all) { const w = walletOf(u); out.push({ name: u.name, id: u.id || "", coins: (Number(w.coins) || 0) + (Number(u.credit) || 0), pending: Number(u.credit) || 0, created: u.created || 0, saved: u.saved || 0 }); }
       out.sort((a, b) => b.created - a.created);
       return J({ accounts: out });
     }
     if (cmd === "give") {
       const name = cleanName(body.name), n = Math.trunc(Number(body.coins));
       if (!n || Math.abs(n) > 9999999) return J({ error: "Quantidade inválida." }, 400);
-      const u = await this.st.get("u:" + name.toLowerCase()); if (!u) return J({ error: "Conta \"" + name + "\" não encontrada." }, 404);
+      const u = await this.findAcc(name); if (!u) return J({ error: "Conta \"" + name + "\" não encontrada." }, 404);
       u.credit = (Number(u.credit) || 0) + n; await this.st.put("u:" + u.key, u);
       const log = (await this.st.get("adminlog")) || []; log.unshift({ at: Date.now(), name: u.name, coins: n }); await this.st.put("adminlog", log.slice(0, 50));
       return J({ ok: true, name: u.name, coins: (Number(walletOf(u).coins) || 0) + u.credit });

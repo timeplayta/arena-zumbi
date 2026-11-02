@@ -70,7 +70,7 @@
   } catch (e) {}
   const API = /^(localhost|127\.)/.test(location.hostname) ? location.origin + "/api/" : "https://arena-zumbi.playes.workers.dev/api/";
   let session = null;                                                    // { name, token }
-  try { const o = JSON.parse(localStorage.getItem(SESSION_KEY) || "null"); if (o && o.token && o.name) session = { name: String(o.name).slice(0, 14), token: String(o.token) }; } catch (e) {}
+  try { const o = JSON.parse(localStorage.getItem(SESSION_KEY) || "null"); if (o && o.token && o.name) session = { name: String(o.name).slice(0, 14), token: String(o.token), id: /^\d{6}$/.test(o.id || "") ? o.id : "" }; } catch (e) {}
   async function api(path, body) {
     const r = await fetch(API + path, { method: body ? "POST" : "GET", headers: Object.assign({ "content-type": "application/json" }, session ? { authorization: "Bearer " + session.token } : {}), body: body ? JSON.stringify(body) : undefined });
     let j = null; try { j = await r.json(); } catch (e) {}
@@ -111,12 +111,16 @@
   sanitizeOwned();
 
   // ---------------- perfil ----------------
-  const profile = { name: session ? session.name : "" };
+  const profile = { name: session ? session.name : "", id: session ? session.id : "" };
+  function setId(id) {                                                  // id da conta (6 números): usado na loja de moedas
+    profile.id = /^\d{6}$/.test(String(id || "")) ? String(id) : "";
+    if (session) { session.id = profile.id; try { localStorage.setItem(SESSION_KEY, JSON.stringify(session)); } catch (e) {} }
+  }
   function updateWho() {
     const w = $("who");
     if (!profile.name) { w.hidden = true; return; }
     w.hidden = false;
-    w.innerHTML = "<b>" + esc(profile.name) + '</b><button type="button" class="coinbtn" data-shop title="Comprar moedas"><span class="coin">' + wallet.coins + '</span><i>+ comprar</i></button><button type="button" class="linkbtn" id="btnLogout">' + (session ? "Sair da conta" : "Entrar numa conta") + "</button>";
+    w.innerHTML = "<b>" + esc(profile.name) + "</b>" + (profile.id ? '<small class="accid" title="Use este id na loja de moedas">ID #' + profile.id + "</small>" : "") + '<button type="button" class="coinbtn" data-shop title="Comprar moedas"><span class="coin">' + wallet.coins + '</span><i>+ comprar</i></button><button type="button" class="linkbtn" id="btnLogout">' + (session ? "Sair da conta" : "Entrar numa conta") + "</button>";
     $("storeCoins").textContent = String(wallet.coins);
   }
   // ---------------- tela de entrada ----------------
@@ -143,7 +147,7 @@
   }
   function logout(expired) {
     if (session && !expired) api("logout", {}).catch(() => {});
-    session = null; profile.name = ""; clearTimeout(pushT); dirty = false;
+    session = null; profile.name = ""; profile.id = ""; clearTimeout(pushT); dirty = false;
     try { localStorage.removeItem(SESSION_KEY); localStorage.removeItem(WALLET_KEY); } catch (e) {}
     applyServerWallet(""); updateWho(); setGate(true);
     $("gName").value = ""; $("gPass").value = "";
@@ -167,8 +171,8 @@
     gateBusy(true, kind === "register" ? "Criando conta..." : "Entrando...");
     try {
       const j = await api(kind, { name, pass });
-      session = { name: j.name, token: j.token };
-      try { localStorage.setItem(SESSION_KEY, JSON.stringify(session)); } catch (e) {}
+      session = { name: j.name, token: j.token, id: "" };
+      setId(j.id);
       applyServerWallet(j.wallet || "");
       if (kind === "register") pushWallet();
       $("gPass").value = "";
@@ -181,14 +185,14 @@
   }
   $("btnOffline").addEventListener("click", () => {                  // sem internet: joga com o progresso deste aparelho
     const name = $("gName").value.replace(/\s+/g, " ").trim().slice(0, 14) || "Sobrevivente";
-    session = null; $("btnOffline").hidden = true; enter(name, true);
+    session = null; profile.id = ""; $("btnOffline").hidden = true; enter(name, true);
   });
   gateForm.addEventListener("submit", (e) => { e.preventDefault(); doAuth("login"); });
   $("btnRegister").addEventListener("click", () => doAuth("register"));
   // já tem sessão: entra direto com o progresso da conta (sem internet, usa o que está salvo no aparelho)
   if (session) {
     $("gName").value = session.name; gateBusy(true, "Entrando como " + session.name + "...");
-    api("me").then((j) => { applyServerWallet(j.wallet || ""); enter(j.name, false); })
+    api("me").then((j) => { setId(j.id); applyServerWallet(j.wallet || ""); enter(j.name, false); })
       .catch((e) => { if (e.status === 401) logout(true); else enter(session.name, true); });
   } else setTimeout(() => { try { $("gName").focus(); } catch (e) {} }, 60);
 
