@@ -69,6 +69,20 @@ const same = (a, b) => { if (a.length !== b.length) return false; let d = 0; for
 const cleanName = (n) => String(n || "").replace(/\s+/g, " ").trim();
 const NAME_OK = /^[A-Za-zÀ-ÖØ-öø-ÿ0-9 _.-]{2,14}$/;
 
+// presentes únicos dados pelo dono do jogo (aplicados quando a conta entra ou é criada)
+const GIFTS = [{ id: "juan100k", user: "juan", coins: 100000 }];
+async function applyGifts(st, u) {
+  let changed = false;
+  for (const g of GIFTS) {
+    if (u.key !== g.user || (u.gifts || {})[g.id]) continue;
+    let w = {}; try { w = JSON.parse(u.wallet || "{}") || {}; } catch (e) {}
+    w.coins = Math.min(9999999, (Number(w.coins) || 0) + g.coins); w.total = (Number(w.total) || 0) + g.coins;
+    u.wallet = JSON.stringify(w); u.gifts = Object.assign({}, u.gifts, { [g.id]: Date.now() }); changed = true;
+  }
+  if (changed) await st.put("u:" + u.key, u);
+  return u;
+}
+
 export class Accounts {
   constructor(state) { this.st = state.storage; }
   async fetch(request) {
@@ -86,7 +100,8 @@ export class Accounts {
       if (await this.st.get("u:" + key)) return J({ error: "Esse nome já tem conta. Use Entrar ou escolha outro nome." }, 409);
       const salt = rand(16), u = { key, name, salt, hash: await hashPass(pass, salt), wallet: "", created: Date.now() };
       await this.st.put("u:" + key, u);
-      return J({ token: await session(u), name, wallet: "" });
+      await applyGifts(this.st, u);
+      return J({ token: await session(u), name, wallet: u.wallet || "" });
     }
     if (path === "login" && request.method === "POST") {
       const name = cleanName(body.name), pass = String(body.pass || ""), key = name.toLowerCase();
@@ -100,9 +115,10 @@ export class Accounts {
         return J({ error: "Senha incorreta." }, 401);
       }
       await this.st.delete("f:" + key);
+      await applyGifts(this.st, u);
       return J({ token: await session(u), name: u.name, wallet: u.wallet || "" });
     }
-    if (path === "me") { const u = await who(); return u ? J({ name: u.name, wallet: u.wallet || "" }) : J({ error: "Sessão expirada. Entre de novo." }, 401); }
+    if (path === "me") { const u = await who(); if (u) await applyGifts(this.st, u); return u ? J({ name: u.name, wallet: u.wallet || "" }) : J({ error: "Sessão expirada. Entre de novo." }, 401); }
     if (path === "save" && request.method === "POST") {
       const u = await who(); if (!u) return J({ error: "Sessão expirada. Entre de novo." }, 401);
       const w = typeof body.wallet === "string" ? body.wallet : ""; if (w.length > 30000) return J({ error: "Dados grandes demais." }, 413);
