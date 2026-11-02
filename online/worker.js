@@ -125,7 +125,7 @@ function readSale(p) {
     }
     for (const v of Object.values(o)) walk(v, depth + 1);
   })(p, 0);
-  return { id, status, account: cleanName(account), coins: items.reduce((s, i) => s + i.coins * i.q, 0) };
+  return { id, status, account: cleanName(account), packs: [...new Set(items.map((i) => i.coins))], coins: items.reduce((s, i) => s + i.coins * i.q, 0) };
 }
 const PAID = /pag|paid|aprov|approv|conclu|complet|entreg|deliver|confirm|sucesso|success/i;
 const NOT_PAID = /pend|aguard|wait|cancel|refund|reemb|estorn|chargeback|expir|fail|falh|recus/i;
@@ -142,13 +142,21 @@ export class Accounts {
     if (!s.id) return done("sem id da venda", 200);
     if (await this.st.get("zs:" + s.id)) return done("repetido: já entregue", 200);
     if (!s.coins) return done("sem pacote de Zcoin", 200);
-    if (!s.account) return done("sem nome da conta", 200);
+    let via = "";
+    if (!s.account) {                                                  // sem nome no aviso: usa quem clicou em Comprar desse pacote na loja (últimos 30 min)
+      const now = Date.now(), ints = ((await this.st.get("zint")) || []).filter((i) => now - i.at < 1800000);
+      const hits = ints.filter((i) => !i.used && s.packs.includes(i.coins)), names = [...new Set(hits.map((i) => i.name.toLowerCase()))];
+      if (names.length > 1) return done("confira: " + names.length + " contas pediram esse pacote", 200);
+      if (!names.length) return done("sem nome da conta", 200);
+      hits.forEach((i) => { i.used = now; }); await this.st.put("zint", ints);
+      s.account = hits[0].name; via = " (pela loja)";
+    }
     const u = await this.st.get("u:" + s.account.toLowerCase());
     if (!u) return done("conta não encontrada", 200);
     u.credit = (Number(u.credit) || 0) + s.coins; await this.st.put("u:" + u.key, u);
     await this.st.put("zs:" + s.id, { at: Date.now(), name: u.name, coins: s.coins });
     const alog = (await this.st.get("adminlog")) || []; alog.unshift({ at: Date.now(), name: u.name, coins: s.coins, via: "ZPAY" }); await this.st.put("adminlog", alog.slice(0, 50));
-    rec.account = u.name; return done("entregue", 200);
+    rec.account = u.name; return done("entregue" + via, 200);
   }
   async fetch(request) {
     const url = new URL(request.url), path = url.pathname.replace(/^\/api\//, "");
@@ -156,6 +164,16 @@ export class Accounts {
       const n = cleanName(url.searchParams.get("n")), ok = NAME_OK.test(n) && !!(await this.st.get("u:" + n.toLowerCase()));
       const gif = ok ? "R0lGODdhAgABAIEAAAAAAAAAAAAAAAAAACwAAAAAAgABAAAIBQABAAgIADs=" : "R0lGODdhAQABAIEAAAAAAAAAAAAAAAAAACwAAAAAAQABAAAIBAABBAQAOw==";
       return new Response(Uint8Array.from(atob(gif), (c) => c.charCodeAt(0)), { headers: { "content-type": "image/gif", "cache-control": "no-store", ...CORS } });
+    }
+    if (path === "zintent" && request.method === "GET") {             // loja ZPAY: "esta conta clicou em Comprar neste pacote" (imagem 1px)
+      const n = cleanName(url.searchParams.get("n")), coins = ZPAY_COINS[url.searchParams.get("p") || ""];
+      if (NAME_OK.test(n) && coins && await this.st.get("u:" + n.toLowerCase())) {
+        const now = Date.now(), ints = ((await this.st.get("zint")) || []).filter((i) => now - i.at < 1800000);
+        const prev = ints.find((i) => !i.used && i.coins === coins && i.name.toLowerCase() === n.toLowerCase());
+        if (prev) prev.at = now; else ints.unshift({ at: now, name: n, coins });
+        await this.st.put("zint", ints.slice(0, 200));
+      }
+      return new Response(Uint8Array.from(atob("R0lGODdhAQABAIEAAAAAAAAAAAAAAAAAACwAAAAAAQABAAAIBAABBAQAOw=="), (c) => c.charCodeAt(0)), { headers: { "content-type": "image/gif", "cache-control": "no-store", ...CORS } });
     }
     const hook = path.match(/^zpay\/([0-9a-f]{48})$/);
     if (hook && request.method === "POST") { const t = await request.text(); if (t.length > 100000) return J({ error: "Dados grandes demais." }, 413); return this.zpay(t, hook[1]); }

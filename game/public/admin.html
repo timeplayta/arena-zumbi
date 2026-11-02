@@ -122,7 +122,7 @@ async function refresh() {
       const tr = document.createElement("tr"); tr.innerHTML = "<td class='small'></td><td></td><td class='n'></td><td></td>";
       tr.children[0].textContent = new Date(s.at).toLocaleString("pt-BR"); tr.children[1].textContent = s.account || "—";
       tr.children[2].textContent = s.coins ? fmt(s.coins) : "—"; tr.children[3].textContent = s.result || "";
-      tr.children[3].className = s.result === "entregue" ? "ok" : (/repetido|ignorado/.test(s.result) ? "small" : "bad");
+      tr.children[3].className = /^entregue/.test(s.result || "") ? "ok" : (/repetido|ignorado/.test(s.result) ? "small" : "bad");
       tr.title = "Clique para ver os dados e preencher o envio"; tr.addEventListener("click", () => { if (s.account) $("name").value = s.account; if (s.coins) $("coins").value = s.coins; $("zraw").hidden = false; $("zrawt").value = s.raw || ""; $("zrawt").select(); });
       tr.className = "pick"; $("zlog").appendChild(tr);
     }
