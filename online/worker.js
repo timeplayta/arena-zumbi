@@ -152,6 +152,11 @@ export class Accounts {
   }
   async fetch(request) {
     const url = new URL(request.url), path = url.pathname.replace(/^\/api\//, "");
+    if (path === "exists" && request.method === "GET") {              // loja ZPAY: confere a conta por imagem (2px de largura = existe, 1px = não)
+      const n = cleanName(url.searchParams.get("n")), ok = NAME_OK.test(n) && !!(await this.st.get("u:" + n.toLowerCase()));
+      const gif = ok ? "R0lGODdhAgABAIEAAAAAAAAAAAAAAAAAACwAAAAAAgABAAAIBQABAAgIADs=" : "R0lGODdhAQABAIEAAAAAAAAAAAAAAAAAACwAAAAAAQABAAAIBAABBAQAOw==";
+      return new Response(Uint8Array.from(atob(gif), (c) => c.charCodeAt(0)), { headers: { "content-type": "image/gif", "cache-control": "no-store", ...CORS } });
+    }
     const hook = path.match(/^zpay\/([0-9a-f]{48})$/);
     if (hook && request.method === "POST") { const t = await request.text(); if (t.length > 100000) return J({ error: "Dados grandes demais." }, 413); return this.zpay(t, hook[1]); }
     let body = {};
