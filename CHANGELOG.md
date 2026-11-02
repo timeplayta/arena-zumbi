@@ -7,7 +7,7 @@
 
 ## Faca na mão (01/11/2026)
 - Tecla V (ou botão da faca no celular) pega e guarda a faca.
-- Com a faca na mão você corre 12% mais rápido.
+- Com a faca na mão você anda e corre na mesma velocidade do infectado.
 - Clique golpeia com a faca. 1, 2, Q ou a rodinha voltam para a arma.
 
 ## Infectado mais rápido (01/11/2026)
