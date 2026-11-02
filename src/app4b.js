@@ -7,21 +7,21 @@
 
   // ---------------- catálogo ----------------
   const UPG = [
-    { k: "hp", n: "Vida máxima", d: "+10 de vida máxima por nível.", p: [150, 300, 450, 650, 900] },
-    { k: "armor", n: "Armadura base", d: "+25 de armadura por nível. A armadura absorve 60% do dano que você leva.", p: [250, 500, 800, 1200] },
-    { k: "dmg", n: "Munição reforçada", d: "+5% de dano em todas as armas de fogo, por nível.", p: [200, 400, 650, 900, 1300] },
-    { k: "reload", n: "Recarga rápida", d: "Recarrega 7% mais rápido, por nível.", p: [150, 300, 500, 700, 1000] },
-    { k: "ammo", n: "Mochila de munição", d: "+10% de munição de reserva no começo, por nível.", p: [150, 300, 450, 650, 900] },
-    { k: "magnet", n: "Ímã de itens", d: "+25% de alcance para puxar vida e munição, por nível.", p: [150, 350, 650] },
-    { k: "stam", n: "Fôlego", d: "O fôlego gasta 10% mais devagar, por nível.", p: [150, 300, 500, 750] },
-    { k: "pots", n: "Bolsa de poções", d: "Modo Infecção: toda partida começa com 2 molotovs e 2 poções de cura. Cada nível dá +1 de cada (até 5).", p: [500, 600, 700] },
+    { k: "hp", n: "Vida máxima", d: "+10 de vida máxima por nível.", p: [1000, 1200, 1400, 1600, 1800] },
+    { k: "armor", n: "Armadura base", d: "+25 de armadura por nível. A armadura absorve 60% do dano que você leva.", p: [1000, 1200, 1400, 1600] },
+    { k: "dmg", n: "Munição reforçada", d: "+5% de dano em todas as armas de fogo, por nível.", p: [1000, 1200, 1400, 1600, 1800] },
+    { k: "reload", n: "Recarga rápida", d: "Recarrega 7% mais rápido, por nível.", p: [1000, 1200, 1400, 1600, 1800] },
+    { k: "ammo", n: "Mochila de munição", d: "+10% de munição de reserva no começo, por nível.", p: [1000, 1200, 1400, 1600, 1800] },
+    { k: "magnet", n: "Ímã de itens", d: "+25% de alcance para puxar vida e munição, por nível.", p: [1000, 1200, 1400] },
+    { k: "stam", n: "Fôlego", d: "O fôlego gasta 10% mais devagar, por nível.", p: [1000, 1200, 1400, 1600] },
+    { k: "pots", n: "Bolsa de poções", d: "Modo Infecção: toda partida começa com 2 molotovs e 2 poções de cura. Cada nível dá +1 de cada (até 5).", p: [1000, 1200, 1400] },
   ];
   const CONS = [
     { k: "vest", n: "Colete de kevlar", d: "Começa a próxima partida com +50 de armadura.", p: 120 },
     { k: "ammoPack", n: "Mochila dupla", d: "Dobra a munição de reserva (e o limite) durante a partida.", p: 150 },
     { k: "revive", n: "Segunda chance", d: "Se você morrer, volta com a vida CHEIA, 4 s invencível e joga os zumbis longe. Só gasta se você realmente morrer.", p: 400 },
   ];
-  const GUN_PRICE = { revolver: 1200, titan: 2200 };
+  const GUN_PRICE = { revolver: 5000, titan: 10000 };
   const MELEE = {
     knife: { n: "Faca de combate", d: "A de sempre. Rápida e discreta.", price: 0, stats: { dmg: 55, range: 1.9, cd: 0.75, knock: 6 } },
     machete: { n: "Facão", d: "Mais dano e golpe rápido.", price: 300, stats: { dmg: 75, range: 1.95, cd: 0.6, knock: 6 } },

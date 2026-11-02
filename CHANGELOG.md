@@ -1,5 +1,9 @@
 # Novidades — Arena Zumbi
 
+## Novos preços na loja (02/11/2026)
+- Melhorias permanentes: 1.000 moedas no nível 1, +200 a cada nível.
+- Revólver Trovão .50: 5.000 moedas. Titã M-60: 10.000 moedas.
+
 ## ID da conta (02/11/2026)
 - Cada conta tem um ID de 6 números, mostrado embaixo do nome no menu.
 - No site de moedas, use o nome ou o ID (#123456) para receber as moedas.
