@@ -674,7 +674,7 @@ table.sc td:first-child { font-family: var(--font-display); font-size: 22px; col
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
-const GAME_VERSION = 202611020003, GAME_NOTES = {"t": "Ataques do infectado (01/11/2026)", "b": ["Botão esquerdo: golpe normal a cada 1 segundo.", "Botão direito: golpe pesado a cada 1,15 segundo.", "Cada golpe tira 20 de vida."]};
+const GAME_VERSION = 202611020007, GAME_NOTES = {"t": "Ataques do infectado (01/11/2026)", "b": ["Botão esquerdo: golpe normal a cada 1 segundo.", "Botão direito: golpe pesado a cada 1,15 segundo.", "Cada golpe tira 20 de vida.", "Um golpe por clique: segurar o botão não repete o ataque."]};
 // ==MAPA ITÁLIA== (só o protótipo do modo Infecção)
 // Coordenadas lógicas: x = leste, y = norte, z = altura (m). Caixas sólidas: [x0, x1, y0, y1, topo, base, tipo, extra]
 const ITALIA = (function () {
@@ -8986,6 +8986,7 @@ const Logic = (function () {
   const tmpV = new THREE.Vector3();
   const lerp = (a, b, t) => a + (b - a) * t;
   let runUsed = [], burnFlash = 0;
+  let zPrevFire = false, zPrevAds = false;
 
   // ---------------- efeitos dos zumbis especiais ----------------
   const shocks = [], crackViews = new Map();
@@ -9838,7 +9839,11 @@ const Logic = (function () {
         sprint: shift, hold: shift, fire: mouseDown, ads: adsHeld, crouch: keys.has(KB.crouch),
       };
       touchInput(lastInp);
-      if (game.team === "z") { if (lastInp.fire) Coop.claw(game); else if (lastInp.ads) Coop.claw(game, true); lastInp.fire = false; lastInp.ads = false; }   // infecção: zumbi ataca com as garras
+      if (game.team === "z") {                                   // infectado: um golpe por clique (segurar não repete)
+        const f = !!lastInp.fire, a = !!lastInp.ads;
+        if (f && !zPrevFire) Coop.claw(game); else if (a && !zPrevAds) Coop.claw(game, true);
+        zPrevFire = f; zPrevAds = a; lastInp.fire = false; lastInp.ads = false;
+      }   // infecção: zumbi ataca com as garras
       if (game.time > 12 && !$("tzone").hidden) $("tzone").hidden = true;
       game.update(dt, lastInp); Coop.afterUpdate(game, dt); processEvents(); syncGame(dt); updateHud(dt); updateWeather(dt);
       if (!game.alive && Coop.ended()) onDeath();

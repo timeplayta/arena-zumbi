@@ -10,6 +10,7 @@
   const tmpV = new THREE.Vector3();
   const lerp = (a, b, t) => a + (b - a) * t;
   let runUsed = [], burnFlash = 0;
+  let zPrevFire = false, zPrevAds = false;
 
   // ---------------- efeitos dos zumbis especiais ----------------
   const shocks = [], crackViews = new Map();
@@ -862,7 +863,11 @@
         sprint: shift, hold: shift, fire: mouseDown, ads: adsHeld, crouch: keys.has(KB.crouch),
       };
       touchInput(lastInp);
-      if (game.team === "z") { if (lastInp.fire) Coop.claw(game); else if (lastInp.ads) Coop.claw(game, true); lastInp.fire = false; lastInp.ads = false; }   // infecção: zumbi ataca com as garras
+      if (game.team === "z") {                                   // infectado: um golpe por clique (segurar não repete)
+        const f = !!lastInp.fire, a = !!lastInp.ads;
+        if (f && !zPrevFire) Coop.claw(game); else if (a && !zPrevAds) Coop.claw(game, true);
+        zPrevFire = f; zPrevAds = a; lastInp.fire = false; lastInp.ads = false;
+      }   // infecção: zumbi ataca com as garras
       if (game.time > 12 && !$("tzone").hidden) $("tzone").hidden = true;
       game.update(dt, lastInp); Coop.afterUpdate(game, dt); processEvents(); syncGame(dt); updateHud(dt); updateWeather(dt);
       if (!game.alive && Coop.ended()) onDeath();

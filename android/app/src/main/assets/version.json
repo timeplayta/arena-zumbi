@@ -1,1 +1,1 @@
-{"v": 202611020003, "notes": {"t": "Ataques do infectado (01/11/2026)", "b": ["Botão esquerdo: golpe normal a cada 1 segundo.", "Botão direito: golpe pesado a cada 1,15 segundo.", "Cada golpe tira 20 de vida."]}}
+{"v": 202611020007, "notes": {"t": "Ataques do infectado (01/11/2026)", "b": ["Botão esquerdo: golpe normal a cada 1 segundo.", "Botão direito: golpe pesado a cada 1,15 segundo.", "Cada golpe tira 20 de vida.", "Um golpe por clique: segurar o botão não repete o ataque."]}}
