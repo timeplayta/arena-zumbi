@@ -1,5 +1,8 @@
 # Novidades — Arena Zumbi
 
+## Braços com qualquer FOV e resolução (02/11/2026)
+- Arma e braços ficam do mesmo tamanho em qualquer campo de visão e resolução: sem braço “voando” nem corte aparecendo.
+
 ## Menu no celular (02/11/2026)
 - Nome, ID e moedas da conta sempre visíveis no menu, em qualquer tamanho de tela.
 

@@ -492,7 +492,9 @@
 
   // clarão, luz do tiro e faca (vivem na câmera)
   const gunRoot = new THREE.Group();
-  camera.add(gunRoot);
+  // braços e armas foram montados para FOV 90 em tela 16:9; vmFov comprime X/Y para a imagem ficar igual em qualquer FOV/resolução (sem mostrar o corte dos braços)
+  const vmFov = new THREE.Group(); camera.add(vmFov);
+  vmFov.add(gunRoot);
   let vm = null, vmKey = "";
   const flashSprite = (function () {
     const c = document.createElement("canvas"); c.width = c.height = 64;
@@ -537,7 +539,7 @@
     for (const [id, g] of [["knife", k0], ["machete", k1], ["katana", k2], ["axe", k3]]) { g.visible = id === "knife"; knife.add(g); meleeSets[id] = g; }
     const mh = new THREE.Group(); knife.add(mh);
     knifeRig = HK.melee(HK.mats((o) => new THREE.MeshStandardMaterial(o)), mh);
-    knife.visible = false; camera.add(knife);
+    knife.visible = false; vmFov.add(knife);
   })();
   function setMeleeModel(id) { for (const k in meleeSets) meleeSets[k].visible = k === id; }
 

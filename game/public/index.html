@@ -707,7 +707,7 @@ table.sc td:first-child { font-family: var(--font-display); font-size: 22px; col
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
-const GAME_VERSION = 202611022025, GAME_NOTES = {"t": "Menu no celular (02/11/2026)", "b": ["Nome, ID e moedas da conta sempre visíveis no menu, em qualquer tamanho de tela."]};
+const GAME_VERSION = 202611022300, GAME_NOTES = {"t": "Braços com qualquer FOV e resolução (02/11/2026)", "b": ["Arma e braços ficam do mesmo tamanho em qualquer campo de visão e resolução: sem braço “voando” nem corte aparecendo."]};
 // ==MAPA ITÁLIA== (só o protótipo do modo Infecção)
 // Coordenadas lógicas: x = leste, y = norte, z = altura (m). Caixas sólidas: [x0, x1, y0, y1, topo, base, tipo, extra]
 const ITALIA = (function () {
@@ -4652,7 +4652,9 @@ const Logic = (function () {
 
   // clarão, luz do tiro e faca (vivem na câmera)
   const gunRoot = new THREE.Group();
-  camera.add(gunRoot);
+  // braços e armas foram montados para FOV 90 em tela 16:9; vmFov comprime X/Y para a imagem ficar igual em qualquer FOV/resolução (sem mostrar o corte dos braços)
+  const vmFov = new THREE.Group(); camera.add(vmFov);
+  vmFov.add(gunRoot);
   let vm = null, vmKey = "";
   const flashSprite = (function () {
     const c = document.createElement("canvas"); c.width = c.height = 64;
@@ -4697,7 +4699,7 @@ const Logic = (function () {
     for (const [id, g] of [["knife", k0], ["machete", k1], ["katana", k2], ["axe", k3]]) { g.visible = id === "knife"; knife.add(g); meleeSets[id] = g; }
     const mh = new THREE.Group(); knife.add(mh);
     knifeRig = HK.melee(HK.mats((o) => new THREE.MeshStandardMaterial(o)), mh);
-    knife.visible = false; camera.add(knife);
+    knife.visible = false; vmFov.add(knife);
   })();
   function setMeleeModel(id) { for (const k in meleeSets) meleeSets[k].visible = k === id; }
 
@@ -10487,6 +10489,7 @@ const Logic = (function () {
     } else if (state === "dead") {
       game.update(dt, {}); processEvents(); syncGame(dt); updateHud(dt); updateWeather(dt);
     } else if (state === "menu") menuTick(dt);
+    { const k = Math.tan((S.fov * Math.PI) / 360) / camera.aspect / 0.5625; vmFov.scale.set(k, k, 1); }   // 0,5625 = tan(45°)/(16/9): FOV 90 em 16:9
     renderer.render(scene, camera);
     if (state === "menu" && ui.tab === "arsenal" && pvRenderer) { pvPivot.rotation.y += dt * 0.7; pvRenderer.render(pvScene, pvCam); }
   }

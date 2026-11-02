@@ -936,6 +936,7 @@
     } else if (state === "dead") {
       game.update(dt, {}); processEvents(); syncGame(dt); updateHud(dt); updateWeather(dt);
     } else if (state === "menu") menuTick(dt);
+    { const k = Math.tan((S.fov * Math.PI) / 360) / camera.aspect / 0.5625; vmFov.scale.set(k, k, 1); }   // 0,5625 = tan(45°)/(16/9): FOV 90 em 16:9
     renderer.render(scene, camera);
     if (state === "menu" && ui.tab === "arsenal" && pvRenderer) { pvPivot.rotation.y += dt * 0.7; pvRenderer.render(pvScene, pvCam); }
   }
