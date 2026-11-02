@@ -202,7 +202,7 @@
   // ---------------- teclas configuráveis (Controles > Teclado) ----------------
   const BIND_DEF = { fwd: "KeyW", back: "KeyS", left: "KeyA", right: "KeyD", sprint: "ShiftLeft", crouch: "KeyC", reload: "KeyR", slot1: "Digit1", slot2: "Digit2", swap: "KeyQ", melee: "KeyV", mode: "KeyB", torch: "KeyF", mute: "KeyM", pause: "KeyP", potFire: "KeyG", potHeal: "KeyH", potCycle: "Digit3" };
   const BIND_LABEL = { fwd: "Andar para frente", back: "Andar para trás", left: "Andar para a esquerda", right: "Andar para a direita", sprint: "Correr / prender a respiração", crouch: "Agachar",
-    reload: "Recarregar", slot1: "Arma 1", slot2: "Arma 2", swap: "Trocar de arma", melee: "Golpe de faca", mode: "Modo de tiro (auto / semi / rajada)", torch: "Lanterna", mute: "Som liga/desliga", pause: "Pausar (Esc sempre pausa)", potFire: "Poção de fogo (Infecção)", potHeal: "Poção de cura (Infecção)", potCycle: "Alternar poções (Infecção)" };
+    reload: "Recarregar", slot1: "Arma 1", slot2: "Arma 2", swap: "Trocar de arma", melee: "Pegar / guardar a faca", mode: "Modo de tiro (auto / semi / rajada)", torch: "Lanterna", mute: "Som liga/desliga", pause: "Pausar (Esc sempre pausa)", potFire: "Poção de fogo (Infecção)", potHeal: "Poção de cura (Infecção)", potCycle: "Alternar poções (Infecção)" };
   function loadBinds() { let b = {}; try { b = JSON.parse(S.binds || "{}") || {}; } catch (e) {} const o = Object.assign({}, BIND_DEF); for (const k in o) if (typeof b[k] === "string" && b[k]) o[k] = b[k]; return o; }
   let KB = loadBinds(), bindWait = null;
   function keyName(c) {
@@ -216,7 +216,7 @@
   }
   function keyHint() {
     return keyName(KB.fwd) + keyName(KB.left) + keyName(KB.back) + keyName(KB.right) + " mover · Mouse mirar · Clique atirar · Botão direito mirar · " + keyName(KB.reload) + " recarregar · " + keyName(KB.slot1) + "/" + keyName(KB.slot2) +
-      " ou roda trocar arma · " + keyName(KB.crouch) + " agachar · " + keyName(KB.melee) + " faca · " + keyName(KB.mode) + " modo de tiro · " + keyName(KB.sprint) + " correr · " + keyName(KB.torch) + " lanterna · Esc pausar";
+      " ou roda trocar arma · " + keyName(KB.crouch) + " agachar · " + keyName(KB.melee) + " pegar faca · " + keyName(KB.mode) + " modo de tiro · " + keyName(KB.sprint) + " correr · " + keyName(KB.torch) + " lanterna · Esc pausar";
   }
   function renderBinds() {
     const box = $("bindList"); if (!box) return;
@@ -256,7 +256,7 @@
       else if (c === KB.slot1) { if (PotVM.holding()) PotVM.stop(); game.switchWeapon(0); }
       else if (c === KB.slot2) { if (PotVM.holding()) PotVM.stop(); game.switchWeapon(1); }
       else if (c === KB.swap) { if (PotVM.holding()) PotVM.stop(); game.switchWeapon(1 - game.cur); }
-      else if (c === KB.melee) game.requestMelee();
+      else if (c === KB.melee) { if (PotVM.busy()) PotVM.stop(); game.toggleKnife(); }
       else if (c === KB.mode) game.toggleFireMode();
       else if (c === KB.torch) { torchEnabled = !torchEnabled; }
       else if (c === KB.potCycle) cyclePot();
@@ -294,7 +294,7 @@
   }
   function syncTouchBtns() {
     const set = (act, on) => { const b = touchEl.querySelector('[data-act="' + act + '"]'); if (b) b.classList.toggle("on", on); };
-    set("ads", TS.ads); set("crouch", TS.crouch); set("torch", torchEnabled); set("autofire", !!S.autoFire);
+    set("ads", TS.ads); set("crouch", TS.crouch); set("torch", torchEnabled); set("autofire", !!S.autoFire); set("melee", !!game.knifeOut);
     const md = touchEl.querySelector('[data-act="mode"]');
     if (md) md.hidden = !(game.w().cfg.modes && game.w().cfg.modes.length > 1);
   }
@@ -369,6 +369,7 @@
     if (!(potBag(game)[k] > 0)) { feedLine("SEM POÇÃO DE " + (k === "fire" ? "FOGO" : "CURA") + " · ACABOU NESTA PARTIDA", false); Snd.play("deny", 0.6); return; }
     if (PotVM.busy()) { if (PotVM.holding()) { const same = PotVM.kind() === k; PotVM.stop(); if (same) return; } else return; }   // mesma tecla guarda; outra troca
     if (game.potCd > 0) return;
+    if (game.knifeOut) game.knifeOut = false;                     // poção na mão guarda a faca
     lastPot = k;
     feedLine(k === "fire" ? "MOLOTOV NA MÃO · CLIQUE PARA ACENDER E ARREMESSAR" : "CURA NA MÃO · CLIQUE PARA ARREMESSAR", false);
     PotVM.start(k, (kk) => {                                     // a garrafa sai da mão no começo do arremesso
@@ -406,7 +407,7 @@
     if (act === "ads") TS.ads = !TS.ads;
     else if (act === "reload") game.startReload();
     else if (act === "swap") { if (PotVM.holding()) PotVM.stop(); game.switchWeapon(1 - game.cur); }
-    else if (act === "melee") game.requestMelee();
+    else if (act === "melee") { if (PotVM.busy()) PotVM.stop(); game.toggleKnife(); }
     else if (act === "crouch") TS.crouch = !TS.crouch;
     else if (act === "mode") game.toggleFireMode();
     else if (act === "torch") torchEnabled = !torchEnabled;
@@ -587,6 +588,12 @@
       const s = mt / 0.6, e = s * s * (3 - 2 * s);
       if (knifeRig) HK.pose(knifeRig, { grip: 0.1 + 0.35 * Math.sin(Math.PI * s), thumb: 0.25 * s, rz: -0.25 * e });
       knife.visible = true; knife.position.set(lerp(0.35, -0.2, e), lerp(-0.35, -0.15, e), lerp(-0.25, -0.55, e)); knife.rotation.set(-0.3, lerp(0.3, -0.5, e), lerp(1.0, -0.6, e));
+    } else if (g.knifeOut) {                                     // faca na mão, parada (balança ao andar e correr)
+      const sw = g.switchT > 0 ? Math.sin(Math.PI * Math.min(1, g.switchT / (SWITCH_TIME * 0.7))) : 0, bb = g.moving ? Math.sin(g.bob) : 0;
+      if (knifeRig) HK.pose(knifeRig, { grip: 0.12, thumb: 0.05, rz: 0 });
+      knife.visible = true;
+      knife.position.set(0.16 + bb * 0.02 * (1 + sprintBlend), -0.14 - sw * 0.35 - Math.abs(bb) * 0.015 * (1 + sprintBlend) - sprintBlend * 0.04, -0.42);
+      knife.rotation.set(-0.1 - sprintBlend * 0.25, 0.3, 0.7 + sprintBlend * 0.2);
     } else knife.visible = false;
     if (g.flashT > 0) {
       const s = c.flash * (0.8 + Math.random() * 0.6);
@@ -600,7 +607,7 @@
     const g = game, c = g.w().cfg;
     setViewGun(g.w());
     const zm = g.team === "z";
-    gunRoot.visible = !zm && !PotVM.busy(); torch.visible = torchEnabled;
+    gunRoot.visible = !zm && !PotVM.busy() && !g.knifeOut; torch.visible = torchEnabled;
     $("view").classList.toggle("zmode", zm); $("hud").classList.toggle("zhud", zm);
     const bobh = S.bob && g.moving ? Math.abs(Math.sin(g.bob)) * (g.sprinting ? 0.05 : 0.03) : 0;
     const sh = g.hurtT * 0.05 + g.shake * 0.03, sway = g.aimSway();
@@ -836,10 +843,10 @@
     const scoped = c.scope && g.ads;
     el.stfill.style.transform = "scaleX(" + clamp(scoped ? g.breath / 4 : g.stamina / 100, 0, 1).toFixed(3) + ")";
     el.stfill.style.background = g.exhausted || g.breathLock ? "var(--danger)" : "#6fb7ff";
-    setText(el.wname, "wname", c.name.toUpperCase());
-    setText(el.wmode, "wmode", (c.pump ? "AÇÃO DE BOMBA" : c.bolt ? "FERROLHO" : { auto: "AUTOMÁTICA", semi: "SEMIAUTOMÁTICA", burst: "RAJADA 3" }[g.mode()]) + (c.modes && c.modes.length > 1 ? " [B]" : "") + (c.hasSil ? " · SILENC." : ""));
-    setText(el.mag, "mag", String(s.mag)); el.mag.style.color = s.mag > Math.ceil(c.magMax * 0.2) ? "" : "var(--danger)";
-    setText(el.reserve, "res", "/ " + s.reserve);
+    setText(el.wname, "wname", g.knifeOut ? MELEE[wallet.melee].n.toUpperCase() : c.name.toUpperCase());
+    if (g.knifeOut) setText(el.wmode, "wmode", "CORRE MAIS RÁPIDO · " + keyName(KB.melee) + " GUARDA"); else setText(el.wmode, "wmode", (c.pump ? "AÇÃO DE BOMBA" : c.bolt ? "FERROLHO" : { auto: "AUTOMÁTICA", semi: "SEMIAUTOMÁTICA", burst: "RAJADA 3" }[g.mode()]) + (c.modes && c.modes.length > 1 ? " [B]" : "") + (c.hasSil ? " · SILENC." : ""));
+    if (g.knifeOut) { setText(el.mag, "mag", "—"); el.mag.style.color = ""; setText(el.reserve, "res", ""); }
+    else { setText(el.mag, "mag", String(s.mag)); el.mag.style.color = s.mag > Math.ceil(c.magMax * 0.2) ? "" : "var(--danger)"; setText(el.reserve, "res", "/ " + s.reserve); }
     setText(el.s0, "s0", "1 " + g.slots[0].cfg.name); setText(el.s1, "s1", "2 " + g.slots[1].cfg.name);
     el.s0.classList.toggle("on", g.cur === 0); el.s1.classList.toggle("on", g.cur === 1);
     el.cross.style.setProperty("--gap", (5 + g.spread() * 650).toFixed(1) + "px");

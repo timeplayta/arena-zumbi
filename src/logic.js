@@ -7,6 +7,7 @@ const Logic = (function () {
   // parâmetros da IA dos bots: escolhidos por busca em ~600 partidas simuladas de Infecção (11 bots, mapa Itália)
   const POT = { speed: 13, lift: 3, grav: 12, cd: 0.8, fire: { r: 3, dur: 6, dps: 100, after: 1.5 }, heal: { r: 3.5, dur: 6, hps: 16 } };
   const BOT_AI = { samples: 10, roamR: 28, wz: 1, wh: 0.3, wHigh: 0.6, roamT: 6, boostR: 25, stand: 26, flee: 7, sprint: 4, away: 7, range: 28, camp: false, spotMode: "mix", spread: 12, group: 2, gap: 3, moveErr: 1.6, fireVar: 1.2, clawR: 1.7 };
+  const KNIFE_SPEED = 1.12;                                    // faca na mão: corre 12% mais rápido (sem peso de arma)
   const ZOMBIE_SPEED = 1.1;                                    // infecção: infectado anda/corre 10% mais rápido que o humano
   const CLAW_DMG = 20, CLAW_DMG_HEAVY = 35;                   // infecção: golpe normal tira 20 · golpe pesado (botão direito) tira 35
   const CLAW_CD = 1.0, CLAW_CD_HEAVY = 1.15;                  // golpe normal (botão esquerdo) 1,0 s · golpe pesado (botão direito) 1,15 s                                       // infecção: intervalo entre ataques do infectado (s)
@@ -464,7 +465,7 @@ const Logic = (function () {
       this.bob = 0; this.bobStep = 0; this.moving = false; this.ads = false; this.crouchT = 0; this.sprinting = false;
       this.stamina = 100; this.exhausted = false; this.breath = 4; this.breathLock = false; this.breathHeld = false;
       this.hp = this.maxHp; this.cool = 0; this.reloadT = 0; this.reloadTotal = 1; this.reloading = false;
-      this.meleeT = 0; this.triggerWas = false; this.burstLeft = 0; this.sched = []; this.hbT = 0;
+      this.meleeT = 0; this.knifeOut = false; this.triggerWas = false; this.burstLeft = 0; this.sched = []; this.hbT = 0;
       this.alive = true; this.time = 0;
       this.score = 0; this.kills = 0; this.headshots = 0; this.shots = 0; this.hits = 0;
       this.zombies = []; this.pickups = []; this.cracks = []; this.crackSlow = 1; this.queue = []; this.queueTotal = 0; this.bonus = 0; this.burnT = 0; this.nextCrack = 1;
@@ -507,7 +508,7 @@ const Logic = (function () {
     // ---------- armas ----------
     startReload() {
       const s = this.w(), c = s.cfg;
-      if (this.reloading || this.switchT > 0 || !this.alive || this.meleeT > 0.4) return;
+      if (this.reloading || this.switchT > 0 || !this.alive || this.meleeT > 0.4 || this.knifeOut) return;
       if (c.shell) {
         if (s.mag >= c.magMax || s.reserve <= 0) return;
         this.reloading = true; this.reloadTotal = this.reloadT = c.reloadStart * this.reloadK;
@@ -527,7 +528,16 @@ const Logic = (function () {
       s.modeIdx = (s.modeIdx + 1) % n; this.burstLeft = 0; this.events.push(["mode"]);
     }
 
+    toggleKnife() {                                                  // tecla da faca: pega / guarda a faca
+      if (this.team === "z" || !this.alive || this.switchT > 0 || this.meleeT > 0) return;
+      this.cancelReload(); this.burstLeft = 0; this.ads = false;
+      this.knifeOut = !this.knifeOut; this.switchT = SWITCH_TIME * 0.7; this.pending = null;
+      this.events.push(["switch"]);
+    }
     switchWeapon(i) {
+      if (this.knifeOut && i >= 0 && i <= 1 && this.switchT <= 0 && this.alive) {   // com a faca: guarda e volta para a arma escolhida
+        this.knifeOut = false; this.pending = i === this.cur ? null : i; this.switchT = SWITCH_TIME; this.events.push(["switch"]); return;
+      }
       if (i === this.cur || i < 0 || i > 1 || this.switchT > 0 || !this.alive) return;
       this.cancelReload(); this.burstLeft = 0; this.pending = i; this.switchT = SWITCH_TIME;
       this.events.push(["switch"]);
@@ -822,7 +832,7 @@ const Logic = (function () {
     // ---------- jogador ----------
     updatePlayer(dt, inp) {
       const s = this.w(), c = s.cfg;
-      this.ads = !!inp.ads && this.switchT <= 0 && !(this.reloading && !c.shell) && this.meleeT < 0.4;
+      this.ads = !!inp.ads && !this.knifeOut && this.switchT <= 0 && !(this.reloading && !c.shell) && this.meleeT < 0.4;
       const crouchTarget = inp.crouch ? 1 : 0;
       this.crouchT += (crouchTarget - this.crouchT) * Math.min(1, dt * 10);
       const fwd = inp.fwd || 0, strafe = inp.strafe || 0;
@@ -839,7 +849,7 @@ const Logic = (function () {
       const wantHold = !!inp.hold && this.ads && c.scope;
       if (wantHold && !this.breathLock && this.breath > 0) { this.breath -= dt; this.breathHeld = true; if (this.breath <= 0) { this.breath = 0; this.breathLock = true; this.breathHeld = false; this.events.push(["winded"]); } }
       else { this.breathHeld = false; this.breath = Math.min(4, this.breath + dt * 0.8); if (this.breathLock && this.breath > 2) this.breathLock = false; }
-      let speed = this.team === "z" ? PLAYER_SPEED * ZOMBIE_SPEED : PLAYER_SPEED * c.speed;   // infectado: 10% mais rápido e sem peso de arma
+      let speed = this.team === "z" ? PLAYER_SPEED * ZOMBIE_SPEED : this.knifeOut ? PLAYER_SPEED * KNIFE_SPEED : PLAYER_SPEED * c.speed;   // infectado: 10% mais rápido e sem peso de arma
       if (this.sprinting) speed *= SPRINT_MULT;
       if (this.ads) speed *= c.adsSpeed;
       speed *= 1 - 0.45 * this.crouchT;
@@ -878,6 +888,8 @@ const Logic = (function () {
           }
         }
       }
+      // faca na mão: o clique golpeia (segurar repete no ritmo da faca)
+      if (this.knifeOut) { if (inp.fire && this.switchT <= 0) this.requestMelee(); this.triggerWas = !!inp.fire; this.burstLeft = 0; return; }
       // disparo
       const trigger = !!inp.fire, mode = this.mode();
       let want = trigger && (mode === "auto" || !this.triggerWas);
@@ -1712,7 +1724,7 @@ const Logic = (function () {
     becomeZombie(id, first) {
       const q = this.infPlayers().find((k) => k.id === id); if (!q || q.team === "z") return;
       const p = q.p; p.team = "z"; p.zDeadT = 0; p.clawT = 0.6;
-      if (q.me) { this.hp = this.maxHp; this.alive = true; this.armor = 0; this.armorMax = 0; this.invulnT = 1; }
+      if (q.me) { this.hp = this.maxHp; this.alive = true; this.armor = 0; this.armorMax = 0; this.invulnT = 1; this.knifeOut = false; }
       else { p.hp = p.maxHp; p.alive = true; p.armor = 0; p.armorMax = 0; p.invulnT = 1; }
       this.spawnPuppet(id, q.x, q.y);
       this.events.push(["infected", id, first ? 1 : 0]);

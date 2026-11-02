@@ -1,5 +1,10 @@
 # Novidades — Arena Zumbi
 
+## Faca na mão (01/11/2026)
+- Tecla V (ou botão da faca no celular) pega e guarda a faca.
+- Com a faca na mão você corre 12% mais rápido.
+- Clique golpeia com a faca. 1, 2, Q ou a rodinha voltam para a arma.
+
 ## Infectado mais rápido (01/11/2026)
 - Infectado anda e corre 10% mais rápido que o humano (corrida: 8,4 m/s).
 
