@@ -438,7 +438,7 @@
     inp.fwd = clamp(inp.fwd - TS.my, -1, 1); inp.strafe = clamp(inp.strafe + TS.mx, -1, 1);
     inp.sprint = inp.sprint || TS.sprint; inp.ads = inp.ads || TS.ads; inp.crouch = inp.crouch || TS.crouch;
     let want = TS.fire;
-    if (!want && S.autoFire && game.alive && game.switchT <= 0 && game.aimTarget(game.ads ? 60 : 35)) want = true;
+    if (!want && S.autoFire && game.alive && game.team !== "z" && game.switchT <= 0 && game.aimTarget(game.ads ? 60 : 35)) want = true;   // tiro automático: nunca para garra
     if (want) {
       TS.alt = !TS.alt;                          // armas semiautomáticas: "aperta e solta" sozinho
       inp.fire = inp.fire || (game.mode() === "auto" ? true : TS.alt);

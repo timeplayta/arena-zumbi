@@ -2,9 +2,10 @@
 
 ## Ataques do infectado (01/11/2026)
 - Botão esquerdo: golpe normal a cada 1 segundo.
-- Botão direito: golpe pesado a cada 1,15 segundo.
-- Cada golpe tira 20 de vida.
+- Botão direito: golpe pesado a cada 1,15 segundo, tira 35 de vida.
+- Golpe normal tira 20 de vida.
 - Um golpe por clique: segurar o botão não repete o ataque.
+- Tiro automático do celular não ataca sozinho quando você é zumbi.
 
 ## Garra do infectado (01/11/2026)
 - Um golpe não infecta mais: cada golpe tira 8.

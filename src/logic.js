@@ -6,7 +6,7 @@ const Logic = (function () {
   const ZOMBIE_RESPAWN = 5;                                   // infecção: segundos até o infectado abatido voltar
   // parâmetros da IA dos bots: escolhidos por busca em ~600 partidas simuladas de Infecção (11 bots, mapa Itália)
   const BOT_AI = { samples: 10, roamR: 28, wz: 1, wh: 0.3, wHigh: 0.6, roamT: 6, boostR: 25, stand: 26, flee: 7, sprint: 4, away: 7, range: 28, camp: false, spotMode: "mix", spread: 12, group: 2, gap: 3, moveErr: 1.6, fireVar: 1.2, clawR: 1.7 };
-  const CLAW_DMG = 20;                                        // infecção: cada golpe do infectado tira 20
+  const CLAW_DMG = 20, CLAW_DMG_HEAVY = 35;                   // infecção: golpe normal tira 20 · golpe pesado (botão direito) tira 35
   const CLAW_CD = 1.0, CLAW_CD_HEAVY = 1.15;                  // golpe normal (botão esquerdo) 1,0 s · golpe pesado (botão direito) 1,15 s                                       // infecção: intervalo entre ataques do infectado (s)
   const ATTACK_RANGE = 1.25, ZOMBIE_SEP = 0.75, RANGE = 90;
   const BODY_R = 0.34, BODY_H = 1.5, HEAD_Z = 1.67, HEAD_R = 0.21, LEG_H = 0.8;
@@ -1642,7 +1642,7 @@ const Logic = (function () {
         if (h.team !== "h" || !h.alive) continue;
         const dx = h.x - x, dy = h.y - y, d = Math.hypot(dx, dy);
         if (d > reach || d < 1e-3 || (dx * fx + dy * fy) / d < 0.3 || Math.abs(h.gz - cg) > 1.6) continue;
-        if (h.me) this.hurt(CLAW_DMG, z, {}); else this.hurtRemote(h.p, CLAW_DMG, z, {});
+        const dmg = heavy ? CLAW_DMG_HEAVY : CLAW_DMG; if (h.me) this.hurt(dmg, z, {}); else this.hurtRemote(h.p, dmg, z, {});
       }
     }
     infectEnd(w) {
