@@ -102,6 +102,18 @@ const ZPAY_COINS = { "6ae7fb23628b71ef671ec257": 250000, "6ae7faee628b71ef671ec2
 const coinsInName = (s) => { const m = String(s || "").match(/(\d{1,3}(?:[.\s]\d{3})+|\d+)\s*z\s*coins?/i); return m ? Number(m[1].replace(/[.\s]/g, "")) : 0; };
 // lê o aviso da venda sem depender de um formato fixo: id da venda, situação, conta do jogo e pacotes comprados
 function readSale(p) {
+  // formato real da ZPAY: {event:"sale.delivered", sale:{id, quantity, status, customAnswers:[...]}, product:{id, name, price}}
+  if (p && p.sale && typeof p.sale === "object" && p.product && typeof p.product === "object") {
+    const per = ZPAY_COINS[String(p.product.id || p.product._id || "")] || coinsInName(p.product.name);
+    const q = Math.max(1, Math.min(50, Math.trunc(Number(p.sale.quantity)) || 1));
+    let account = "";
+    for (const a of Array.isArray(p.sale.customAnswers) ? p.sale.customAnswers : []) {
+      if (!a || typeof a !== "object") continue;
+      const label = String(a.title || a.question || a.label || a.name || a.field || ""), val = a.answer ?? a.value ?? a.response ?? a.text ?? a.resposta ?? "";
+      if (typeof val === "string" && val.trim() && (!account || /conta(?!ct)|nick|jogador|player/i.test(label))) account = val;
+    }
+    return { id: String(p.sale.id || p.sale._id || ""), status: String(p.sale.status || p.event || ""), account: cleanName(account), packs: per ? [per] : [], coins: per * q };
+  }
   const pick = (o, ks) => { for (const k of ks) if (o && o[k] != null && typeof o[k] !== "object") return String(o[k]); return ""; };
   const roots = [p, p && p.data, p && p.order, p && p.sale, p && p.venda, p && p.data && (p.data.order || p.data.sale)].filter((o) => o && typeof o === "object");
   let id = "", status = "", account = "";
