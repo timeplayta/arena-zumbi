@@ -1,5 +1,8 @@
 # Novidades — Arena Zumbi
 
+## Menu no celular (02/11/2026)
+- Nome, ID e moedas da conta sempre visíveis no menu, em qualquer tamanho de tela.
+
 ## Atirar correndo (02/11/2026)
 - Ao atirar correndo, a arma volta para o centro antes do disparo e o tiro sai dela.
 - Enquanto atira, você corre um pouco mais devagar e o recuo e a dispersão ficam piores.

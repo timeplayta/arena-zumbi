@@ -394,6 +394,18 @@ table.sc td:first-child { font-family: var(--font-display); font-size: 22px; col
 /* ---------- celular: menus sem barra de rolagem ---------- */
 #stage.touchmode *, #stage.touchmode { scrollbar-width: none; }
 #stage.touchmode *::-webkit-scrollbar { display: none; width: 0; height: 0; }
+/* tela baixa (celular deitado, tablet): título e abas encolhem com a altura para a conta (nome, ID e moedas) caber sempre */
+@media (orientation: landscape) and (max-height: 900px) {
+  .m-side { gap: min(22px, 2.4vh); min-height: 0; overflow: hidden; }
+  #nav { flex: 1 1 auto; min-height: 0; overflow-y: auto; }              /* se faltar altura, só as abas rolam; a conta fica sempre à vista */
+  .who { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 8px; row-gap: 2px; align-items: baseline; }
+  .who b { min-width: 0; } .who .accid { margin-top: 0; white-space: nowrap; justify-self: end; }
+  .who .coinbtn { min-width: 0; } .who .linkbtn { justify-self: end; white-space: nowrap; }
+  .brand .kicker { font-size: min(1em, 2.6vh); margin-bottom: 0; }
+  .brand h1 { font-size: min(clamp(44px, 5.4vw, 76px), 9vh); line-height: 0.92; }
+  #nav button { font-size: min(28px, 4.1vh); padding-top: 0; }
+  .who { flex: none; }
+}
 /* ---------- celular na horizontal: menu lateral compacto (todas as abas visíveis, sem rolar para o lado) ---------- */
 @media (max-height: 520px) and (orientation: landscape) {
   #menu { grid-template-columns: 158px minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) auto; gap: 0 14px;
@@ -401,9 +413,11 @@ table.sc td:first-child { font-family: var(--font-display); font-size: 22px; col
   .m-side { grid-row: 1 / span 2; flex-direction: column; align-items: stretch; gap: 6px; overflow: hidden; }
   .brand .kicker { display: none; }
   .brand h1 { font-size: 25px; line-height: 0.95; } .brand h1 br { display: inline; }
-  #nav { flex-direction: column; flex-wrap: nowrap; overflow: visible; flex: none; gap: 0; }
+  #nav { flex-direction: column; flex-wrap: nowrap; overflow-y: auto; flex: 1 1 auto; min-height: 0; gap: 0; }
   #nav button { font-size: 16px; padding: 3px 8px 2px; border-bottom: 0; border-left: 3px solid transparent; white-space: nowrap; }
   #nav button.on { border-left-color: var(--amber); background: linear-gradient(90deg, var(--amber-soft), transparent); }
+  .who .coinbtn i { display: none; }                                      /* menu estreito: só o valor (tocar abre a loja) e "Sair" */
+  .who .linkbtn { font-size: 0; } .who .linkbtn::after { content: "Sair"; font-size: 12px; }
   .who { padding: 4px 8px; gap: 1px; } .who b { font-size: 17px; } .who span { font-size: 12px; } .who .coin { font-size: 15px; } .who .accid { font-size: 11px; margin-top: 0; }
   .m-main, .m-dock { grid-column: 2; }
   .panel > h2 { display: none; }
