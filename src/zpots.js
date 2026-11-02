@@ -223,3 +223,45 @@
     }
     return { start, fire, update, stop, busy: () => act, holding, kind: () => kind };
   })();
+  // ---------- faca M9 Bayonet em primeira pessoa (modelo de CS 1.6) ----------
+  const KnifeVM = (() => {
+    let V = null, fovG = null, act = "", t = 0, spd = 1, side = 0, lastMel = 0, wasOn = false;
+    function build() {
+      const J = KNIFE_MODEL, { g, mats } = PotFX.gsGeom(J, true);
+      const mesh = new THREE.SkinnedMesh(g, mats);
+      const bones = J.bones.map((b) => { const o = new THREE.Bone(); o.position.set(b[1], b[2], b[3]); o.quaternion.set(b[4], b[5], b[6], b[7]); return o; });
+      J.bones.forEach((b, i) => { if (b[0] >= 0) bones[b[0]].add(bones[i]); else mesh.add(bones[i]); });
+      mesh.updateMatrixWorld(true); mesh.bind(new THREE.Skeleton(bones)); mesh.frustumCulled = false;
+      const conv = new THREE.Group();
+      conv.quaternion.setFromRotationMatrix(new THREE.Matrix4().set(0, -1, 0, 0, 0, 0, 1, 0, -1, 0, 0, 0, 0, 0, 0, 1)); conv.scale.setScalar(0.0254); conv.add(mesh);
+      const qa = new THREE.Quaternion(), qb = new THREE.Quaternion();
+      function pose(name, tt) {
+        const A = J.anims[name], nf = A.f.length, ft = tt * A.fps;
+        let f0 = Math.floor(ft), k = ft - f0; if (f0 >= nf - 1) { f0 = nf - 1; k = 0; }
+        const f1 = Math.min(nf - 1, f0 + 1), a = A.f[f0], b = A.f[f1];
+        for (let i = 0; i < bones.length; i++) {
+          const o = i * 7, B = bones[i];
+          B.position.set(a[o] + (b[o] - a[o]) * k, a[o + 1] + (b[o + 1] - a[o + 1]) * k, a[o + 2] + (b[o + 2] - a[o + 2]) * k);
+          qa.set(a[o + 3], a[o + 4], a[o + 5], a[o + 6]); qb.set(b[o + 3], b[o + 4], b[o + 5], b[o + 6]); B.quaternion.copy(qa).slerp(qb, k);
+        }
+      }
+      return { root: conv, pose, dur: (n) => J.anims[n].f.length / J.anims[n].fps };
+    }
+    // devolve true quando a faca nova está na tela (aí a faca antiga fica escondida)
+    function update(g, dt) {
+      const on = !!g.knifeOut && g.alive && g.team !== "z" && wallet.melee === "knife";
+      if (!on) { if (fovG) fovG.visible = false; wasOn = false; act = ""; lastMel = g.meleeT || 0; return false; }
+      if (!V) { V = build(); fovG = new THREE.Group(); fovG.add(V.root); camera.add(fovG); }
+      fovG.visible = true;
+      const k = Math.tan((camera.fov * Math.PI) / 360) / Math.tan((73.74 * Math.PI) / 360);
+      fovG.scale.set(k, k, 1);
+      if (!wasOn) { act = "draw"; t = 0; spd = V.dur("draw") / 0.5; }
+      wasOn = true;
+      if (g.meleeT > lastMel + 0.01) { act = side ? "midslash2" : "midslash1"; side ^= 1; t = 0; spd = V.dur(act) / Math.max(0.35, g.mel.cd); }   // golpe novo
+      lastMel = g.meleeT;
+      if (act) { t += dt * spd; if (t >= V.dur(act)) act = ""; else V.pose(act, t); }
+      if (!act) V.pose("idle", (g.time * 0.6) % V.dur("idle"));
+      return true;
+    }
+    return { update };
+  })();

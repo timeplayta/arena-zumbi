@@ -1,5 +1,8 @@
 # Novidades — Arena Zumbi
 
+## Faca nova (01/11/2026)
+- Faca de combate agora é uma M9 Bayonet com luvas, com animações de sacar, golpear e parada.
+
 ## Novas teclas (01/11/2026)
 - 3 pega e guarda a faca.
 - 4 alterna as poções (G e H continuam valendo).

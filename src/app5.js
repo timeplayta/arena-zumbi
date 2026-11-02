@@ -617,6 +617,7 @@
     hfov += ((g.ads ? c.adsFov : S.fov) - hfov) * Math.min(1, dt * 12);
     camera.fov = vfovFor(hfov); camera.updateProjectionMatrix();
     animateGun(dt, g); if (zm) knife.visible = false; ZArms.update(g, dt); PotVM.update(g, dt);
+    if (KnifeVM.update(g, dt)) knife.visible = false;               // faca padrão: modelo M9 com braços
     flickerT -= dt;
     if (flickerT <= 0) { flickerT = rand(0.04, 0.2); lampLights[2].intensity = env.lamp * (Math.random() < 0.25 ? rand(0, 0.5) : 1); }
     syncZombies(g); syncPickups(g); syncCracks(g); updateShocks(dt); syncAllies(g, dt); syncBoosts(g); PotFX.sync(g, g.time);
