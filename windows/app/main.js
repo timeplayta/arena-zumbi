@@ -1,7 +1,7 @@
 // Arena Zumbi para Windows (Electron).
 // Ao abrir: procura versão nova no Cloudflare; se houver, baixa o jogo offline e já abre a versão nova.
 // Sem internet: abre a última versão baixada (ou a que veio junto com o instalador).
-const { app, BrowserWindow, Menu, net } = require("electron");
+const { app, BrowserWindow, Menu, net, shell } = require("electron");
 const fs = require("fs"), path = require("path");
 const BASE = "https://arena-zumbi.playes.workers.dev/";
 
@@ -46,7 +46,10 @@ async function createWindow() {
     if (input.key === "F11") { win.setFullScreen(!win.isFullScreen()); e.preventDefault(); }
     else if (input.control && input.key.toLowerCase() === "q") { app.quit(); e.preventDefault(); }
   });
-  win.webContents.setWindowOpenHandler(() => ({ action: "deny" }));
+  win.webContents.setWindowOpenHandler(({ url }) => {                  // links (ex.: comprar moedas) abrem no navegador do PC
+    if (/^https:\/\//.test(url)) shell.openExternal(url);
+    return { action: "deny" };
+  });
   await win.loadURL(splash("Procurando atualização..."));
   win.loadFile(await bestGame(win));
 }

@@ -191,6 +191,11 @@ button.buy.alt { background: transparent; color: var(--fg); border: 1px solid #3
 #gate .err { font-size: 14px; }
 #gate .err.ok { color: var(--muted); }
 #gate .row { gap: 10px; flex-wrap: wrap; }
+.who .coinbtn { display: flex; align-items: baseline; gap: 8px; background: none; border: 0; padding: 0; cursor: pointer; text-align: left; font: inherit; color: inherit; }
+.who .coinbtn i { font-style: normal; font-size: 14px; color: var(--amber); opacity: 0.85; letter-spacing: 0.06em; }
+.who .coinbtn:hover i, .who .coinbtn:focus-visible i { opacity: 1; text-decoration: underline; }
+#storeCoins[data-shop] { cursor: pointer; }
+.shopbtn { margin-left: 10px; vertical-align: middle; }
 .who .linkbtn { background: none; border: 0; padding: 0; color: var(--muted); font: inherit; font-size: 13px; letter-spacing: 0.06em; text-decoration: underline; cursor: pointer; text-align: left; }
 .warn { font-size: 12px; color: var(--muted); line-height: 1.4; margin: 0; }
 #stage .ar { display: none; } #stage .ar.show { display: block; }
@@ -513,7 +518,7 @@ table.sc td:first-child { font-family: var(--font-display); font-size: 22px; col
 
       <section class="panel" data-panel="store" hidden>
         <h2>Loja</h2>
-        <div class="sec bal"><div>Suas moedas <b id="storeCoins">0</b></div><p>Você ganha moedas em toda partida: abates, ondas vencidas, headshots e zumbis especiais. Dificuldades mais altas pagam mais. Tudo que você compra fica salvo neste aparelho.</p></div>
+        <div class="sec bal"><div>Suas moedas <b id="storeCoins" data-shop title="Comprar moedas">0</b> <button type="button" class="buy shopbtn" data-shop>Comprar moedas</button></div><p>Você ganha moedas em toda partida: abates, ondas vencidas, headshots e zumbis especiais. Dificuldades mais altas pagam mais. Tudo que você compra fica salvo na sua conta.</p></div>
         <div class="sec"><h3>Melhorias permanentes</h3><div class="shop" id="shopUp"></div></div>
         <div class="sec"><h3>Itens de uma partida</h3><div class="shop" id="shopCons"></div></div>
         <div class="sec"><h3>Armas de fogo</h3><div class="shop" id="shopGuns"></div></div>

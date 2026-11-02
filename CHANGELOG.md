@@ -1,5 +1,8 @@
 # Novidades — Arena Zumbi
 
+## Comprar moedas (02/11/2026)
+- Toque nas suas moedas (menu ou loja) para abrir o site de compra de moedas.
+
 ## Moedas de presente (02/11/2026)
 - Moedas enviadas para a sua conta chegam em até 1 minuto, mesmo com o jogo aberto.
 

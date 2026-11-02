@@ -116,7 +116,7 @@
     const w = $("who");
     if (!profile.name) { w.hidden = true; return; }
     w.hidden = false;
-    w.innerHTML = "<b>" + esc(profile.name) + '</b><span class="coin">' + wallet.coins + '</span><button type="button" class="linkbtn" id="btnLogout">' + (session ? "Sair da conta" : "Entrar numa conta") + "</button>";
+    w.innerHTML = "<b>" + esc(profile.name) + '</b><button type="button" class="coinbtn" data-shop title="Comprar moedas"><span class="coin">' + wallet.coins + '</span><i>+ comprar</i></button><button type="button" class="linkbtn" id="btnLogout">' + (session ? "Sair da conta" : "Entrar numa conta") + "</button>";
     $("storeCoins").textContent = String(wallet.coins);
   }
   // ---------------- tela de entrada ----------------
@@ -150,7 +150,16 @@
     gateError(expired ? "Sua sessão expirou. Entre de novo." : "");
     setTimeout(() => { try { $("gName").focus(); } catch (e) {} }, 60);
   }
-  menuEl.addEventListener("click", (e) => { if (e.target && e.target.id === "btnLogout") logout(false); });
+  menuEl.addEventListener("click", (e) => {
+    if (e.target && e.target.id === "btnLogout") logout(false);
+    if (e.target && e.target.closest && e.target.closest("[data-shop]")) openShop();
+  });
+  // loja de moedas (site do dono do jogo): abre fora do jogo
+  const SHOP_URL = "https://arenazumbi.zpaysolution.shop/";
+  function openShop() {
+    try { if (window.AZ && window.AZ.openUrl) { window.AZ.openUrl(SHOP_URL); return; } } catch (e) {}   // app de Android
+    try { window.open(SHOP_URL, "_blank", "noopener"); } catch (e) {}                                     // navegador e .exe
+  }
   async function doAuth(kind) {
     const name = $("gName").value.replace(/\s+/g, " ").trim(), pass = $("gPass").value;
     if (name.length < 2) { gateError("Digite seu nome (pelo menos 2 letras)."); $("gName").focus(); return; }

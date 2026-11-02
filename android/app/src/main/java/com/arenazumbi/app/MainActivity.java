@@ -1,6 +1,10 @@
 package com.arenazumbi.app;
 
 import android.app.Activity;
+import android.content.Intent;
+import android.net.Uri;
+import android.webkit.JavascriptInterface;
+import android.webkit.WebResourceRequest;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.view.Gravity;
@@ -40,7 +44,16 @@ public class MainActivity extends Activity {
         s.setMediaPlaybackRequiresUserGesture(false);
         s.setAllowFileAccess(true);
         web.setWebChromeClient(new WebChromeClient());
-        web.setWebViewClient(new WebViewClient());
+        web.setWebViewClient(new WebViewClient() {
+            @Override public boolean shouldOverrideUrlLoading(WebView v, WebResourceRequest r) {   // links da internet abrem no navegador
+                String u = r.getUrl().toString();
+                if (u.startsWith("https://") || u.startsWith("http://")) { openExternal(u); return true; }
+                return false;
+            }
+        });
+        web.addJavascriptInterface(new Object() {                              // o jogo chama AZ.openUrl(...) (ex.: comprar moedas)
+            @JavascriptInterface public void openUrl(String u) { if (u != null && u.startsWith("https://")) runOnUiThread(() -> openExternal(u)); }
+        }, "AZ");
         web.setBackgroundColor(0xFF07090D);
         splash = new TextView(this);
         splash.setText("ARENA ZUMBI\n\nProcurando atualização...");
@@ -53,6 +66,8 @@ public class MainActivity extends Activity {
         if (saved != null) { setContentView(web); web.restoreState(saved); return; }
         new Thread(this::chooseGame).start();
     }
+
+    private void openExternal(String u) { try { startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(u))); } catch (Exception e) {} }
 
     private static String get(String url, int timeoutMs) throws Exception {
         HttpURLConnection c = (HttpURLConnection) new URL(url + "?t=" + System.currentTimeMillis()).openConnection();
