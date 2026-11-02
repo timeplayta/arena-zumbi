@@ -362,6 +362,7 @@
   function pressAct(act, down) {
     if (act === "fire") { TS.fire = down; return; }
     if (!down) return;
+    if (act === "ads" && game.team === "z") { Coop.claw(game, true); return; }   // infectado: botão de mira = golpe pesado
     if (act === "ads") TS.ads = !TS.ads;
     else if (act === "reload") game.startReload();
     else if (act === "swap") game.switchWeapon(1 - game.cur);
@@ -612,7 +613,7 @@
           Snd.play("giantroar", me ? 0.9 : 0.5, 1.25, 0, 0.2); if (me) { buzz([80, 40, 160]); game.shake = Math.max(game.shake, 0.8); }
           break;
         }
-        case "claw": spatial("melee", ev[1], ev[2], 0.9, rand(0.65, 0.8), 0.1, 25); break;
+        case "claw": spatial("melee", ev[1], ev[2], ev[3] ? 1 : 0.9, ev[3] ? rand(0.5, 0.6) : rand(0.65, 0.8), 0.1, 25); break;
         case "boost": spatial("pickup", ev[2], ev[3], 0.7, ev[1] === "speed" ? 1.4 : 1, 0.2, 30); break;
         case "boost_me": feedLine(ev[1] === "speed" ? "VELOCIDADE +40% POR 8 s" : "VIDA RECUPERADA", true, "hp"); Snd.play("pickup", 1, ev[1] === "speed" ? 1.5 : 1.1); buzz(30); break;
         case "zrespawn": if (ev[1] === Coop.st.id) feedLine("VOCÊ VOLTOU", false); break;
@@ -861,7 +862,7 @@
         sprint: shift, hold: shift, fire: mouseDown, ads: adsHeld, crouch: keys.has(KB.crouch),
       };
       touchInput(lastInp);
-      if (game.team === "z") { if (lastInp.fire) Coop.claw(game); lastInp.fire = false; lastInp.ads = false; }   // infecção: zumbi ataca com as garras
+      if (game.team === "z") { if (lastInp.fire) Coop.claw(game); else if (lastInp.ads) Coop.claw(game, true); lastInp.fire = false; lastInp.ads = false; }   // infecção: zumbi ataca com as garras
       if (game.time > 12 && !$("tzone").hidden) $("tzone").hidden = true;
       game.update(dt, lastInp); Coop.afterUpdate(game, dt); processEvents(); syncGame(dt); updateHud(dt); updateWeather(dt);
       if (!game.alive && Coop.ended()) onDeath();

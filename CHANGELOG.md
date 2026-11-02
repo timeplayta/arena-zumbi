@@ -1,5 +1,10 @@
 # Novidades — Arena Zumbi
 
+## Ataques do infectado (01/11/2026)
+- Botão esquerdo: golpe normal a cada 1 segundo.
+- Botão direito: golpe pesado a cada 1,15 segundo.
+- Cada golpe tira 20 de vida.
+
 ## Garra do infectado (01/11/2026)
 - Um golpe não infecta mais: cada golpe tira 8.
 - Segurando o ataque, infecta em cerca de 1 segundo.

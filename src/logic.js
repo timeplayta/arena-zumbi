@@ -6,8 +6,8 @@ const Logic = (function () {
   const ZOMBIE_RESPAWN = 5;                                   // infecção: segundos até o infectado abatido voltar
   // parâmetros da IA dos bots: escolhidos por busca em ~600 partidas simuladas de Infecção (11 bots, mapa Itália)
   const BOT_AI = { samples: 10, roamR: 28, wz: 1, wh: 0.3, wHigh: 0.6, roamT: 6, boostR: 25, stand: 26, flee: 7, sprint: 4, away: 7, range: 28, camp: false, spotMode: "mix", spread: 12, group: 2, gap: 3, moveErr: 1.6, fireVar: 1.2, clawR: 1.7 };
-  const CLAW_DMG = 8;                                         // dano por golpe: com golpe a cada 50 ms, segurar o ataque infecta em ~1 s (não num toque só)
-  const CLAW_CD = 0.05;                                       // infecção: intervalo entre ataques do infectado (s)
+  const CLAW_DMG = 20;                                        // infecção: cada golpe do infectado tira 20
+  const CLAW_CD = 1.0, CLAW_CD_HEAVY = 1.15;                  // golpe normal (botão esquerdo) 1,0 s · golpe pesado (botão direito) 1,15 s                                       // infecção: intervalo entre ataques do infectado (s)
   const ATTACK_RANGE = 1.25, ZOMBIE_SEP = 0.75, RANGE = 90;
   const BODY_R = 0.34, BODY_H = 1.5, HEAD_Z = 1.67, HEAD_R = 0.21, LEG_H = 0.8;
   const MELEE_RANGE = 1.9, MELEE_CD = 0.75, MELEE_DMG = 55, SWITCH_TIME = 0.45;
@@ -1498,7 +1498,7 @@ const Logic = (function () {
           for (const q of ps) if (q.team === "h" && q.alive) { const d = Math.hypot(q.x - o.x, q.y - o.y) + Math.abs(q.gz - oz) * 3; if (d < bd) { bd = d; tg = q; } }
           if (!tg) { o.mv = 0; continue; }
           const dd = Math.hypot(tg.x - o.x, tg.y - o.y), same = Math.abs(tg.gz - oz) < 1.2, ang = Math.atan2(-(tg.x - o.x), tg.y - o.y);
-          if (dd < AI.clawR && same) { o.yaw = ang; this.claw(o.id); if (dd > 1.0) this.botMove(o, ang, sp * SPRINT_MULT, dt); else o.mv = 0; continue; }
+          if (dd < AI.clawR && same) { o.yaw = ang; this.claw(o.id, this.rnd() < 0.3); if (dd > 1.0) this.botMove(o, ang, sp * SPRINT_MULT, dt); else o.mv = 0; continue; }
           if (same && dd < 9 && Nav.los(o.x, o.y, oz, tg.x, tg.y)) { o.yaw = ang; this.botMove(o, ang, sp * SPRINT_MULT, dt); B.path = null; continue; }
           const moved = B.goal ? Math.hypot(B.goal[0] - tg.x, B.goal[1] - tg.y) : 99;
           if (!B.path || B.repath <= 0 || moved > 2.5) { this.botGo(o, tg.x, tg.y, tg.gz, 8000); B.repath = 0.5 + this.rnd() * 0.4; }
@@ -1630,17 +1630,18 @@ const Logic = (function () {
       this.spawnPuppet(id, q.x, q.y);
       this.events.push(["infected", id, first ? 1 : 0]);
     }
-    claw(id) {
+    claw(id, heavy) {
       if (this.gm !== "infect" || !this.inf || this.inf.ph !== "play") return;
       const q = this.infPlayers().find((k) => k.id === id); if (!q || q.team !== "z" || !q.alive) return;
       const z = this.pz(id); if (!z || (q.p.clawT || 0) > 0) return;
-      q.p.clawT = this.clawCd || CLAW_CD; z.clawShow = 0.45; z.attackT = 0;
+      q.p.clawT = this.clawCd || (heavy ? CLAW_CD_HEAVY : CLAW_CD); z.clawShow = heavy ? 0.6 : 0.45; z.attackT = 0;
       const [x, y, yaw, cg] = this.posOf(id), fx = -Math.sin(yaw), fy = Math.cos(yaw);
-      this.events.push(["claw", x, y]);
+      this.events.push(["claw", x, y, heavy ? 1 : 0]);
+      const reach = heavy ? 2.5 : 2.2;                               // golpe pesado alcança um pouco mais
       for (const h of this.infPlayers()) {
         if (h.team !== "h" || !h.alive) continue;
         const dx = h.x - x, dy = h.y - y, d = Math.hypot(dx, dy);
-        if (d > 2.2 || d < 1e-3 || (dx * fx + dy * fy) / d < 0.3 || Math.abs(h.gz - cg) > 1.6) continue;
+        if (d > reach || d < 1e-3 || (dx * fx + dy * fy) / d < 0.3 || Math.abs(h.gz - cg) > 1.6) continue;
         if (h.me) this.hurt(CLAW_DMG, z, {}); else this.hurtRemote(h.p, CLAW_DMG, z, {});
       }
     }

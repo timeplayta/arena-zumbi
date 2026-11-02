@@ -674,7 +674,7 @@ table.sc td:first-child { font-family: var(--font-display); font-size: 22px; col
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
-const GAME_VERSION = 202611012306, GAME_NOTES = {"t": "Garra do infectado (01/11/2026)", "b": ["Um golpe não infecta mais: cada golpe tira 8.", "Segurando o ataque, infecta em cerca de 1 segundo."]};
+const GAME_VERSION = 202611020003, GAME_NOTES = {"t": "Ataques do infectado (01/11/2026)", "b": ["Botão esquerdo: golpe normal a cada 1 segundo.", "Botão direito: golpe pesado a cada 1,15 segundo.", "Cada golpe tira 20 de vida."]};
 // ==MAPA ITÁLIA== (só o protótipo do modo Infecção)
 // Coordenadas lógicas: x = leste, y = norte, z = altura (m). Caixas sólidas: [x0, x1, y0, y1, topo, base, tipo, extra]
 const ITALIA = (function () {
@@ -861,8 +861,8 @@ const Logic = (function () {
   const ZOMBIE_RESPAWN = 5;                                   // infecção: segundos até o infectado abatido voltar
   // parâmetros da IA dos bots: escolhidos por busca em ~600 partidas simuladas de Infecção (11 bots, mapa Itália)
   const BOT_AI = { samples: 10, roamR: 28, wz: 1, wh: 0.3, wHigh: 0.6, roamT: 6, boostR: 25, stand: 26, flee: 7, sprint: 4, away: 7, range: 28, camp: false, spotMode: "mix", spread: 12, group: 2, gap: 3, moveErr: 1.6, fireVar: 1.2, clawR: 1.7 };
-  const CLAW_DMG = 8;                                         // dano por golpe: com golpe a cada 50 ms, segurar o ataque infecta em ~1 s (não num toque só)
-  const CLAW_CD = 0.05;                                       // infecção: intervalo entre ataques do infectado (s)
+  const CLAW_DMG = 20;                                        // infecção: cada golpe do infectado tira 20
+  const CLAW_CD = 1.0, CLAW_CD_HEAVY = 1.15;                  // golpe normal (botão esquerdo) 1,0 s · golpe pesado (botão direito) 1,15 s                                       // infecção: intervalo entre ataques do infectado (s)
   const ATTACK_RANGE = 1.25, ZOMBIE_SEP = 0.75, RANGE = 90;
   const BODY_R = 0.34, BODY_H = 1.5, HEAD_Z = 1.67, HEAD_R = 0.21, LEG_H = 0.8;
   const MELEE_RANGE = 1.9, MELEE_CD = 0.75, MELEE_DMG = 55, SWITCH_TIME = 0.45;
@@ -2353,7 +2353,7 @@ const Logic = (function () {
           for (const q of ps) if (q.team === "h" && q.alive) { const d = Math.hypot(q.x - o.x, q.y - o.y) + Math.abs(q.gz - oz) * 3; if (d < bd) { bd = d; tg = q; } }
           if (!tg) { o.mv = 0; continue; }
           const dd = Math.hypot(tg.x - o.x, tg.y - o.y), same = Math.abs(tg.gz - oz) < 1.2, ang = Math.atan2(-(tg.x - o.x), tg.y - o.y);
-          if (dd < AI.clawR && same) { o.yaw = ang; this.claw(o.id); if (dd > 1.0) this.botMove(o, ang, sp * SPRINT_MULT, dt); else o.mv = 0; continue; }
+          if (dd < AI.clawR && same) { o.yaw = ang; this.claw(o.id, this.rnd() < 0.3); if (dd > 1.0) this.botMove(o, ang, sp * SPRINT_MULT, dt); else o.mv = 0; continue; }
           if (same && dd < 9 && Nav.los(o.x, o.y, oz, tg.x, tg.y)) { o.yaw = ang; this.botMove(o, ang, sp * SPRINT_MULT, dt); B.path = null; continue; }
           const moved = B.goal ? Math.hypot(B.goal[0] - tg.x, B.goal[1] - tg.y) : 99;
           if (!B.path || B.repath <= 0 || moved > 2.5) { this.botGo(o, tg.x, tg.y, tg.gz, 8000); B.repath = 0.5 + this.rnd() * 0.4; }
@@ -2485,17 +2485,18 @@ const Logic = (function () {
       this.spawnPuppet(id, q.x, q.y);
       this.events.push(["infected", id, first ? 1 : 0]);
     }
-    claw(id) {
+    claw(id, heavy) {
       if (this.gm !== "infect" || !this.inf || this.inf.ph !== "play") return;
       const q = this.infPlayers().find((k) => k.id === id); if (!q || q.team !== "z" || !q.alive) return;
       const z = this.pz(id); if (!z || (q.p.clawT || 0) > 0) return;
-      q.p.clawT = this.clawCd || CLAW_CD; z.clawShow = 0.45; z.attackT = 0;
+      q.p.clawT = this.clawCd || (heavy ? CLAW_CD_HEAVY : CLAW_CD); z.clawShow = heavy ? 0.6 : 0.45; z.attackT = 0;
       const [x, y, yaw, cg] = this.posOf(id), fx = -Math.sin(yaw), fy = Math.cos(yaw);
-      this.events.push(["claw", x, y]);
+      this.events.push(["claw", x, y, heavy ? 1 : 0]);
+      const reach = heavy ? 2.5 : 2.2;                               // golpe pesado alcança um pouco mais
       for (const h of this.infPlayers()) {
         if (h.team !== "h" || !h.alive) continue;
         const dx = h.x - x, dy = h.y - y, d = Math.hypot(dx, dy);
-        if (d > 2.2 || d < 1e-3 || (dx * fx + dy * fy) / d < 0.3 || Math.abs(h.gz - cg) > 1.6) continue;
+        if (d > reach || d < 1e-3 || (dx * fx + dy * fy) / d < 0.3 || Math.abs(h.gz - cg) > 1.6) continue;
         if (h.me) this.hurt(CLAW_DMG, z, {}); else this.hurtRemote(h.p, CLAW_DMG, z, {});
       }
     }
@@ -8697,9 +8698,9 @@ const Logic = (function () {
   // ---------- braços de zumbi em primeira pessoa (modo Infecção) ----------
   const ZArms = (() => {
     let Z = null, act = "", actT = 0, side = 0, idleT = 0;
-    function swipe() {                         // ataque a cada 50 ms: só reinicia a animação depois de meio golpe
-      if (act && Z && actT < Z.dur(act) * 0.5) return false;
-      act = side ? "light_miss2" : "light_miss1"; side ^= 1; actT = 0; return true;
+    let actSpd = 1;
+    function swipe(heavy) {                    // golpe pesado: mesma animação, mais lenta e mais forte
+      act = side ? "light_miss2" : "light_miss1"; side ^= 1; actT = 0; actSpd = heavy ? 0.75 : 1; return true;
     }
     function update(g, dt) {
       const on = g.team === "z" && g.alive;
@@ -8714,7 +8715,7 @@ const Logic = (function () {
       const k = Math.tan((camera.fov * Math.PI) / 360) / Math.tan((54 * Math.PI) / 360);
       Z.fov.scale.set(k, k, 1);
       idleT += dt;
-      if (act) { actT += dt; if (actT >= Z.dur(act)) act = ""; else { Z.pose(act, actT, false); return; } }
+      if (act) { actT += dt * actSpd; if (actT >= Z.dur(act)) act = ""; else { Z.pose(act, actT, false); return; } }
       Z.pose("idle1", idleT, true);
       Z.root.position.y = g.moving ? Math.sin(g.bob * 0.9) * 0.006 : 0;
     }
@@ -8809,7 +8810,7 @@ const Logic = (function () {
         case "s": if (st.host && game && game.coop) game.setRemote(m.from, m); break;
         case "shot": if (st.host && game && game.coop) game.remoteShot(m.from, m); break;
         case "melee": if (st.host && game && game.coop) game.remoteMelee(m.from); break;
-        case "claw": if (st.host && game && game.coop) game.claw(m.from); break;
+        case "claw": if (st.host && game && game.coop) game.claw(m.from, !!m.h); break;
         // --- convidado ---
         case "lobby": st.players = m.players || []; st.stamp = m.stamp || st.stamp; st.gm = m.gm || "coop"; st.started = !!m.started; st.diff = m.diff || st.diff; renderLobby(); break;
         case "start": st.diff = m.diff || "normal"; st.gm = m.gm || st.gm; st.started = true; st.over = false;
@@ -8905,11 +8906,11 @@ const Logic = (function () {
       }
     }
     let clawCd = 0;
-    function claw(g) {                                                     // jogador zumbi ataca com as garras
+    function claw(g, heavy) {                                                     // jogador zumbi ataca com as garras
       if (g.team !== "z" || !g.alive) return;
-      const now = performance.now(); if (now < clawCd) return; clawCd = now + 50;
-      if (st.host) g.claw(st.id); else send({ t: "claw" });
-      if (ZArms.swipe()) { Snd.play("melee", 0.8, rand(0.7, 0.85)); g.shake = Math.max(g.shake, 0.25); }
+      const now = performance.now(); if (now < clawCd) return; clawCd = now + (heavy ? 1150 : 1000);
+      if (st.host) g.claw(st.id, heavy); else send({ t: "claw", h: heavy ? 1 : 0 });
+      ZArms.swipe(heavy); Snd.play("melee", heavy ? 1 : 0.8, heavy ? rand(0.5, 0.6) : rand(0.7, 0.85)); g.shake = Math.max(g.shake, heavy ? 0.45 : 0.25);
     }
     function onToMenu() {
       if (!connected()) return;
@@ -9337,6 +9338,7 @@ const Logic = (function () {
   function pressAct(act, down) {
     if (act === "fire") { TS.fire = down; return; }
     if (!down) return;
+    if (act === "ads" && game.team === "z") { Coop.claw(game, true); return; }   // infectado: botão de mira = golpe pesado
     if (act === "ads") TS.ads = !TS.ads;
     else if (act === "reload") game.startReload();
     else if (act === "swap") game.switchWeapon(1 - game.cur);
@@ -9587,7 +9589,7 @@ const Logic = (function () {
           Snd.play("giantroar", me ? 0.9 : 0.5, 1.25, 0, 0.2); if (me) { buzz([80, 40, 160]); game.shake = Math.max(game.shake, 0.8); }
           break;
         }
-        case "claw": spatial("melee", ev[1], ev[2], 0.9, rand(0.65, 0.8), 0.1, 25); break;
+        case "claw": spatial("melee", ev[1], ev[2], ev[3] ? 1 : 0.9, ev[3] ? rand(0.5, 0.6) : rand(0.65, 0.8), 0.1, 25); break;
         case "boost": spatial("pickup", ev[2], ev[3], 0.7, ev[1] === "speed" ? 1.4 : 1, 0.2, 30); break;
         case "boost_me": feedLine(ev[1] === "speed" ? "VELOCIDADE +40% POR 8 s" : "VIDA RECUPERADA", true, "hp"); Snd.play("pickup", 1, ev[1] === "speed" ? 1.5 : 1.1); buzz(30); break;
         case "zrespawn": if (ev[1] === Coop.st.id) feedLine("VOCÊ VOLTOU", false); break;
@@ -9836,7 +9838,7 @@ const Logic = (function () {
         sprint: shift, hold: shift, fire: mouseDown, ads: adsHeld, crouch: keys.has(KB.crouch),
       };
       touchInput(lastInp);
-      if (game.team === "z") { if (lastInp.fire) Coop.claw(game); lastInp.fire = false; lastInp.ads = false; }   // infecção: zumbi ataca com as garras
+      if (game.team === "z") { if (lastInp.fire) Coop.claw(game); else if (lastInp.ads) Coop.claw(game, true); lastInp.fire = false; lastInp.ads = false; }   // infecção: zumbi ataca com as garras
       if (game.time > 12 && !$("tzone").hidden) $("tzone").hidden = true;
       game.update(dt, lastInp); Coop.afterUpdate(game, dt); processEvents(); syncGame(dt); updateHud(dt); updateWeather(dt);
       if (!game.alive && Coop.ended()) onDeath();

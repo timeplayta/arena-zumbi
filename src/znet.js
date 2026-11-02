@@ -145,9 +145,9 @@
   // ---------- braços de zumbi em primeira pessoa (modo Infecção) ----------
   const ZArms = (() => {
     let Z = null, act = "", actT = 0, side = 0, idleT = 0;
-    function swipe() {                         // ataque a cada 50 ms: só reinicia a animação depois de meio golpe
-      if (act && Z && actT < Z.dur(act) * 0.5) return false;
-      act = side ? "light_miss2" : "light_miss1"; side ^= 1; actT = 0; return true;
+    let actSpd = 1;
+    function swipe(heavy) {                    // golpe pesado: mesma animação, mais lenta e mais forte
+      act = side ? "light_miss2" : "light_miss1"; side ^= 1; actT = 0; actSpd = heavy ? 0.75 : 1; return true;
     }
     function update(g, dt) {
       const on = g.team === "z" && g.alive;
@@ -162,7 +162,7 @@
       const k = Math.tan((camera.fov * Math.PI) / 360) / Math.tan((54 * Math.PI) / 360);
       Z.fov.scale.set(k, k, 1);
       idleT += dt;
-      if (act) { actT += dt; if (actT >= Z.dur(act)) act = ""; else { Z.pose(act, actT, false); return; } }
+      if (act) { actT += dt * actSpd; if (actT >= Z.dur(act)) act = ""; else { Z.pose(act, actT, false); return; } }
       Z.pose("idle1", idleT, true);
       Z.root.position.y = g.moving ? Math.sin(g.bob * 0.9) * 0.006 : 0;
     }
@@ -257,7 +257,7 @@
         case "s": if (st.host && game && game.coop) game.setRemote(m.from, m); break;
         case "shot": if (st.host && game && game.coop) game.remoteShot(m.from, m); break;
         case "melee": if (st.host && game && game.coop) game.remoteMelee(m.from); break;
-        case "claw": if (st.host && game && game.coop) game.claw(m.from); break;
+        case "claw": if (st.host && game && game.coop) game.claw(m.from, !!m.h); break;
         // --- convidado ---
         case "lobby": st.players = m.players || []; st.stamp = m.stamp || st.stamp; st.gm = m.gm || "coop"; st.started = !!m.started; st.diff = m.diff || st.diff; renderLobby(); break;
         case "start": st.diff = m.diff || "normal"; st.gm = m.gm || st.gm; st.started = true; st.over = false;
@@ -353,11 +353,11 @@
       }
     }
     let clawCd = 0;
-    function claw(g) {                                                     // jogador zumbi ataca com as garras
+    function claw(g, heavy) {                                                     // jogador zumbi ataca com as garras
       if (g.team !== "z" || !g.alive) return;
-      const now = performance.now(); if (now < clawCd) return; clawCd = now + 50;
-      if (st.host) g.claw(st.id); else send({ t: "claw" });
-      if (ZArms.swipe()) { Snd.play("melee", 0.8, rand(0.7, 0.85)); g.shake = Math.max(g.shake, 0.25); }
+      const now = performance.now(); if (now < clawCd) return; clawCd = now + (heavy ? 1150 : 1000);
+      if (st.host) g.claw(st.id, heavy); else send({ t: "claw", h: heavy ? 1 : 0 });
+      ZArms.swipe(heavy); Snd.play("melee", heavy ? 1 : 0.8, heavy ? rand(0.5, 0.6) : rand(0.7, 0.85)); g.shake = Math.max(g.shake, heavy ? 0.45 : 0.25);
     }
     function onToMenu() {
       if (!connected()) return;
