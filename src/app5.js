@@ -517,11 +517,11 @@
   function animateGun(dt, g) {
     const c = g.w().cfg, v = VM[c.id], P = vm.parts;
     adsT += ((g.ads ? 1 : 0) - adsT) * Math.min(1, dt * 11);
-    sprintBlend += ((g.sprinting ? 1 : 0) - sprintBlend) * Math.min(1, dt * 8);
+    sprintBlend += ((g.sprinting ? 1 : 0) - sprintBlend) * Math.min(1, dt * (g.runShoot ? 24 : 8));   // atirou correndo: a arma volta rápido para o centro
     const a = adsT, wa = 1 - a;
     let x = lerp(v.hip[0], 0, a), y = lerp(v.hip[1], -vm.sightTop, a), z = lerp(v.hip[2], v.adsZ, a);
     let rx = 0, ry = 0, rz = 0;
-    const walk = g.moving ? (g.sprinting ? 1.7 : 1) : 0;
+    const walk = g.moving ? (g.sprinting ? 1.7 : g.runShoot ? 1.35 : 1) : 0;
     if (S.bob) { x += Math.sin(g.bob) * 0.008 * walk * wa; y += Math.abs(Math.cos(g.bob)) * 0.01 * walk * wa; }
     y += Math.sin(g.time * 1.6) * 0.0015; x += Math.sin(g.time * 0.9) * 0.001;
     const dec = Math.exp(-8 * dt); lagX *= dec; lagY *= dec;
@@ -609,7 +609,7 @@
     const zm = g.team === "z";
     gunRoot.visible = !zm && !PotVM.busy() && !g.knifeOut; torch.visible = torchEnabled;
     $("view").classList.toggle("zmode", zm); $("hud").classList.toggle("zhud", zm);
-    const bobh = S.bob && g.moving ? Math.abs(Math.sin(g.bob)) * (g.sprinting ? 0.05 : 0.03) : 0;
+    const bobh = S.bob && g.moving ? Math.abs(Math.sin(g.bob)) * (g.sprinting ? 0.05 : g.runShoot ? 0.04 : 0.03) : 0;
     const sh = g.hurtT * 0.05 + g.shake * 0.03, sway = g.aimSway();
     camera.position.set(g.px, g.eyeH() + bobh, -g.py);
     camRoll += (-(lastInp.strafe || 0) * 0.012 - camRoll) * Math.min(1, dt * 8);

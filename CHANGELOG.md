@@ -1,5 +1,10 @@
 # Novidades — Arena Zumbi
 
+## Atirar correndo (02/11/2026)
+- Ao atirar correndo, a arma volta para o centro antes do disparo e o tiro sai dela.
+- Enquanto atira, você corre um pouco mais devagar e o recuo e a dispersão ficam piores.
+- Soltou o gatilho, volta a correr normalmente.
+
 ## Bots sem olho nas costas (02/11/2026)
 - Bots só enxergam o que está à frente (cerca de 120°) e com vista livre; parados, olham em volta.
 - Ouvem só o que está colado neles e o barulho de tiros por perto.

@@ -693,7 +693,7 @@ table.sc td:first-child { font-family: var(--font-display); font-size: 22px; col
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
-const GAME_VERSION = 202611021747, GAME_NOTES = {"t": "Bots sem olho nas costas (02/11/2026)", "b": ["Bots só enxergam o que está à frente (cerca de 120°) e com vista livre; parados, olham em volta.", "Ouvem só o que está colado neles e o barulho de tiros por perto.", "Infectados avisam a horda quando avistam alguém. Partidas seguem equilibradas."]};
+const GAME_VERSION = 202611022009, GAME_NOTES = {"t": "Atirar correndo (02/11/2026)", "b": ["Ao atirar correndo, a arma volta para o centro antes do disparo e o tiro sai dela.", "Enquanto atira, você corre um pouco mais devagar e o recuo e a dispersão ficam piores.", "Soltou o gatilho, volta a correr normalmente."]};
 // ==MAPA ITÁLIA== (só o protótipo do modo Infecção)
 // Coordenadas lógicas: x = leste, y = norte, z = altura (m). Caixas sólidas: [x0, x1, y0, y1, topo, base, tipo, extra]
 const ITALIA = (function () {
@@ -877,6 +877,7 @@ const Logic = (function () {
   let ARENA = 22;
   const ARENA0 = 22, WALL_H = 3.6, EYE_H = 1.7, STEP = 0.5, HEAD_ROOM = 1.85, CROUCH_DROP = 0.55, PLAYER_R = 0.38, ZOMBIE_R = 0.36;
   const PLAYER_SPEED = 4.6, SPRINT_MULT = 1.65;
+  const RUN_SHOOT_MULT = 1.3, RUN_SHOOT_SPREAD = 1.7, RUN_SHOOT_RECOIL = 1.5, RUN_RAISE = 0.14;   // atirando enquanto corre: mais lento que a corrida, arma volta ao centro em 0,14 s, recuo pior
   const ZOMBIE_RESPAWN = 5;                                   // infecção: segundos até o infectado abatido voltar
   // parâmetros da IA dos bots: escolhidos por busca em ~600 partidas simuladas de Infecção (11 bots, mapa Itália)
   const POT = { speed: 13, lift: 3, grav: 12, cd: 0.8, fire: { r: 3, dur: 6, dps: 100, after: 1.5 }, heal: { r: 3.5, dur: 6, hps: 16 } };
@@ -1336,7 +1337,7 @@ const Logic = (function () {
       this.px = 0; this.py = -4; this.yaw = 0; this.pitch = 0;
       this.recoil = 0; this.recoilYaw = 0; this.sustain = 0; this.kickV = 0; this.heat = 0; this.kick = 0; this.flashT = 0;
       this.hurtT = 0; this.hitmarkT = 0; this.hitmarkHead = false;
-      this.bob = 0; this.bobStep = 0; this.moving = false; this.ads = false; this.crouchT = 0; this.sprinting = false;
+      this.bob = 0; this.bobStep = 0; this.moving = false; this.ads = false; this.crouchT = 0; this.sprinting = false; this.runShoot = false; this.runShootT = 0;
       this.stamina = 100; this.exhausted = false; this.breath = 4; this.breathLock = false; this.breathHeld = false;
       this.hp = this.maxHp; this.cool = 0; this.reloadT = 0; this.reloadTotal = 1; this.reloading = false;
       this.meleeT = 0; this.knifeOut = false; this.triggerWas = false; this.burstLeft = 0; this.sched = []; this.hbT = 0;
@@ -1365,7 +1366,7 @@ const Logic = (function () {
     spread() {
       const c = this.w().cfg;
       let s = c.spread + this.heat * c.shot + (this.moving ? c.move : 0);
-      s *= c.spreadMul;
+      s *= c.spreadMul * (this.runShoot ? RUN_SHOOT_SPREAD : 1);
       if (this.ads) s *= c.adsMul;
       return s * (1 - 0.3 * this.crouchT);
     }
@@ -1493,7 +1494,7 @@ const Logic = (function () {
       const sp = this.spread();
       const baseRec = this.recoil, sway = this.aimSway(), eyeH = this.eyeH();
       this.heat = Math.min(1, this.heat + (c.shot > 0 ? 0.12 : 0));
-      const R = c.rec, rk = c.recoilMul * (this.ads ? 0.7 : 1) * (1 - 0.25 * this.crouchT) * (1 + R.climb * this.sustain);
+      const R = c.rec, rk = c.recoilMul * (this.ads ? 0.7 : 1) * (1 - 0.25 * this.crouchT) * (1 + R.climb * this.sustain) * (this.runShoot ? RUN_SHOOT_RECOIL : 1);
       const rv = R.v * DEG * rk;                                  // sobe mais quanto mais tempo você segura o gatilho
       this.recoil += rv * (1 - R.perm); this.pitch = clamp(this.pitch + rv * R.perm, -1.5, 1.5);
       const ry = (this.uniform(-1, 1) * R.h + R.bias * (0.4 + this.sustain)) * DEG * rk;
@@ -1717,15 +1718,21 @@ const Logic = (function () {
       this.moving = ln > 0.01;
       if (ln > 1) { mx /= ln; my /= ln; }
       // fôlego e stamina
-      this.sprinting = !!inp.sprint && fwd > 0 && !this.ads && !this.exhausted && this.stamina > 0 && this.crouchT < 0.4 && this.moving;
+      const wantRun = !!inp.sprint && fwd > 0 && !this.ads && !this.exhausted && this.stamina > 0 && this.crouchT < 0.4 && this.moving;
+      // atirar correndo: a arma volta para o centro (leva um instante), a corrida fica mais lenta e o recuo/dispersão pioram
+      this.runShootT = Math.max(0, (this.runShootT || 0) - dt);
+      if (inp.fire && wantRun && this.team !== "z" && !this.knifeOut) { if (this.sprinting) this.cool = Math.max(this.cool, RUN_RAISE); this.runShootT = 0.45; }
+      this.runShoot = wantRun && this.runShootT > 0;
+      this.sprinting = wantRun && !this.runShoot;
       if (this.team === "z") { this.stamina = 100; this.exhausted = false; }      // infectado: corrida infinita
-      if (this.sprinting) { this.stamina -= 22 * this.stamK * dt; if (this.stamina <= 0) { this.stamina = 0; this.exhausted = true; this.events.push(["winded"]); } }
+      if (this.sprinting || this.runShoot) { this.stamina -= 22 * this.stamK * (this.runShoot ? 0.6 : 1) * dt; if (this.stamina <= 0) { this.stamina = 0; this.exhausted = true; this.events.push(["winded"]); } }
       else { this.stamina = Math.min(100, this.stamina + (this.moving ? 14 : 22) * dt); if (this.exhausted && this.stamina > 25) this.exhausted = false; }
       const wantHold = !!inp.hold && this.ads && c.scope;
       if (wantHold && !this.breathLock && this.breath > 0) { this.breath -= dt; this.breathHeld = true; if (this.breath <= 0) { this.breath = 0; this.breathLock = true; this.breathHeld = false; this.events.push(["winded"]); } }
       else { this.breathHeld = false; this.breath = Math.min(4, this.breath + dt * 0.8); if (this.breathLock && this.breath > 2) this.breathLock = false; }
       let speed = this.team === "z" ? PLAYER_SPEED * ZOMBIE_SPEED : this.knifeOut ? PLAYER_SPEED * KNIFE_SPEED : PLAYER_SPEED * c.speed;   // infectado: 10% mais rápido e sem peso de arma
       if (this.sprinting) speed *= SPRINT_MULT;
+      else if (this.runShoot) speed *= RUN_SHOOT_MULT;
       if (this.ads) speed *= c.adsSpeed;
       speed *= 1 - 0.45 * this.crouchT;
       speed *= this.crackSlow;
@@ -10047,11 +10054,11 @@ const Logic = (function () {
   function animateGun(dt, g) {
     const c = g.w().cfg, v = VM[c.id], P = vm.parts;
     adsT += ((g.ads ? 1 : 0) - adsT) * Math.min(1, dt * 11);
-    sprintBlend += ((g.sprinting ? 1 : 0) - sprintBlend) * Math.min(1, dt * 8);
+    sprintBlend += ((g.sprinting ? 1 : 0) - sprintBlend) * Math.min(1, dt * (g.runShoot ? 24 : 8));   // atirou correndo: a arma volta rápido para o centro
     const a = adsT, wa = 1 - a;
     let x = lerp(v.hip[0], 0, a), y = lerp(v.hip[1], -vm.sightTop, a), z = lerp(v.hip[2], v.adsZ, a);
     let rx = 0, ry = 0, rz = 0;
-    const walk = g.moving ? (g.sprinting ? 1.7 : 1) : 0;
+    const walk = g.moving ? (g.sprinting ? 1.7 : g.runShoot ? 1.35 : 1) : 0;
     if (S.bob) { x += Math.sin(g.bob) * 0.008 * walk * wa; y += Math.abs(Math.cos(g.bob)) * 0.01 * walk * wa; }
     y += Math.sin(g.time * 1.6) * 0.0015; x += Math.sin(g.time * 0.9) * 0.001;
     const dec = Math.exp(-8 * dt); lagX *= dec; lagY *= dec;
@@ -10139,7 +10146,7 @@ const Logic = (function () {
     const zm = g.team === "z";
     gunRoot.visible = !zm && !PotVM.busy() && !g.knifeOut; torch.visible = torchEnabled;
     $("view").classList.toggle("zmode", zm); $("hud").classList.toggle("zhud", zm);
-    const bobh = S.bob && g.moving ? Math.abs(Math.sin(g.bob)) * (g.sprinting ? 0.05 : 0.03) : 0;
+    const bobh = S.bob && g.moving ? Math.abs(Math.sin(g.bob)) * (g.sprinting ? 0.05 : g.runShoot ? 0.04 : 0.03) : 0;
     const sh = g.hurtT * 0.05 + g.shake * 0.03, sway = g.aimSway();
     camera.position.set(g.px, g.eyeH() + bobh, -g.py);
     camRoll += (-(lastInp.strafe || 0) * 0.012 - camRoll) * Math.min(1, dt * 8);

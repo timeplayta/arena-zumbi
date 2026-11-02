@@ -3,6 +3,7 @@ const Logic = (function () {
   let ARENA = 22;
   const ARENA0 = 22, WALL_H = 3.6, EYE_H = 1.7, STEP = 0.5, HEAD_ROOM = 1.85, CROUCH_DROP = 0.55, PLAYER_R = 0.38, ZOMBIE_R = 0.36;
   const PLAYER_SPEED = 4.6, SPRINT_MULT = 1.65;
+  const RUN_SHOOT_MULT = 1.3, RUN_SHOOT_SPREAD = 1.7, RUN_SHOOT_RECOIL = 1.5, RUN_RAISE = 0.14;   // atirando enquanto corre: mais lento que a corrida, arma volta ao centro em 0,14 s, recuo pior
   const ZOMBIE_RESPAWN = 5;                                   // infecção: segundos até o infectado abatido voltar
   // parâmetros da IA dos bots: escolhidos por busca em ~600 partidas simuladas de Infecção (11 bots, mapa Itália)
   const POT = { speed: 13, lift: 3, grav: 12, cd: 0.8, fire: { r: 3, dur: 6, dps: 100, after: 1.5 }, heal: { r: 3.5, dur: 6, hps: 16 } };
@@ -462,7 +463,7 @@ const Logic = (function () {
       this.px = 0; this.py = -4; this.yaw = 0; this.pitch = 0;
       this.recoil = 0; this.recoilYaw = 0; this.sustain = 0; this.kickV = 0; this.heat = 0; this.kick = 0; this.flashT = 0;
       this.hurtT = 0; this.hitmarkT = 0; this.hitmarkHead = false;
-      this.bob = 0; this.bobStep = 0; this.moving = false; this.ads = false; this.crouchT = 0; this.sprinting = false;
+      this.bob = 0; this.bobStep = 0; this.moving = false; this.ads = false; this.crouchT = 0; this.sprinting = false; this.runShoot = false; this.runShootT = 0;
       this.stamina = 100; this.exhausted = false; this.breath = 4; this.breathLock = false; this.breathHeld = false;
       this.hp = this.maxHp; this.cool = 0; this.reloadT = 0; this.reloadTotal = 1; this.reloading = false;
       this.meleeT = 0; this.knifeOut = false; this.triggerWas = false; this.burstLeft = 0; this.sched = []; this.hbT = 0;
@@ -491,7 +492,7 @@ const Logic = (function () {
     spread() {
       const c = this.w().cfg;
       let s = c.spread + this.heat * c.shot + (this.moving ? c.move : 0);
-      s *= c.spreadMul;
+      s *= c.spreadMul * (this.runShoot ? RUN_SHOOT_SPREAD : 1);
       if (this.ads) s *= c.adsMul;
       return s * (1 - 0.3 * this.crouchT);
     }
@@ -619,7 +620,7 @@ const Logic = (function () {
       const sp = this.spread();
       const baseRec = this.recoil, sway = this.aimSway(), eyeH = this.eyeH();
       this.heat = Math.min(1, this.heat + (c.shot > 0 ? 0.12 : 0));
-      const R = c.rec, rk = c.recoilMul * (this.ads ? 0.7 : 1) * (1 - 0.25 * this.crouchT) * (1 + R.climb * this.sustain);
+      const R = c.rec, rk = c.recoilMul * (this.ads ? 0.7 : 1) * (1 - 0.25 * this.crouchT) * (1 + R.climb * this.sustain) * (this.runShoot ? RUN_SHOOT_RECOIL : 1);
       const rv = R.v * DEG * rk;                                  // sobe mais quanto mais tempo você segura o gatilho
       this.recoil += rv * (1 - R.perm); this.pitch = clamp(this.pitch + rv * R.perm, -1.5, 1.5);
       const ry = (this.uniform(-1, 1) * R.h + R.bias * (0.4 + this.sustain)) * DEG * rk;
@@ -843,15 +844,21 @@ const Logic = (function () {
       this.moving = ln > 0.01;
       if (ln > 1) { mx /= ln; my /= ln; }
       // fôlego e stamina
-      this.sprinting = !!inp.sprint && fwd > 0 && !this.ads && !this.exhausted && this.stamina > 0 && this.crouchT < 0.4 && this.moving;
+      const wantRun = !!inp.sprint && fwd > 0 && !this.ads && !this.exhausted && this.stamina > 0 && this.crouchT < 0.4 && this.moving;
+      // atirar correndo: a arma volta para o centro (leva um instante), a corrida fica mais lenta e o recuo/dispersão pioram
+      this.runShootT = Math.max(0, (this.runShootT || 0) - dt);
+      if (inp.fire && wantRun && this.team !== "z" && !this.knifeOut) { if (this.sprinting) this.cool = Math.max(this.cool, RUN_RAISE); this.runShootT = 0.45; }
+      this.runShoot = wantRun && this.runShootT > 0;
+      this.sprinting = wantRun && !this.runShoot;
       if (this.team === "z") { this.stamina = 100; this.exhausted = false; }      // infectado: corrida infinita
-      if (this.sprinting) { this.stamina -= 22 * this.stamK * dt; if (this.stamina <= 0) { this.stamina = 0; this.exhausted = true; this.events.push(["winded"]); } }
+      if (this.sprinting || this.runShoot) { this.stamina -= 22 * this.stamK * (this.runShoot ? 0.6 : 1) * dt; if (this.stamina <= 0) { this.stamina = 0; this.exhausted = true; this.events.push(["winded"]); } }
       else { this.stamina = Math.min(100, this.stamina + (this.moving ? 14 : 22) * dt); if (this.exhausted && this.stamina > 25) this.exhausted = false; }
       const wantHold = !!inp.hold && this.ads && c.scope;
       if (wantHold && !this.breathLock && this.breath > 0) { this.breath -= dt; this.breathHeld = true; if (this.breath <= 0) { this.breath = 0; this.breathLock = true; this.breathHeld = false; this.events.push(["winded"]); } }
       else { this.breathHeld = false; this.breath = Math.min(4, this.breath + dt * 0.8); if (this.breathLock && this.breath > 2) this.breathLock = false; }
       let speed = this.team === "z" ? PLAYER_SPEED * ZOMBIE_SPEED : this.knifeOut ? PLAYER_SPEED * KNIFE_SPEED : PLAYER_SPEED * c.speed;   // infectado: 10% mais rápido e sem peso de arma
       if (this.sprinting) speed *= SPRINT_MULT;
+      else if (this.runShoot) speed *= RUN_SHOOT_MULT;
       if (this.ads) speed *= c.adsSpeed;
       speed *= 1 - 0.45 * this.crouchT;
       speed *= this.crackSlow;
