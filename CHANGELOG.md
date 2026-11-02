@@ -1,5 +1,10 @@
 # Novidades — Arena Zumbi
 
+## Novas teclas (01/11/2026)
+- 3 pega e guarda a faca.
+- 4 alterna as poções (G e H continuam valendo).
+- Teclas que você já trocou em Ajustes continuam como estavam.
+
 ## Faca na mão (01/11/2026)
 - Tecla V (ou botão da faca no celular) pega e guarda a faca.
 - Com a faca na mão você corre 12% mais rápido.

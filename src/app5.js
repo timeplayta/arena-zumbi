@@ -200,7 +200,7 @@
   $("btnToMenu2").addEventListener("click", toMenu);
 
   // ---------------- teclas configuráveis (Controles > Teclado) ----------------
-  const BIND_DEF = { fwd: "KeyW", back: "KeyS", left: "KeyA", right: "KeyD", sprint: "ShiftLeft", crouch: "KeyC", reload: "KeyR", slot1: "Digit1", slot2: "Digit2", swap: "KeyQ", melee: "KeyV", mode: "KeyB", torch: "KeyF", mute: "KeyM", pause: "KeyP", potFire: "KeyG", potHeal: "KeyH", potCycle: "Digit3" };
+  const BIND_DEF = { fwd: "KeyW", back: "KeyS", left: "KeyA", right: "KeyD", sprint: "ShiftLeft", crouch: "KeyC", reload: "KeyR", slot1: "Digit1", slot2: "Digit2", swap: "KeyQ", melee: "Digit3", mode: "KeyB", torch: "KeyF", mute: "KeyM", pause: "KeyP", potFire: "KeyG", potHeal: "KeyH", potCycle: "Digit4" };
   const BIND_LABEL = { fwd: "Andar para frente", back: "Andar para trás", left: "Andar para a esquerda", right: "Andar para a direita", sprint: "Correr / prender a respiração", crouch: "Agachar",
     reload: "Recarregar", slot1: "Arma 1", slot2: "Arma 2", swap: "Trocar de arma", melee: "Pegar / guardar a faca", mode: "Modo de tiro (auto / semi / rajada)", torch: "Lanterna", mute: "Som liga/desliga", pause: "Pausar (Esc sempre pausa)", potFire: "Poção de fogo (Infecção)", potHeal: "Poção de cura (Infecção)", potCycle: "Alternar poções (Infecção)" };
   function loadBinds() { let b = {}; try { b = JSON.parse(S.binds || "{}") || {}; } catch (e) {} const o = Object.assign({}, BIND_DEF); for (const k in o) if (typeof b[k] === "string" && b[k]) o[k] = b[k]; return o; }

@@ -440,7 +440,7 @@ table.sc td:first-child { font-family: var(--font-display); font-size: 22px; col
     <div id="msg"></div>
     <div id="boss" hidden><div class="bname" id="bossName">GIGANTE</div><div class="bbar"><div id="bossfill"></div></div></div>
     <div id="fps" hidden></div>
-    <div id="hint">WASD mover · Mouse mirar · Clique atirar · Botão direito mirar · R recarregar · 1/2 ou roda trocar arma · C agachar · V faca · B modo de tiro · Shift correr · F lanterna · Esc pausar</div>
+    <div id="hint">WASD mover · Mouse mirar · Clique atirar · Botão direito mirar · R recarregar · 1/2 ou roda trocar arma · C agachar · 3 pegar faca · B modo de tiro · Shift correr · F lanterna · Esc pausar</div>
   </div>
 
 
@@ -514,7 +514,7 @@ table.sc td:first-child { font-family: var(--font-display); font-size: 22px; col
         <div class="sec"><h3>Melhorias permanentes</h3><div class="shop" id="shopUp"></div></div>
         <div class="sec"><h3>Itens de uma partida</h3><div class="shop" id="shopCons"></div></div>
         <div class="sec"><h3>Armas de fogo</h3><div class="shop" id="shopGuns"></div></div>
-        <div class="sec"><h3>Armas brancas (tecla V)</h3><div class="shop" id="shopMelee"></div></div>
+        <div class="sec"><h3>Armas brancas (tecla 3 pega a faca)</h3><div class="shop" id="shopMelee"></div></div>
         <div class="sec"><h3>Acabamentos de arma</h3><div class="shop" id="shopSkins"></div></div>
       </section>
 
@@ -684,7 +684,7 @@ table.sc td:first-child { font-family: var(--font-display); font-size: 22px; col
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
-const GAME_VERSION = 202611020122, GAME_NOTES = {"t": "Faca na mão (01/11/2026)", "b": ["Tecla V (ou botão da faca no celular) pega e guarda a faca.", "Com a faca na mão você corre 12% mais rápido.", "Clique golpeia com a faca. 1, 2, Q ou a rodinha voltam para a arma."]};
+const GAME_VERSION = 202611020125, GAME_NOTES = {"t": "Novas teclas (01/11/2026)", "b": ["3 pega e guarda a faca.", "4 alterna as poções (G e H continuam valendo).", "Teclas que você já trocou em Ajustes continuam como estavam."]};
 // ==MAPA ITÁLIA== (só o protótipo do modo Infecção)
 // Coordenadas lógicas: x = leste, y = norte, z = altura (m). Caixas sólidas: [x0, x1, y0, y1, topo, base, tipo, extra]
 const ITALIA = (function () {
@@ -9536,7 +9536,7 @@ const Logic = (function () {
   $("btnToMenu2").addEventListener("click", toMenu);
 
   // ---------------- teclas configuráveis (Controles > Teclado) ----------------
-  const BIND_DEF = { fwd: "KeyW", back: "KeyS", left: "KeyA", right: "KeyD", sprint: "ShiftLeft", crouch: "KeyC", reload: "KeyR", slot1: "Digit1", slot2: "Digit2", swap: "KeyQ", melee: "KeyV", mode: "KeyB", torch: "KeyF", mute: "KeyM", pause: "KeyP", potFire: "KeyG", potHeal: "KeyH", potCycle: "Digit3" };
+  const BIND_DEF = { fwd: "KeyW", back: "KeyS", left: "KeyA", right: "KeyD", sprint: "ShiftLeft", crouch: "KeyC", reload: "KeyR", slot1: "Digit1", slot2: "Digit2", swap: "KeyQ", melee: "Digit3", mode: "KeyB", torch: "KeyF", mute: "KeyM", pause: "KeyP", potFire: "KeyG", potHeal: "KeyH", potCycle: "Digit4" };
   const BIND_LABEL = { fwd: "Andar para frente", back: "Andar para trás", left: "Andar para a esquerda", right: "Andar para a direita", sprint: "Correr / prender a respiração", crouch: "Agachar",
     reload: "Recarregar", slot1: "Arma 1", slot2: "Arma 2", swap: "Trocar de arma", melee: "Pegar / guardar a faca", mode: "Modo de tiro (auto / semi / rajada)", torch: "Lanterna", mute: "Som liga/desliga", pause: "Pausar (Esc sempre pausa)", potFire: "Poção de fogo (Infecção)", potHeal: "Poção de cura (Infecção)", potCycle: "Alternar poções (Infecção)" };
   function loadBinds() { let b = {}; try { b = JSON.parse(S.binds || "{}") || {}; } catch (e) {} const o = Object.assign({}, BIND_DEF); for (const k in o) if (typeof b[k] === "string" && b[k]) o[k] = b[k]; return o; }
