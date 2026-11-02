@@ -1,5 +1,8 @@
 # Novidades — Arena Zumbi
 
+## Infectado mais rápido (01/11/2026)
+- Infectado anda e corre 10% mais rápido que o humano (corrida: 8,4 m/s).
+
 ## Ninguém corre de costas (01/11/2026)
 - Bots fogem olhando para onde correm.
 - Jogadores andando para trás (celular ou PC) aparecem virados para onde andam.

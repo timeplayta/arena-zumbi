@@ -7,6 +7,7 @@ const Logic = (function () {
   // parâmetros da IA dos bots: escolhidos por busca em ~600 partidas simuladas de Infecção (11 bots, mapa Itália)
   const POT = { speed: 13, lift: 3, grav: 12, cd: 0.8, fire: { r: 3, dur: 6, dps: 100, after: 1.5 }, heal: { r: 3.5, dur: 6, hps: 16 } };
   const BOT_AI = { samples: 10, roamR: 28, wz: 1, wh: 0.3, wHigh: 0.6, roamT: 6, boostR: 25, stand: 26, flee: 7, sprint: 4, away: 7, range: 28, camp: false, spotMode: "mix", spread: 12, group: 2, gap: 3, moveErr: 1.6, fireVar: 1.2, clawR: 1.7 };
+  const ZOMBIE_SPEED = 1.1;                                    // infecção: infectado anda/corre 10% mais rápido que o humano
   const CLAW_DMG = 20, CLAW_DMG_HEAVY = 35;                   // infecção: golpe normal tira 20 · golpe pesado (botão direito) tira 35
   const CLAW_CD = 1.0, CLAW_CD_HEAVY = 1.15;                  // golpe normal (botão esquerdo) 1,0 s · golpe pesado (botão direito) 1,15 s                                       // infecção: intervalo entre ataques do infectado (s)
   const ATTACK_RANGE = 1.25, ZOMBIE_SEP = 0.75, RANGE = 90;
@@ -838,7 +839,7 @@ const Logic = (function () {
       const wantHold = !!inp.hold && this.ads && c.scope;
       if (wantHold && !this.breathLock && this.breath > 0) { this.breath -= dt; this.breathHeld = true; if (this.breath <= 0) { this.breath = 0; this.breathLock = true; this.breathHeld = false; this.events.push(["winded"]); } }
       else { this.breathHeld = false; this.breath = Math.min(4, this.breath + dt * 0.8); if (this.breathLock && this.breath > 2) this.breathLock = false; }
-      let speed = PLAYER_SPEED * c.speed;
+      let speed = this.team === "z" ? PLAYER_SPEED * ZOMBIE_SPEED : PLAYER_SPEED * c.speed;   // infectado: 10% mais rápido e sem peso de arma
       if (this.sprinting) speed *= SPRINT_MULT;
       if (this.ads) speed *= c.adsSpeed;
       speed *= 1 - 0.45 * this.crouchT;
@@ -1573,7 +1574,7 @@ const Logic = (function () {
       for (const o of this.others) {
         const B = o.bot; if (!B || !o.alive) continue;
         o.boostT = Math.max(0, (o.boostT || 0) - dt);
-        const sp = PLAYER_SPEED * (o.boostT > 0 ? 1.4 : 1), oz = o.gz || 0;
+        const sp = PLAYER_SPEED * (o.boostT > 0 ? 1.4 : 1) * ((o.team || "h") === "z" ? ZOMBIE_SPEED : 1), oz = o.gz || 0;
         B.repath = (B.repath || 0) - dt;
         if ((o.team || "h") === "z") {                                           // infectado: caça o humano mais perto pelo caminho
           if (!play) { o.mv = 0; continue; }

@@ -1,1 +1,1 @@
-{"v": 202611020052, "notes": {"t": "Ninguém corre de costas (01/11/2026)", "b": ["Bots fogem olhando para onde correm.", "Jogadores andando para trás (celular ou PC) aparecem virados para onde andam.", "Infectado andando para trás também vira o corpo."]}}
+{"v": 202611020056, "notes": {"t": "Infectado mais rápido (01/11/2026)", "b": ["Infectado anda e corre 10% mais rápido que o humano (corrida: 8,4 m/s)."]}}
