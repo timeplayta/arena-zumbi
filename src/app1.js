@@ -5,7 +5,7 @@
   "use strict";
   const $ = (id) => document.getElementById(id);
   const L = Logic;
-  const { Game, BOXES, OBSTACLES, LAMPS, clamp, insideAny, WEAPONS: W, WEAPON_ORDER, DIFF } = L;
+  const { Game, BOXES, OBSTACLES, LAMPS, clamp, wrapAngle, insideAny, WEAPONS: W, WEAPON_ORDER, DIFF } = L;
   const { ARENA, EYE_H, RADAR_RANGE, SWITCH_TIME, MELEE_CD } = L.C;
   const rand = (a, b) => a + Math.random() * (b - a);
   const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));

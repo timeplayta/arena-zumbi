@@ -1,5 +1,10 @@
 # Novidades — Arena Zumbi
 
+## Ninguém corre de costas (01/11/2026)
+- Bots fogem olhando para onde correm.
+- Jogadores andando para trás (celular ou PC) aparecem virados para onde andam.
+- Infectado andando para trás também vira o corpo.
+
 ## Poções arremessáveis (01/11/2026)
 - Modo Infecção: humanos têm molotov e poção de cura.
 - G pega o molotov, H pega a cura, 3 alterna. Clique arremessa.

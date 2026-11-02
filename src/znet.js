@@ -87,8 +87,16 @@
       let v = allyViews.get(o.id);
       const nm = o.name || Coop.nameOf(o.id);
       if (!v || v.name !== nm) { if (v) { scene.remove(v.root); } v = makeAlly(Coop.shirtOf(o.id), nm); allyViews.set(o.id, v); }
-      v.root.position.set(o.x, o.gz || 0, -o.y); v.root.rotation.y = o.yaw; v.body.position.x = 0;
-      v.aim.rotation.x = clamp(o.pitch || 0, -1, 1);
+      // direção em que anda (pela posição): andando para trás, o boneco vira e corre de frente
+      const dx = o.x - (v.px === undefined ? o.x : v.px), dy = o.y - (v.py === undefined ? o.y : v.py); v.px = o.x; v.py = o.y;
+      const sp = Math.hypot(dx, dy) / Math.max(dt, 1e-3);
+      v.spd = (v.spd || 0) + (sp - (v.spd || 0)) * Math.min(1, dt * 8);
+      if (sp > 0.6 && sp < 20) { const my = Math.atan2(-dx, dy); v.my = v.my === undefined ? my : v.my + wrapAngle(my - v.my) * Math.min(1, dt * 10); }
+      const back = o.alive && v.spd > 0.8 && v.my !== undefined && Math.abs(wrapAngle(v.my - o.yaw)) > 1.75;
+      const face = back ? v.my : o.yaw;
+      v.face = v.face === undefined ? face : v.face + wrapAngle(face - v.face) * Math.min(1, dt * 12);
+      v.root.position.set(o.x, o.gz || 0, -o.y); v.root.rotation.y = v.face; v.body.position.x = 0;
+      v.aim.rotation.x = back ? 0 : clamp(o.pitch || 0, -1, 1);
       v.step += (o.mv ? 8 : 0) * dt; const sw = o.mv && o.alive ? Math.sin(v.step) * 0.6 : 0;
       v.legs[0].rotation.x = sw; v.legs[1].rotation.x = -sw;
       const down = !o.alive;

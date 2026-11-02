@@ -1657,7 +1657,10 @@ const Logic = (function () {
         else { B.stam = Math.min(100, B.stam + 14 * dt); if (B.tired && B.stam > 25) B.tired = false; }
         if (!moving) o.mv = 0;
         B.shootT -= dt;
-        if (zt && zd < AI.range && play) {
+        // não corre de costas: fugindo com o zumbi atrás, olha para onde corre e não atira para trás
+        const back = zt && moving && B.moveAng !== undefined && Math.abs(wrapAngle(Math.atan2(-(zt.x - o.x), zt.y - o.y) - B.moveAng)) > 1.75;
+        if (back) { o.yaw = B.moveAng; o.pitch = 0; }
+        else if (zt && zd < AI.range && play) {
           const hz = (zt.gz || 0) + 1.2;
           if (B.shootT <= 0 && B.vis) {
             const c = o.cfgs[0], ex = o.x, ey = o.y, ez = oz + 1.6, err = B.aimErr * (moving ? AI.moveErr : 1) * (zd > 15 ? 1.4 : 1);
@@ -1751,7 +1754,9 @@ const Logic = (function () {
           continue;
         }
         const [x, y, yaw, pg] = this.posOf(q.id), mv = Math.hypot(x - z.x, y - z.y);
-        z.x = x; z.y = y; z.yaw = yaw; z.gz = pg; z.kx = z.ky = 0; z.stagger = 0;
+        let fy = yaw;                                                // andando para trás: o corpo vira para onde anda
+        if (mv > 0.02 && mv < 3) { const my = Math.atan2(-(x - z.x), y - z.y); if (Math.abs(wrapAngle(my - yaw)) > 1.75) fy = my; }
+        z.x = x; z.y = y; z.yaw = fy; z.gz = pg; z.kx = z.ky = 0; z.stagger = 0;
         if (z.clawShow > 0) { z.clawShow -= dt; z.state = "attack"; z.attackT += dt; } else z.state = "walk";
         z.phase += Math.min(mv, 0.5) * 2.6;
       }
