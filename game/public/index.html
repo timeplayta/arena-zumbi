@@ -693,7 +693,7 @@ table.sc td:first-child { font-family: var(--font-display); font-size: 22px; col
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
-const GAME_VERSION = 202611021728, GAME_NOTES = {"t": "Bots mais espertos na Infecção (02/11/2026)", "b": ["Humanos se escondem em duplas nos melhores pontos do mapa e atiram juntos.", "Infectados farejam mais longe e economizam fôlego para o bote final.", "Partidas continuam equilibradas: cerca de metade das vitórias para cada lado."]};
+const GAME_VERSION = 202611021747, GAME_NOTES = {"t": "Bots sem olho nas costas (02/11/2026)", "b": ["Bots só enxergam o que está à frente (cerca de 120°) e com vista livre; parados, olham em volta.", "Ouvem só o que está colado neles e o barulho de tiros por perto.", "Infectados avisam a horda quando avistam alguém. Partidas seguem equilibradas."]};
 // ==MAPA ITÁLIA== (só o protótipo do modo Infecção)
 // Coordenadas lógicas: x = leste, y = norte, z = altura (m). Caixas sólidas: [x0, x1, y0, y1, topo, base, tipo, extra]
 const ITALIA = (function () {
@@ -880,7 +880,7 @@ const Logic = (function () {
   const ZOMBIE_RESPAWN = 5;                                   // infecção: segundos até o infectado abatido voltar
   // parâmetros da IA dos bots: escolhidos por busca em ~600 partidas simuladas de Infecção (11 bots, mapa Itália)
   const POT = { speed: 13, lift: 3, grav: 12, cd: 0.8, fire: { r: 3, dur: 6, dps: 100, after: 1.5 }, heal: { r: 3.5, dur: 6, hps: 16 } };
-  const BOT_AI = { samples: 10, roamR: 40.51, wz: 1.17, wh: 0, wHigh: 0, roamT: 8.69, boostR: 25, stand: 18.34, flee: 10.21, sprint: 3.47, away: 7.52, range: 40, camp: true, spotMode: "mix", spread: 12, group: 2, gap: 5.4, moveErr: 2.06, fireVar: 0.81, clawR: 1.59, zSprint: 6.13, zStam: 1, zRepath: 1.08, zSense: 34, zMemory: 3.37 };   // treino 02/11 (2ª rodada): humanos e infectados treinados um contra o outro; ~50% de vitória para cada lado (48 partidas só de bots)
+  const BOT_AI = { samples: 10, roamR: 40.51, wz: 1.17, wh: 0, wHigh: 0, roamT: 8.69, boostR: 25, stand: 18.34, flee: 10.21, sprint: 3.47, away: 7.52, range: 40, camp: true, spotMode: "mix", spread: 12, group: 2, gap: 5.4, moveErr: 2.06, fireVar: 0.81, clawR: 1.59, zSprint: 6.13, zStam: 1, zRepath: 1.08, zSense: 40, zMemory: 3.37, fov: 2.1, hear: 2.5, hMemory: 4, scan: 3.5, zShotHear: 22, zCall: 15 };   // treino 02/11: campo de visão de 120° (fov), ouvem só de perto (hear) e tiros (zShotHear); ~50% de vitória para cada lado (48 partidas só de bots)
   const ZOMBIE_SPEED = 1.1;                                    // infecção: infectado anda/corre 10% mais rápido que o humano
   const KNIFE_SPEED = ZOMBIE_SPEED;                            // faca na mão: mesma velocidade do infectado (andando e correndo)
   const CLAW_DMG = 20, CLAW_DMG_HEAVY = 35;                   // infecção: golpe normal tira 20 · golpe pesado (botão direito) tira 35
@@ -1488,6 +1488,7 @@ const Logic = (function () {
     fireWeapon() {
       const s = this.w(), c = s.cfg;
       s.mag -= 1; this.cool = c.delay; this.shots += 1;
+      if (!c.hasSil) this.shotNoise(this.px, this.py, this.coop ? this.coop.id : "");
       this.flashT = c.hasSil ? 0 : 0.05; this.kick = 1;
       const sp = this.spread();
       const baseRec = this.recoil, sway = this.aimSway(), eyeH = this.eyeH();
@@ -2237,6 +2238,7 @@ const Logic = (function () {
       const o = Array.isArray(m.o) ? m.o : [a.x, a.y, 1.6];
       if (Math.hypot(o[0] - a.x, o[1] - a.y) > 3) return;
       const ds = m.d.slice(0, Math.min(14, c.pellets + 1));
+      if (!c.hasSil) this.shotNoise(a.x, a.y, id);
       this.asShooter(a, () => {
         let first = null;
         for (const d of ds) {
@@ -2406,6 +2408,17 @@ const Logic = (function () {
       if (this.gm === "infect") this.infectJoin(id);
       return o;
     }
+    shotNoise(x, y, id) {                                                      // tiro faz barulho: infectados por perto ouvem e vão até quem atirou
+      if (this.gm !== "infect") return;
+      const N = this.noises || (this.noises = []), now = this.botClock || 0;
+      N.push({ x, y, id, t: now }); while (N.length && now - N[0].t > 0.6) N.shift(); if (N.length > 40) N.shift();
+    }
+    inFov(o, x, y, fov) { return Math.abs(wrapAngle(Math.atan2(-(x - o.x), y - o.y) - (o.yaw || 0))) <= fov / 2; }   // está na frente do bot?
+    botScan(o, dt) {                                                           // parado: olha em volta aos poucos (não tem olho nas costas)
+      const B = o.bot; B.scanT = (B.scanT || 0) - dt;
+      if (B.scanT <= 0) { B.scanT = 0.8 + this.rnd() * 1.4; B.scanYaw = (o.yaw || 0) + (this.rnd() - 0.5) * BOT_AI.scan; }
+      const dy = wrapAngle((B.scanYaw ?? o.yaw ?? 0) - (o.yaw || 0)); o.yaw = (o.yaw || 0) + Math.sign(dy) * Math.min(Math.abs(dy), 3 * dt);
+    }
     botLos(o, x, y, h) {
       const ex = o.x, ey = o.y, ez = (o.gz || 0) + 1.6, dx = x - ex, dy = y - ey, dz = h - ez, L = Math.hypot(dx, dy, dz) || 1;
       const r = this.cast(ex, ey, ez, dx / L, dy / L, dz / L, null, L + 0.5);
@@ -2456,6 +2469,8 @@ const Logic = (function () {
     }
     updateBots(dt) {
       const ps = this.infPlayers(), AI = BOT_AI, play = this.inf && this.inf.ph === "play";
+      this.botClock = (this.botClock || 0) + dt; const now = this.botClock, calls = this.zCalls || (this.zCalls = []);
+      while (calls.length && now - calls[0].t > 0.3) calls.shift();
       const zs = this.zombies.filter((z) => z.state !== "dead");
       for (const o of this.others) {
         const B = o.bot; if (!B || !o.alive) continue;
@@ -2464,19 +2479,31 @@ const Logic = (function () {
         B.repath = (B.repath || 0) - dt;
         if ((o.team || "h") === "z") {                                           // infectado: caça o humano mais perto pelo caminho
           if (!play) { o.mv = 0; continue; }
-          let tg = null, bd = 1e9;
-          for (const q of ps) if (q.team === "h" && q.alive) { const d = Math.hypot(q.x - o.x, q.y - o.y) + Math.abs(q.gz - oz) * 3; if (d < bd) { bd = d; tg = q; } }
-          if (!tg) { o.mv = 0; continue; }
-          // faro do infectado: não enxerga através do mapa; persegue quem está ao alcance do faro (ou foi visto há pouco), senão procura
-          if (bd > AI.zSense) {
-            B.lkT = (B.lkT || 0) - dt;
-            if (B.lkT <= 0) {
-              if (!B.path || B.repath <= 0 || B.hunt !== "roam") { const r = Nav.randomNode(() => this.rnd()); this.botGo(o, r[0], r[1], r[2]); B.hunt = "roam"; B.repath = 4 + this.rnd() * 3; }
-              if (!this.botFollow(o, dt, sp)) { B.path = null; o.mv = 0; } else o.yaw = B.moveAng;
-              B.stam = Math.min(100, B.stam + 14 * dt); if (B.tired && B.stam > 25) B.tired = false;
-              continue;
+          // visão do infectado: só enxerga quem está à frente (campo de visão) e com vista livre; ouve quem está colado nas costas
+          B.seeT = (B.seeT || 0) - dt; B.lkT = (B.lkT || 0) - dt;
+          if (B.seeT <= 0) {
+            B.seeT = 0.15; let best = null, bd = 1e9;
+            for (const q of ps) if (q.team === "h" && q.alive) {
+              const d = Math.hypot(q.x - o.x, q.y - o.y) + Math.abs(q.gz - oz) * 3; if (d >= bd || d > AI.zSense) continue;
+              if (d < AI.hear || (this.inFov(o, q.x, q.y, AI.fov) && Nav.los(o.x, o.y, oz, q.x, q.y))) { bd = d; best = q; }
             }
-          } else { B.lkT = AI.zMemory; if (B.hunt === "roam") { B.hunt = ""; B.path = null; } }
+            if (best) { B.tgId = best.id; B.lkT = AI.zMemory; calls.push({ x: o.x, y: o.y, id: best.id, t: now }); }   // avisa a horda por perto
+            else {
+              let hd = 1e9, hid = null;
+              for (const n of this.noises || []) if (now - n.t < 0.6) { const d = Math.hypot(n.x - o.x, n.y - o.y); if (d < AI.zShotHear && d < hd) { hd = d; hid = n.id; } }   // ouviu tiro
+              for (const c of calls) { const d = Math.hypot(c.x - o.x, c.y - o.y); if (d < AI.zCall && d < hd) { hd = d; hid = c.id; } }                              // outro infectado chamou
+              if (hid && ps.some((q) => q.id === hid && q.team === "h" && q.alive)) { B.tgId = hid; B.lkT = AI.zMemory; }
+            }
+          }
+          const tg = B.tgId && B.lkT > 0 ? ps.find((q) => q.id === B.tgId && q.team === "h" && q.alive) : null;
+          if (!tg) {                                                             // ninguém à vista: procura pelo mapa, olhando para onde anda
+            B.tgId = null;
+            if (!B.path || B.repath <= 0 || B.hunt !== "roam") { const r = Nav.randomNode(() => this.rnd()); this.botGo(o, r[0], r[1], r[2]); B.hunt = "roam"; B.repath = 4 + this.rnd() * 3; }
+            if (!this.botFollow(o, dt, sp)) { B.path = null; o.mv = 0; this.botScan(o, dt); } else o.yaw = B.moveAng;
+            B.stam = Math.min(100, B.stam + 14 * dt); if (B.tired && B.stam > 25) B.tired = false;
+            continue;
+          }
+          if (B.hunt === "roam") { B.hunt = ""; B.path = null; }
           const dd = Math.hypot(tg.x - o.x, tg.y - o.y), same = Math.abs(tg.gz - oz) < 1.2, ang = Math.atan2(-(tg.x - o.x), tg.y - o.y);
           // infectado cansa como o jogador: só dispara (corrida) quando a presa está perto e ainda tem fôlego
           const zRun = dd < AI.zSprint && !B.tired, zs2 = zRun ? sp * SPRINT_MULT : sp;
@@ -2491,8 +2518,22 @@ const Logic = (function () {
           continue;
         }
         // humano: vai para um esconderijo, segura a posição atirando e foge pelo caminho quando o zumbi chega perto
+        // visão do humano: só enxerga zumbis à frente (campo de visão) com vista livre; ouve os que estão colados; lembra deles por um tempo
+        B.clock = (B.clock || 0) + dt; B.visT = (B.visT || 0) - dt;
+        if (!B.kn) B.kn = new Map();
+        if (B.visT <= 0) {
+          B.visT = 0.15; B.seen = new Set(); let tries = 0;
+          const cand = zs.map((z) => [Math.hypot(z.x - o.x, z.y - o.y) + Math.abs((z.gz || 0) - oz) * 1.5, z]).filter((c) => c[0] < AI.range).sort((a, b) => a[0] - b[0]);
+          for (const [d, z] of cand) {
+            if (d < AI.hear) { B.kn.set(z, B.clock); continue; }
+            if (!play || !this.inFov(o, z.x, z.y, AI.fov) || tries >= 4) continue;
+            tries++; if (this.botLos(o, z.x, z.y, (z.gz || 0) + 1.2)) { B.kn.set(z, B.clock); B.seen.add(z); }
+          }
+          for (const [z, t] of B.kn) if (z.state === "dead" || B.clock - t > AI.hMemory) B.kn.delete(z);
+        }
+        const kz = [...B.kn.keys()];                                            // zumbis que ele sabe onde estão
         let zt = null, zd = 1e9;
-        for (const z of zs) { const d = Math.hypot(z.x - o.x, z.y - o.y) + Math.abs((z.gz || 0) - oz) * 1.5; if (d < zd) { zd = d; zt = z; } }
+        for (const z of kz) { const d = Math.hypot(z.x - o.x, z.y - o.y) + Math.abs((z.gz || 0) - oz) * 1.5; if (d < zd) { zd = d; zt = z; } }
         if (!B.spot && AI.camp) {                                               // duplas/trios no mesmo esconderijo
           const L = this.botSpots(); if (L.length) {
             const i = this.others.filter((q) => q.bot).indexOf(o), k = Math.floor(i / AI.group) % L.length, m = i % AI.group; B.spot = L[k];
@@ -2500,8 +2541,7 @@ const Logic = (function () {
           }
         }
         let spd = sp * 0.85, sprint = false, moving = false;
-        B.visT = (B.visT || 0) - dt;
-        if (B.visT <= 0) { B.visT = 0.15; B.vis = !!(play && zt && zd < AI.range && this.botLos(o, zt.x, zt.y, (zt.gz || 0) + 1.2)); }
+        B.vis = !!(zt && B.seen && B.seen.has(zt));
         const danger = play && zt && zd < AI.flee;
         if (danger) {
           if (!B.fleeing || B.repath <= 0) {                                   // escolhe para onde fugir: longe dos zumbis, perto de casa
@@ -2510,7 +2550,7 @@ const Logic = (function () {
               const a = (k / 10) * 6.283 + this.rnd() * 0.5, r = 7 + this.rnd() * 9, x = o.x + Math.cos(a) * r, y = o.y + Math.sin(a) * r;
               const id = Nav.locate(x, y, oz); if (id < 0) continue;
               const M = Nav.get(), cx = M.X[id], cy = M.Y[id];
-              let dz = 1e9; for (const z of zs) dz = Math.min(dz, Math.hypot(z.x - cx, z.y - cy));
+              let dz = 1e9; for (const z of kz) dz = Math.min(dz, Math.hypot(z.x - cx, z.y - cy));
               const toward = zt ? ((cx - o.x) * (zt.x - o.x) + (cy - o.y) * (zt.y - o.y)) / (Math.hypot(cx - o.x, cy - o.y) * zd + 1e-6) : 0;
               const sc = Math.min(dz, 25) - toward * AI.away;
               if (sc > bs) { bs = sc; best = [cx, cy, M.Z[id]]; }
@@ -2539,14 +2579,14 @@ const Logic = (function () {
                 const r = Nav.randomNode(() => this.rnd()), dme = Math.hypot(r[0] - o.x, r[1] - o.y);
                 if (dme > AI.roamR) continue;
                 let dz = 40, dh = 40;
-                for (const z of zs) dz = Math.min(dz, Math.hypot(z.x - r[0], z.y - r[1]));
+                for (const z of kz) dz = Math.min(dz, Math.hypot(z.x - r[0], z.y - r[1]));
                 for (const q of ps) if (q.p !== o && q.team === "h" && q.alive) dh = Math.min(dh, Math.hypot(q.x - r[0], q.y - r[1]));
                 const sc = dz * AI.wz + Math.min(dh, 15) * AI.wh + r[2] * AI.wHigh - dme * 0.1;
                 if (sc > bs) { bs = sc; best = r; }
               }
               if (this.boosts) for (const b of this.boosts) {                   // booster perto: vida quando machucado, velocidade sempre
                 if (!b.on || Math.hypot(b.x - o.x, b.y - o.y) > AI.boostR || (b.k === "health" && o.hp > o.maxHp * 0.7)) continue;
-                let dz = 40; for (const z of zs) dz = Math.min(dz, Math.hypot(z.x - b.x, z.y - b.y));
+                let dz = 40; for (const z of kz) dz = Math.min(dz, Math.hypot(z.x - b.x, z.y - b.y));
                 if (dz > 12) { best = [b.x, b.y, b.z]; break; }
               }
               if (best) this.botGo(o, best[0], best[1], best[2]); B.repath = AI.roamT + this.rnd() * 4;
@@ -2561,7 +2601,7 @@ const Logic = (function () {
         // não corre de costas: fugindo com o zumbi atrás, olha para onde corre e não atira para trás
         const back = zt && moving && B.moveAng !== undefined && Math.abs(wrapAngle(Math.atan2(-(zt.x - o.x), zt.y - o.y) - B.moveAng)) > 1.75;
         if (back) { o.yaw = B.moveAng; o.pitch = 0; }
-        else if (zt && zd < AI.range && play) {
+        else if (zt && zd < AI.range && play && B.vis) {
           const hz = (zt.gz || 0) + 1.2;
           if (B.shootT <= 0 && B.vis) {
             const c = o.cfgs[0], ex = o.x, ey = o.y, ez = oz + 1.6, err = B.aimErr * (moving ? AI.moveErr : 1) * (zd > 15 ? 1.4 : 1);
@@ -2572,8 +2612,11 @@ const Logic = (function () {
             this.remoteShot(o.id, { s: 0, o: [ex, ey, ez], d: dirs });
             B.shootT = Math.max(c.delay, 0.12) * (1 + this.rnd() * AI.fireVar);
           }
-          if (B.vis) o.yaw = Math.atan2(-(zt.x - o.x), zt.y - o.y);
+          o.yaw = Math.atan2(-(zt.x - o.x), zt.y - o.y);
+        } else if (zt && play && !moving) {                                     // ouviu ou perdeu de vista: vira para onde o zumbi está
+          const dy = wrapAngle(Math.atan2(-(zt.x - o.x), zt.y - o.y) - (o.yaw || 0)); o.yaw = (o.yaw || 0) + Math.sign(dy) * Math.min(Math.abs(dy), 6 * dt);
         } else if (moving && B.moveAng !== undefined) o.yaw = B.moveAng;
+        else this.botScan(o, dt);
       }
     }
     posOf(id) { if (id === this.coop.id) return [this.px, this.py, this.yaw, this.gz]; const o = this.remote(id); return o ? [o.x, o.y, o.yaw, o.gz || 0] : [0, 0, 0, 0]; }

@@ -1,5 +1,10 @@
 # Novidades — Arena Zumbi
 
+## Bots sem olho nas costas (02/11/2026)
+- Bots só enxergam o que está à frente (cerca de 120°) e com vista livre; parados, olham em volta.
+- Ouvem só o que está colado neles e o barulho de tiros por perto.
+- Infectados avisam a horda quando avistam alguém. Partidas seguem equilibradas.
+
 ## Bots mais espertos na Infecção (02/11/2026)
 - Humanos se escondem em duplas nos melhores pontos do mapa e atiram juntos.
 - Infectados farejam mais longe e economizam fôlego para o bote final.
