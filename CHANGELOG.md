@@ -1,5 +1,10 @@
 # Novidades — Arena Zumbi
 
+## Bots mais espertos na Infecção (02/11/2026)
+- Humanos se escondem em duplas nos melhores pontos do mapa e atiram juntos.
+- Infectados farejam mais longe e economizam fôlego para o bote final.
+- Partidas continuam equilibradas: cerca de metade das vitórias para cada lado.
+
 ## Bots treinados na Infecção (02/11/2026)
 - Partidas equilibradas: humanos e infectados vencem cerca de metade das vezes.
 - Bots infectados cansam ao correr, como o jogador, e só farejam quem está perto.

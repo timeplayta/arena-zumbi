@@ -6,7 +6,7 @@ const Logic = (function () {
   const ZOMBIE_RESPAWN = 5;                                   // infecção: segundos até o infectado abatido voltar
   // parâmetros da IA dos bots: escolhidos por busca em ~600 partidas simuladas de Infecção (11 bots, mapa Itália)
   const POT = { speed: 13, lift: 3, grav: 12, cd: 0.8, fire: { r: 3, dur: 6, dps: 100, after: 1.5 }, heal: { r: 3.5, dur: 6, hps: 16 } };
-  const BOT_AI = { samples: 10, roamR: 38.19, wz: 1, wh: 0, wHigh: 0, roamT: 8.85, boostR: 25, stand: 21.49, flee: 12.75, sprint: 5.56, away: 5.14, range: 36.86, camp: false, spotMode: "mix", spread: 12, group: 1, gap: 4.69, moveErr: 2.03, fireVar: 0.89, clawR: 1.7, zSprint: 10, zStam: 1, zRepath: 0.5, zSense: 12.25, zMemory: 4 };   // treino 02/11: ~50% de vitória dos humanos (48 partidas só de bots)
+  const BOT_AI = { samples: 10, roamR: 40.51, wz: 1.17, wh: 0, wHigh: 0, roamT: 8.69, boostR: 25, stand: 18.34, flee: 10.21, sprint: 3.47, away: 7.52, range: 40, camp: true, spotMode: "mix", spread: 12, group: 2, gap: 5.4, moveErr: 2.06, fireVar: 0.81, clawR: 1.59, zSprint: 6.13, zStam: 1, zRepath: 1.08, zSense: 34, zMemory: 3.37 };   // treino 02/11 (2ª rodada): humanos e infectados treinados um contra o outro; ~50% de vitória para cada lado (48 partidas só de bots)
   const ZOMBIE_SPEED = 1.1;                                    // infecção: infectado anda/corre 10% mais rápido que o humano
   const KNIFE_SPEED = ZOMBIE_SPEED;                            // faca na mão: mesma velocidade do infectado (andando e correndo)
   const CLAW_DMG = 20, CLAW_DMG_HEAVY = 35;                   // infecção: golpe normal tira 20 · golpe pesado (botão direito) tira 35
