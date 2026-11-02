@@ -91,12 +91,22 @@
     dirty = true; clearTimeout(pushT);
     pushT = setTimeout(async () => {
       if (pushing || !session) return; pushing = true; dirty = false;
-      try { await api("save", { wallet: JSON.stringify(wallet) }); }
+      try { const j = await api("save", { wallet: JSON.stringify(wallet) }); if (j && j.credit) gotCredit(j.credit); }
       catch (e) { dirty = true; if (e.status === 401) logout(true); else pushT = setTimeout(pushWallet, 15000); }   // sem internet: tenta de novo depois
       pushing = false;
     }, 1200);
   }
   window.addEventListener("online", () => { if (dirty) pushWallet(); });
+  // moedas enviadas pelo administrador: chegam em até 1 minuto com o jogo aberto
+  function gotCredit(c) {
+    wallet.coins = Math.max(0, Math.min(9999999, wallet.coins + c)); if (c > 0) wallet.total += c;
+    saveWalletLocal(); try { updateWho(); renderStore(); } catch (e) {}
+    setTimeout(() => { try { feedLine((c > 0 ? "+" : "") + c.toLocaleString("pt-BR") + " MOEDAS NA SUA CONTA", c > 0); } catch (e) {} }, 300);
+  }
+  setInterval(() => {
+    if (!session || pushing || (typeof navigator !== "undefined" && navigator.onLine === false)) return;
+    api("sync", {}).then((j) => { if (j && j.credit) gotCredit(j.credit); }).catch((e) => { if (e.status === 401) logout(true); });
+  }, 60000);
   loadWallet();
   sanitizeOwned();
 

@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="pt-BR"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow">
+<title>Arena Zumbi · Administrador</title>
+<style>
+:root { --bg: #0f0c0a; --card: #1b1612; --line: #3a2e24; --text: #f1e9de; --muted: #a8998a; --amber: #ffb040; --ok: #4ddc84; --bad: #ff6a5a; }
+* { box-sizing: border-box; }
+body { margin: 0; background: radial-gradient(ellipse at top, #2a1a0c, var(--bg) 60%); color: var(--text); font: 16px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; min-height: 100vh; }
+main { max-width: 760px; margin: 0 auto; padding: 24px 16px 60px; }
+h1 { font-size: 30px; margin: 0 0 2px; letter-spacing: 0.02em; color: var(--amber); }
+.sub { color: var(--muted); margin: 0 0 20px; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 18px; margin-bottom: 16px; }
+.card h2 { font-size: 18px; margin: 0 0 12px; }
+label { display: block; font-size: 14px; color: var(--muted); margin: 0 0 4px; }
+input { width: 100%; padding: 11px 12px; border-radius: 8px; border: 1px solid var(--line); background: #120e0b; color: var(--text); font-size: 16px; }
+input:focus { outline: 2px solid var(--amber); outline-offset: 1px; }
+.row { display: flex; gap: 10px; flex-wrap: wrap; align-items: end; }
+.row > div { flex: 1 1 180px; }
+button { padding: 11px 16px; border-radius: 8px; border: 0; background: var(--amber); color: #1a1006; font-weight: 700; font-size: 15px; cursor: pointer; }
+button.ghost { background: transparent; color: var(--text); border: 1px solid var(--line); font-weight: 600; }
+button:disabled { opacity: 0.5; cursor: default; }
+.quick { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+.quick button { background: #2a2018; color: var(--amber); border: 1px solid var(--line); }
+.msg { margin: 10px 0 0; min-height: 22px; font-size: 15px; }
+.msg.ok { color: var(--ok); } .msg.bad { color: var(--bad); }
+table { width: 100%; border-collapse: collapse; font-size: 15px; }
+th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--line); }
+th { color: var(--muted); font-weight: 600; font-size: 13px; }
+td.n { text-align: right; font-variant-numeric: tabular-nums; color: var(--amber); }
+tr.pick { cursor: pointer; } tr.pick:hover td { background: #241c15; }
+.small { color: var(--muted); font-size: 13px; }
+[hidden] { display: none !important; }
+.top { display: flex; justify-content: space-between; align-items: start; gap: 10px; }
+</style></head><body><main>
+<div class="top"><div><h1>Painel do administrador</h1><p class="sub">Arena Zumbi · enviar moedas para as contas</p></div>
+<button class="ghost" id="out" hidden>Sair</button></div>
+
+<section class="card" id="login">
+  <h2>Entrar</h2>
+  <form id="fLogin" class="row"><div><label for="key">Senha de administrador</label><input id="key" type="password" autocomplete="current-password" required></div><button type="submit">Entrar</button></form>
+  <p class="msg" id="mLogin" role="alert"></p>
+</section>
+
+<div id="panel" hidden>
+  <section class="card">
+    <h2>Enviar moedas</h2>
+    <form id="fGive">
+      <div class="row">
+        <div><label for="name">Nome da conta</label><input id="name" autocomplete="off" required maxlength="14"></div>
+        <div><label for="coins">Quantidade</label><input id="coins" type="number" inputmode="numeric" required></div>
+        <button type="submit">Enviar</button>
+      </div>
+      <div class="quick"><button type="button" data-q="1000">1.000</button><button type="button" data-q="10000">10.000</button><button type="button" data-q="50000">50.000</button><button type="button" data-q="100000">100.000</button></div>
+      <p class="small">Número negativo tira moedas. O jogador recebe em até 1 minuto se estiver jogando, ou ao abrir o jogo.</p>
+    </form>
+    <p class="msg" id="mGive" role="status"></p>
+  </section>
+
+  <section class="card">
+    <div class="top"><h2>Contas</h2><button class="ghost" id="reload" type="button">Atualizar</button></div>
+    <input id="search" placeholder="Procurar conta..." autocomplete="off" style="margin-bottom:10px">
+    <table><thead><tr><th>Nome</th><th style="text-align:right">Moedas</th><th>Criada</th></tr></thead><tbody id="list"></tbody></table>
+    <p class="small" id="count"></p>
+  </section>
+
+  <section class="card">
+    <h2>Últimos envios</h2>
+    <table><tbody id="log"></tbody></table>
+  </section>
+
+  <section class="card">
+    <h2>Trocar a senha do painel</h2>
+    <form id="fPass" class="row"><div><label for="np">Senha nova (8 ou mais caracteres)</label><input id="np" type="password" autocomplete="new-password" minlength="8" required></div><button type="submit">Trocar</button></form>
+    <p class="msg" id="mPass" role="status"></p>
+  </section>
+</div>
+</main>
+<script>
+const $ = (id) => document.getElementById(id);
+const fmt = (n) => Number(n || 0).toLocaleString("pt-BR");
+const day = (t) => t ? new Date(t).toLocaleDateString("pt-BR") : "—";
+let KEY = ""; try { KEY = sessionStorage.getItem("az-admin") || ""; } catch (e) {}
+let ACC = [];
+async function call(cmd, extra) {
+  const r = await fetch("/api/admin/" + cmd, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(Object.assign({ key: KEY }, extra || {})) });
+  let j = {}; try { j = await r.json(); } catch (e) {}
+  if (!r.ok) throw new Error(j.error || "Erro " + r.status);
+  return j;
+}
+function msg(el, t, ok) { el.textContent = t; el.className = "msg " + (ok ? "ok" : "bad"); }
+function show(on) { $("login").hidden = on; $("panel").hidden = !on; $("out").hidden = !on; }
+function renderList() {
+  const q = $("search").value.trim().toLowerCase(), rows = ACC.filter((a) => !q || a.name.toLowerCase().includes(q));
+  $("list").innerHTML = "";
+  for (const a of rows) {
+    const tr = document.createElement("tr"); tr.className = "pick"; tr.title = "Usar esta conta";
+    const td = (t, c) => { const e = document.createElement("td"); e.textContent = t; if (c) e.className = c; tr.appendChild(e); };
+    td(a.name); td(fmt(a.coins) + (a.pending ? " (+" + fmt(a.pending) + " a entregar)" : ""), "n"); td(day(a.created));
+    tr.addEventListener("click", () => { $("name").value = a.name; $("coins").focus(); });
+    $("list").appendChild(tr);
+  }
+  $("count").textContent = ACC.length + (ACC.length === 1 ? " conta" : " contas");
+}
+async function refresh() {
+  try { ACC = (await call("list")).accounts || []; renderList(); } catch (e) { msg($("mGive"), e.message, false); }
+  try {
+    const L = (await call("log")).log || []; $("log").innerHTML = "";
+    for (const l of L.slice(0, 15)) { const tr = document.createElement("tr"); tr.innerHTML = "<td></td><td class='n'></td><td class='small'></td>"; tr.children[0].textContent = l.name; tr.children[1].textContent = (l.coins > 0 ? "+" : "") + fmt(l.coins); tr.children[2].textContent = new Date(l.at).toLocaleString("pt-BR"); $("log").appendChild(tr); }
+    if (!L.length) $("log").innerHTML = "<tr><td class='small'>Nenhum envio ainda.</td></tr>";
+  } catch (e) {}
+}
+async function enter(k) {
+  KEY = k;
+  try { await call("check"); try { sessionStorage.setItem("az-admin", k); } catch (e) {} show(true); refresh(); $("name").focus(); }
+  catch (e) { KEY = ""; show(false); msg($("mLogin"), e.message, false); }
+}
+$("fLogin").addEventListener("submit", (e) => { e.preventDefault(); enter($("key").value); });
+$("out").addEventListener("click", () => { KEY = ""; try { sessionStorage.removeItem("az-admin"); } catch (e) {} $("key").value = ""; show(false); });
+document.querySelectorAll("[data-q]").forEach((b) => b.addEventListener("click", () => { $("coins").value = b.getAttribute("data-q"); }));
+$("fGive").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const name = $("name").value.trim(), coins = Number($("coins").value);
+  if (!name || !coins) return msg($("mGive"), "Preencha o nome e a quantidade.", false);
+  const btn = e.submitter || $("fGive").querySelector("button[type=submit]"); btn.disabled = true;
+  try { const j = await call("give", { name, coins }); msg($("mGive"), (coins > 0 ? "Enviado: +" : "Retirado: ") + fmt(Math.abs(coins)) + " moedas para " + j.name + ". Saldo: " + fmt(j.coins) + ".", true); $("coins").value = ""; refresh(); }
+  catch (err) { msg($("mGive"), err.message, false); }
+  btn.disabled = false;
+});
+$("fPass").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  try { await call("setpass", { newpass: $("np").value }); KEY = $("np").value; try { sessionStorage.setItem("az-admin", KEY); } catch (err) {} $("np").value = ""; msg($("mPass"), "Senha trocada. Use a nova senha da próxima vez.", true); }
+  catch (err) { msg($("mPass"), err.message, false); }
+});
+$("reload").addEventListener("click", refresh);
+$("search").addEventListener("input", renderList);
+if (KEY) enter(KEY); else $("key").focus();
+</script></body></html>

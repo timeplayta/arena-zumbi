@@ -1,5 +1,8 @@
 # Novidades — Arena Zumbi
 
+## Moedas de presente (02/11/2026)
+- Moedas enviadas para a sua conta chegam em até 1 minuto, mesmo com o jogo aberto.
+
 ## Contas com nome e senha (01/11/2026)
 - Agora você entra com nome e senha, ou cria uma conta nova.
 - Moedas, melhorias e compras ficam salvas na conta: entre de qualquer aparelho.

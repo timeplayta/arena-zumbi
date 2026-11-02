@@ -12,7 +12,7 @@ const closeC = (c) => { try { c.sock.write(Buffer.from([0x88, 0])); c.sock.end()
 let ACC = null;
 import(require("url").pathToFileURL(path.join(__dirname, "worker.js")).href).then((mod) => {
   const mem = new Map();
-  ACC = new mod.Accounts({ storage: { get: async (k) => mem.get(k), put: async (k, v) => { mem.set(k, JSON.parse(JSON.stringify(v))); }, delete: async (k) => mem.delete(k) } });
+  ACC = new mod.Accounts({ storage: { get: async (k) => mem.get(k), put: async (k, v) => { mem.set(k, JSON.parse(JSON.stringify(v))); }, delete: async (k) => mem.delete(k), list: async ({ prefix }) => new Map([...mem].filter(([k]) => k.startsWith(prefix))) } });
 }).catch((e) => console.error("contas indisponíveis:", e.message));
 const server = http.createServer((req, res) => {
   if (req.url.startsWith("/api/")) {

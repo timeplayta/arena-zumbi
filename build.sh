@@ -33,6 +33,7 @@ open('game/public/index-offline.html','w',encoding='utf8').write(h.replace(tag,'
 notes=json.loads(h.split('GAME_NOTES = ',1)[1].split(';\n',1)[0])
 json.dump({'v':int(sys.argv[1]),'notes':notes},open('game/public/version.json','w',encoding='utf8'),ensure_ascii=False)
 PY
+cp src/admin.html game/public/admin.html                          # painel do administrador (enviar moedas)
 cat > game/public/_headers <<'H'
 /version.json
   Access-Control-Allow-Origin: *
@@ -42,5 +43,8 @@ cat > game/public/_headers <<'H'
   Cache-Control: no-cache
 /index.html
   Cache-Control: no-cache
+/admin.html
+  Cache-Control: no-store
+  X-Robots-Tag: noindex
 H
 echo "versão $V"

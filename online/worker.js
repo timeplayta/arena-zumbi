@@ -83,6 +83,18 @@ async function applyGifts(st, u) {
   return u;
 }
 
+// ---------------- painel do administrador (/admin.html) ----------------
+// senha inicial: só o resumo SHA-256 fica aqui; o dono pode trocar a senha no painel (fica salva no servidor)
+const ADMIN_SHA = "ec61d1a66c6d8672337e3a1a133000061520cfe753b2f140a80c853fce040454";
+const sha256 = async (t) => hex(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(t)));
+const walletOf = (u) => { try { return JSON.parse(u.wallet || "{}") || {}; } catch (e) { return {}; } };
+// moedas enviadas pelo admin ficam "a entregar" (credit) até o jogo do jogador sincronizar; assim o jogo aberto não apaga o envio
+function deliver(u) {
+  const c = Number(u.credit) || 0; if (!c) return 0;
+  const w = walletOf(u); w.coins = Math.max(0, Math.min(9999999, (Number(w.coins) || 0) + c)); if (c > 0) w.total = (Number(w.total) || 0) + c;
+  u.wallet = JSON.stringify(w); u.credit = 0; return c;
+}
+
 export class Accounts {
   constructor(state) { this.st = state.storage; }
   async fetch(request) {
@@ -92,6 +104,12 @@ export class Accounts {
     const auth = (request.headers.get("authorization") || "").replace(/^Bearer\s+/i, "").trim();
     const who = async () => { if (!/^[0-9a-f]{64}$/.test(auth)) return null; const t = await this.st.get("t:" + auth); return t ? await this.st.get("u:" + t.u) : null; };
     const session = async (u) => { const tok = rand(32); await this.st.put("t:" + tok, { u: u.key, at: Date.now() }); return tok; };
+    if (path.startsWith("admin/") && request.method === "POST") return this.admin(path.slice(6), body, request);
+    if (path === "sync" && request.method === "POST") {                // jogo aberto pergunta se chegou moeda
+      const u = await who(); if (!u) return J({ error: "Sessão expirada. Entre de novo." }, 401);
+      const c = deliver(u); if (c) await this.st.put("u:" + u.key, u);
+      return J({ credit: c });
+    }
     if (path === "register" && request.method === "POST") {
       const name = cleanName(body.name), pass = String(body.pass || "");
       if (!NAME_OK.test(name)) return J({ error: "Nome: de 2 a 14 letras ou números." }, 400);
@@ -116,18 +134,49 @@ export class Accounts {
       }
       await this.st.delete("f:" + key);
       await applyGifts(this.st, u);
+      if (deliver(u)) await this.st.put("u:" + u.key, u);
       return J({ token: await session(u), name: u.name, wallet: u.wallet || "" });
     }
-    if (path === "me") { const u = await who(); if (u) await applyGifts(this.st, u); return u ? J({ name: u.name, wallet: u.wallet || "" }) : J({ error: "Sessão expirada. Entre de novo." }, 401); }
+    if (path === "me") { const u = await who(); if (u) { await applyGifts(this.st, u); if (deliver(u)) await this.st.put("u:" + u.key, u); } return u ? J({ name: u.name, wallet: u.wallet || "" }) : J({ error: "Sessão expirada. Entre de novo." }, 401); }
     if (path === "save" && request.method === "POST") {
       const u = await who(); if (!u) return J({ error: "Sessão expirada. Entre de novo." }, 401);
       const w = typeof body.wallet === "string" ? body.wallet : ""; if (w.length > 30000) return J({ error: "Dados grandes demais." }, 413);
       try { JSON.parse(w || "{}"); } catch (e) { return J({ error: "Dados inválidos." }, 400); }
-      u.wallet = w; u.saved = Date.now(); await this.st.put("u:" + u.key, u);
-      return J({ ok: true });
+      u.wallet = w; u.saved = Date.now(); const c = deliver(u); await this.st.put("u:" + u.key, u);
+      return J({ ok: true, credit: c });
     }
     if (path === "logout" && request.method === "POST") { if (/^[0-9a-f]{64}$/.test(auth)) await this.st.delete("t:" + auth); return J({ ok: true }); }
     return J({ error: "Não encontrado." }, 404);
+  }
+  async admin(cmd, body, request) {
+    const lock = (await this.st.get("adminlock")) || { n: 0, until: 0 };
+    if (lock.until > Date.now()) return J({ error: "Muitas tentativas erradas. Espere 10 minutos." }, 429);
+    const key = String(body.key || ""), saved = await this.st.get("adminpass");
+    const ok = saved ? same(await hashPass(key, saved.salt), saved.hash) : same(await sha256(key), ADMIN_SHA);
+    if (!ok) { lock.n += 1; if (lock.n >= 8) { lock.n = 0; lock.until = Date.now() + 600000; } await this.st.put("adminlock", lock); return J({ error: "Senha de administrador incorreta." }, 401); }
+    if (lock.n) await this.st.delete("adminlock");
+    if (cmd === "check") return J({ ok: true });
+    if (cmd === "list") {
+      const all = await this.st.list({ prefix: "u:" }), out = [];
+      for (const [, u] of all) { const w = walletOf(u); out.push({ name: u.name, coins: (Number(w.coins) || 0) + (Number(u.credit) || 0), pending: Number(u.credit) || 0, created: u.created || 0, saved: u.saved || 0 }); }
+      out.sort((a, b) => b.created - a.created);
+      return J({ accounts: out });
+    }
+    if (cmd === "give") {
+      const name = cleanName(body.name), n = Math.trunc(Number(body.coins));
+      if (!n || Math.abs(n) > 9999999) return J({ error: "Quantidade inválida." }, 400);
+      const u = await this.st.get("u:" + name.toLowerCase()); if (!u) return J({ error: "Conta \"" + name + "\" não encontrada." }, 404);
+      u.credit = (Number(u.credit) || 0) + n; await this.st.put("u:" + u.key, u);
+      const log = (await this.st.get("adminlog")) || []; log.unshift({ at: Date.now(), name: u.name, coins: n }); await this.st.put("adminlog", log.slice(0, 50));
+      return J({ ok: true, name: u.name, coins: (Number(walletOf(u).coins) || 0) + u.credit });
+    }
+    if (cmd === "log") return J({ log: (await this.st.get("adminlog")) || [] });
+    if (cmd === "setpass") {
+      const np = String(body.newpass || ""); if (np.length < 8) return J({ error: "A senha nova precisa ter pelo menos 8 caracteres." }, 400);
+      const salt = rand(16); await this.st.put("adminpass", { salt, hash: await hashPass(np, salt) });
+      return J({ ok: true });
+    }
+    return J({ error: "Comando desconhecido." }, 404);
   }
 }
 

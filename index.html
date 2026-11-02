@@ -687,7 +687,7 @@ table.sc td:first-child { font-family: var(--font-display); font-size: 22px; col
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
-const GAME_VERSION = 202611020145, GAME_NOTES = {"t": "Contas com nome e senha (01/11/2026)", "b": ["Agora você entra com nome e senha, ou cria uma conta nova.", "Moedas, melhorias e compras ficam salvas na conta: entre de qualquer aparelho.", "Todas as contas antigas foram resetadas: todo mundo começa do zero.", "Sem internet dá para jogar sem conta (o progresso fica só no aparelho)."]};
+const GAME_VERSION = 202611020311, GAME_NOTES = {"t": "Moedas de presente (02/11/2026)", "b": ["Moedas enviadas para a sua conta chegam em até 1 minuto, mesmo com o jogo aberto."]};
 // ==MAPA ITÁLIA== (só o protótipo do modo Infecção)
 // Coordenadas lógicas: x = leste, y = norte, z = altura (m). Caixas sólidas: [x0, x1, y0, y1, topo, base, tipo, extra]
 const ITALIA = (function () {
@@ -8562,12 +8562,22 @@ const Logic = (function () {
     dirty = true; clearTimeout(pushT);
     pushT = setTimeout(async () => {
       if (pushing || !session) return; pushing = true; dirty = false;
-      try { await api("save", { wallet: JSON.stringify(wallet) }); }
+      try { const j = await api("save", { wallet: JSON.stringify(wallet) }); if (j && j.credit) gotCredit(j.credit); }
       catch (e) { dirty = true; if (e.status === 401) logout(true); else pushT = setTimeout(pushWallet, 15000); }   // sem internet: tenta de novo depois
       pushing = false;
     }, 1200);
   }
   window.addEventListener("online", () => { if (dirty) pushWallet(); });
+  // moedas enviadas pelo administrador: chegam em até 1 minuto com o jogo aberto
+  function gotCredit(c) {
+    wallet.coins = Math.max(0, Math.min(9999999, wallet.coins + c)); if (c > 0) wallet.total += c;
+    saveWalletLocal(); try { updateWho(); renderStore(); } catch (e) {}
+    setTimeout(() => { try { feedLine((c > 0 ? "+" : "") + c.toLocaleString("pt-BR") + " MOEDAS NA SUA CONTA", c > 0); } catch (e) {} }, 300);
+  }
+  setInterval(() => {
+    if (!session || pushing || (typeof navigator !== "undefined" && navigator.onLine === false)) return;
+    api("sync", {}).then((j) => { if (j && j.credit) gotCredit(j.credit); }).catch((e) => { if (e.status === 401) logout(true); });
+  }, 60000);
   loadWallet();
   sanitizeOwned();
 
