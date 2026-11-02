@@ -14,6 +14,7 @@
     { k: "ammo", n: "Mochila de munição", d: "+10% de munição de reserva no começo, por nível.", p: [150, 300, 450, 650, 900] },
     { k: "magnet", n: "Ímã de itens", d: "+25% de alcance para puxar vida e munição, por nível.", p: [150, 350, 650] },
     { k: "stam", n: "Fôlego", d: "O fôlego gasta 10% mais devagar, por nível.", p: [150, 300, 500, 750] },
+    { k: "pots", n: "Bolsa de poções", d: "Modo Infecção: toda partida começa com 2 molotovs e 2 poções de cura. Cada nível dá +1 de cada (até 5).", p: [500, 600, 700] },
   ];
   const CONS = [
     { k: "vest", n: "Colete de kevlar", d: "Começa a próxima partida com +50 de armadura.", p: 120 },
@@ -30,7 +31,7 @@
   const CONS_MAX = 5;
 
   // ---------------- carteira ----------------
-  const newWallet = () => ({ coins: 0, perks: { hp: 0, armor: 0, dmg: 0, reload: 0, ammo: 0, magnet: 0, stam: 0 }, own: {}, stock: { vest: 0, ammoPack: 0, revive: 0 }, use: { vest: true, ammoPack: true, revive: true }, melee: "knife", total: 0, runs: 0 });
+  const newWallet = () => ({ coins: 0, perks: { hp: 0, armor: 0, dmg: 0, reload: 0, ammo: 0, magnet: 0, stam: 0, pots: 0 }, own: {}, stock: { vest: 0, ammoPack: 0, revive: 0 }, use: { vest: true, ammoPack: true, revive: true }, melee: "knife", total: 0, runs: 0 });
   const wallet = newWallet();
   const int = (v, lo, hi) => { v = Math.floor(Number(v)); return isFinite(v) ? Math.max(lo, Math.min(hi, v)) : lo; };
   function loadWallet() {

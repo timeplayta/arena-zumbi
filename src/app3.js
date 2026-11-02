@@ -96,6 +96,10 @@
       r.sword_pull = (function () { let lp = 0; return mk(0.9, (t) => { lp += 0.25 * (rnd() - lp); const sw = 0.5 + 0.5 * Math.sin(PI2 * 9 * t); return (lp * 1.2 + Math.sin(PI2 * (170 + 60 * t) * t) * 0.25) * sw * Math.sin(Math.PI * t / 0.9) * 1.1; }); })();
       r.sword_thud = (function () { let lp = 0; return mk(0.6, (t) => { lp += 0.07 * (rnd() - lp); return Math.sin(PI2 * (60 - 25 * t) * t) * E(-t * 8) * 1.8 + lp * E(-t * 14) * 3 + Math.sin(PI2 * 700 * t) * E(-t * 40) * 0.25; }); })();
       r.burn = (function () { let lp = 0; return mk(0.45, (t) => { const n = rnd(); lp += 0.5 * (n - lp); return (n - lp) * E(-t * 7) * 0.9 * (0.6 + 0.4 * Math.sin(PI2 * 40 * t)); }); })();
+      r.molotov_light = (() => { const b = atob(SND_MOLOTOV_LIGHT), o = new Float32Array(b.length); for (let i = 0; i < b.length; i++) o[i] = (b.charCodeAt(i) - 128) / 128; return o; })();   // isqueiro + pano pegando fogo
+      r.whoosh = (function () { let a = 0, b = 0; return mk(0.35, (t) => { const n = rnd(); a += 0.4 * (n - a); b += 0.08 * (n - b); return (a - b) * Math.sin(Math.PI * t / 0.35) * 1.5; }); })();
+      r.glass = mk(0.6, (t) => { let v = (rnd() * 2 - 1) * E(-t * 30) * 0.9; for (const [f, d, a] of [[3100, 9, 0.35], [4700, 13, 0.3], [6300, 11, 0.25], [2300, 7, 0.2]]) v += Math.sin(PI2 * f * t) * E(-t * d) * a * (t > 0.01 ? 1 : 0); return v; });
+      r.flame = (function () { let lp = 0, lp2 = 0; return mk(1.4, (t) => { const n = rnd(); lp += 0.25 * (n - lp); lp2 += 0.04 * (n - lp2); return ((n - lp) * 0.5 + lp2 * 3) * Math.min(1, t / 0.05) * E(-t * 1.8) * 1.4; }); })();
       r.revive = mk(1.4, (t) => { const u = t / 1.4; return (Math.sin(PI2 * (220 + 440 * u) * t) * 0.5 + Math.sin(PI2 * (330 + 660 * u) * t) * 0.3 + Math.sin(PI2 * 880 * t) * 0.12) * Math.sin(Math.PI * Math.min(1, u)) * 0.7; });
       r.buy = mk(0.5, (t) => (Math.sin(PI2 * 1318 * t) * E(-t * 9) + Math.sin(PI2 * 1760 * Math.max(0, t - 0.09)) * (t > 0.09 ? 1 : 0) * E(-(t - 0.09) * 8)) * 0.5);
       r.deny = mk(0.25, (t) => Math.sin(PI2 * 120 * t) * (Math.sin(PI2 * 22 * t) > 0 ? 1 : -1) * E(-t * 12) * 0.35);

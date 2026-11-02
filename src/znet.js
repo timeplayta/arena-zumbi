@@ -258,6 +258,7 @@
         case "shot": if (st.host && game && game.coop) game.remoteShot(m.from, m); break;
         case "melee": if (st.host && game && game.coop) game.remoteMelee(m.from); break;
         case "claw": if (st.host && game && game.coop) game.claw(m.from, !!m.h); break;
+        case "pot": if (st.host && game && game.coop && Array.isArray(m.o) && Array.isArray(m.d)) game.throwPotion(m.from, String(m.k), m.o.slice(0, 3).map(Number), m.d.slice(0, 3).map(Number)); break;
         // --- convidado ---
         case "lobby": st.players = m.players || []; st.stamp = m.stamp || st.stamp; st.gm = m.gm || "coop"; st.started = !!m.started; st.diff = m.diff || st.diff; renderLobby(); break;
         case "start": st.diff = m.diff || "normal"; st.gm = m.gm || st.gm; st.started = true; st.over = false;
@@ -359,6 +360,11 @@
       if (st.host) g.claw(st.id, heavy); else send({ t: "claw", h: heavy ? 1 : 0 });
       ZArms.swipe(heavy); Snd.play("melee", heavy ? 1 : 0.8, heavy ? rand(0.5, 0.6) : rand(0.7, 0.85)); g.shake = Math.max(g.shake, heavy ? 0.45 : 0.25);
     }
+    function throwPot(g, T) {                                              // poção arremessável: anfitrião cria, convidado pede
+      if (!connected() && !st.local) return false;
+      if (st.host) return g.throwPotion(st.id, T.k, T.o, T.d);
+      send({ t: "pot", k: T.k, o: T.o, d: T.d }); return true;
+    }
     function onToMenu() {
       if (!connected()) return;
       if (st.host && st.started) { st.started = false; send({ t: "over" }); hostLobby(); }
@@ -419,5 +425,5 @@
       for (const id of ["coopName", "coopPass"]) $(id).addEventListener("keydown", (e) => { e.stopPropagation(); if (e.key === "Enter") go("guest"); });
       renderLobby();
     }
-    return { st, active, ended, attach, afterUpdate, hostStartBroadcast, sendInfo, hud, onToMenu, bindUI, nameOf, slotOf, shirtOf, claw, connected, leave, isHost: () => st.host, inRoom: () => connected(), toast: (m) => setMsg(m, "err"), lobby };
+    return { st, active, ended, attach, afterUpdate, hostStartBroadcast, sendInfo, hud, onToMenu, bindUI, nameOf, slotOf, shirtOf, claw, throwPot, connected, leave, isHost: () => st.host, inRoom: () => connected(), toast: (m) => setMsg(m, "err"), lobby };
   })();

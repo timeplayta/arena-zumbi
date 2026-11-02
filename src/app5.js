@@ -10,7 +10,7 @@
   const tmpV = new THREE.Vector3();
   const lerp = (a, b, t) => a + (b - a) * t;
   let runUsed = [], burnFlash = 0;
-  let zPrevFire = false, zPrevAds = false;
+  let zPrevFire = false, zPrevAds = false, potPrevFire = false;
 
   // ---------------- efeitos dos zumbis especiais ----------------
   const shocks = [], crackViews = new Map();
@@ -200,9 +200,9 @@
   $("btnToMenu2").addEventListener("click", toMenu);
 
   // ---------------- teclas configuráveis (Controles > Teclado) ----------------
-  const BIND_DEF = { fwd: "KeyW", back: "KeyS", left: "KeyA", right: "KeyD", sprint: "ShiftLeft", crouch: "KeyC", reload: "KeyR", slot1: "Digit1", slot2: "Digit2", swap: "KeyQ", melee: "KeyV", mode: "KeyB", torch: "KeyF", mute: "KeyM", pause: "KeyP" };
+  const BIND_DEF = { fwd: "KeyW", back: "KeyS", left: "KeyA", right: "KeyD", sprint: "ShiftLeft", crouch: "KeyC", reload: "KeyR", slot1: "Digit1", slot2: "Digit2", swap: "KeyQ", melee: "KeyV", mode: "KeyB", torch: "KeyF", mute: "KeyM", pause: "KeyP", potFire: "KeyG", potHeal: "KeyH", potCycle: "Digit3" };
   const BIND_LABEL = { fwd: "Andar para frente", back: "Andar para trás", left: "Andar para a esquerda", right: "Andar para a direita", sprint: "Correr / prender a respiração", crouch: "Agachar",
-    reload: "Recarregar", slot1: "Arma 1", slot2: "Arma 2", swap: "Trocar de arma", melee: "Golpe de faca", mode: "Modo de tiro (auto / semi / rajada)", torch: "Lanterna", mute: "Som liga/desliga", pause: "Pausar (Esc sempre pausa)" };
+    reload: "Recarregar", slot1: "Arma 1", slot2: "Arma 2", swap: "Trocar de arma", melee: "Golpe de faca", mode: "Modo de tiro (auto / semi / rajada)", torch: "Lanterna", mute: "Som liga/desliga", pause: "Pausar (Esc sempre pausa)", potFire: "Poção de fogo (Infecção)", potHeal: "Poção de cura (Infecção)", potCycle: "Alternar poções (Infecção)" };
   function loadBinds() { let b = {}; try { b = JSON.parse(S.binds || "{}") || {}; } catch (e) {} const o = Object.assign({}, BIND_DEF); for (const k in o) if (typeof b[k] === "string" && b[k]) o[k] = b[k]; return o; }
   let KB = loadBinds(), bindWait = null;
   function keyName(c) {
@@ -253,12 +253,15 @@
     if (state === "run") {
       if (c === "Escape" || c === KB.pause) pause();
       else if (c === KB.reload) game.startReload();
-      else if (c === KB.slot1) game.switchWeapon(0);
-      else if (c === KB.slot2) game.switchWeapon(1);
-      else if (c === KB.swap) game.switchWeapon(1 - game.cur);
+      else if (c === KB.slot1) { if (PotVM.holding()) PotVM.stop(); game.switchWeapon(0); }
+      else if (c === KB.slot2) { if (PotVM.holding()) PotVM.stop(); game.switchWeapon(1); }
+      else if (c === KB.swap) { if (PotVM.holding()) PotVM.stop(); game.switchWeapon(1 - game.cur); }
       else if (c === KB.melee) game.requestMelee();
       else if (c === KB.mode) game.toggleFireMode();
       else if (c === KB.torch) { torchEnabled = !torchEnabled; }
+      else if (c === KB.potCycle) cyclePot();
+      else if (c === KB.potFire) throwPot("fire");
+      else if (c === KB.potHeal) throwPot("heal");
       else if (c === KB.mute) { S.muted = Snd.toggleMute(); saveSettings(); }
     } else if (state === "dead" && (c === KB.reload || c === "Space")) startGame();
   });
@@ -275,7 +278,7 @@
     game.look(-e.movementX * k, -e.movementY * k * (S.invertY ? -1 : 1));
     lagX = clamp(lagX - e.movementX * 0.00018, -0.03, 0.03); lagY = clamp(lagY + e.movementY * 0.00018, -0.03, 0.03);
   });
-  window.addEventListener("wheel", (e) => { if (state !== "run") return; e.preventDefault(); game.switchWeapon(1 - game.cur); }, { passive: false });
+  window.addEventListener("wheel", (e) => { if (state !== "run") return; e.preventDefault(); if (PotVM.holding()) PotVM.stop(); game.switchWeapon(1 - game.cur); }, { passive: false });
 
   // ---------------- toque (celular) ----------------
   const TOUCH_HINT = "Esquerda: arraste para andar (empurre até o fim para correr) · Direita: arraste para olhar · ● atirar · ◎ mirar";
@@ -309,7 +312,7 @@
   }
   // ---------------- editor: posição de cada botão de toque (Ajustes > Posicionar botões) ----------------
   let tEdit = null;
-  const TPOS_ACTS = ["fire", "ads", "reload", "swap", "melee", "crouch", "mode"];
+  const TPOS_ACTS = ["fire", "ads", "reload", "swap", "melee", "crouch", "mode", "potfire", "potheal"];
   function tposGet() { try { return JSON.parse(S.tpos || "{}") || {}; } catch (e) { return {}; } }
   function applyTouchPos() {
     const P = tposGet(), r = touchEl.getBoundingClientRect();
@@ -360,17 +363,55 @@
     if (fn && !document.fullscreenElement) { try { const r = fn.call(d, { navigationUI: "hide" }); if (r && r.catch) r.catch(() => {}); } catch (e) {} }
     try { const r = screen.orientation && screen.orientation.lock && screen.orientation.lock("landscape"); if (r && r.catch) r.catch(() => {}); } catch (e) {}
   }
+  // poções arremessáveis (teste): só humanos no modo Infecção; gasta da mochila comprada na loja
+  function throwPot(k) {
+    if (game.gm !== "infect" || game.team === "z" || !game.alive || !Coop.active()) return;
+    if (!(potBag(game)[k] > 0)) { feedLine("SEM POÇÃO DE " + (k === "fire" ? "FOGO" : "CURA") + " · ACABOU NESTA PARTIDA", false); Snd.play("deny", 0.6); return; }
+    if (PotVM.busy()) { if (PotVM.holding()) { const same = PotVM.kind() === k; PotVM.stop(); if (same) return; } else return; }   // mesma tecla guarda; outra troca
+    if (game.potCd > 0) return;
+    lastPot = k;
+    feedLine(k === "fire" ? "MOLOTOV NA MÃO · CLIQUE PARA ACENDER E ARREMESSAR" : "CURA NA MÃO · CLIQUE PARA ARREMESSAR", false);
+    PotVM.start(k, (kk) => {                                     // a garrafa sai da mão no começo do arremesso
+      const T = game.myThrow(kk); if (!T) return;
+      if (Coop.throwPot(game, T)) { potBag(game)[kk]--; game.shake = Math.max(game.shake, 0.12); buzz(20); }
+    });
+  }
+  let lastPot = "fire";
+  // poções da partida: toda partida de Infecção começa com 2 de cada (+1 por nível da "Bolsa de poções", até 5)
+  function potBag(g) {
+    if (!g.potLeft) { const n = Math.min(5, 2 + (wallet.perks.pots || 0)); g.potLeft = { fire: n, heal: n }; }
+    return g.potLeft;
+  }
+  function cyclePot() {                                          // tecla 3: pega uma poção e, apertando de novo, alterna fogo <-> cura
+    if (game.gm !== "infect" || game.team === "z" || !game.alive) return;
+    const has = ["fire", "heal"].filter((k) => potBag(game)[k] > 0);
+    if (!has.length) { feedLine("SEM POÇÕES NESTA PARTIDA", false); Snd.play("deny", 0.6); return; }
+    if (PotVM.busy()) { if (!PotVM.holding()) return; const nxt = has.find((k) => k !== PotVM.kind()); if (nxt) throwPot(nxt); return; }
+    throwPot(has.indexOf(lastPot) >= 0 ? lastPot : has[0]);
+  }
+  function potsHud(g) {
+    const on = g.gm === "infect" && g.team !== "z", nf = potBag(g).fire, nh = potBag(g).heal;
+    const key = on ? nf + "/" + nh + "/" + KB.potFire + KB.potHeal + KB.potCycle : "";
+    if (hudLast.pots === key) return; hudLast.pots = key;
+    const e = $("pots"); e.hidden = !on;
+    if (on) e.innerHTML = '<span>' + keyName(KB.potCycle) + ' ALTERNA</span><span class="f' + (nf ? "" : " z") + '">' + keyName(KB.potFire) + " FOGO ×" + nf + '</span><span class="h' + (nh ? "" : " z") + '">' + keyName(KB.potHeal) + " CURA ×" + nh + "</span>";
+    const pf = touchEl.querySelector('[data-act="potfire"]'), ph = touchEl.querySelector('[data-act="potheal"]');
+    if (pf) { pf.hidden = !on && !tEdit; pf.querySelector("i").textContent = String(nf); }
+    if (ph) { ph.hidden = !on && !tEdit; ph.querySelector("i").textContent = String(nh); }
+  }
   function pressAct(act, down) {
     if (act === "fire") { TS.fire = down; return; }
     if (!down) return;
     if (act === "ads" && game.team === "z") { Coop.claw(game, true); return; }   // infectado: botão de mira = golpe pesado
     if (act === "ads") TS.ads = !TS.ads;
     else if (act === "reload") game.startReload();
-    else if (act === "swap") game.switchWeapon(1 - game.cur);
+    else if (act === "swap") { if (PotVM.holding()) PotVM.stop(); game.switchWeapon(1 - game.cur); }
     else if (act === "melee") game.requestMelee();
     else if (act === "crouch") TS.crouch = !TS.crouch;
     else if (act === "mode") game.toggleFireMode();
     else if (act === "torch") torchEnabled = !torchEnabled;
+    else if (act === "potfire") throwPot("fire");
+    else if (act === "potheal") throwPot("heal");
     else if (act === "autofire") { S.autoFire = !S.autoFire; saveSettings(); feedLine(S.autoFire ? "TIRO AUTOMÁTICO LIGADO" : "TIRO AUTOMÁTICO DESLIGADO", false); }   // só existe no HUD de toque
     else if (act === "pause") { pause(); return; }
     syncTouchBtns();
@@ -438,7 +479,7 @@
     inp.fwd = clamp(inp.fwd - TS.my, -1, 1); inp.strafe = clamp(inp.strafe + TS.mx, -1, 1);
     inp.sprint = inp.sprint || TS.sprint; inp.ads = inp.ads || TS.ads; inp.crouch = inp.crouch || TS.crouch;
     let want = TS.fire;
-    if (!want && S.autoFire && game.alive && game.team !== "z" && game.switchT <= 0 && game.aimTarget(game.ads ? 60 : 35)) want = true;   // tiro automático: nunca para garra
+    if (!want && S.autoFire && game.alive && game.team !== "z" && !PotVM.busy() && game.switchT <= 0 && game.aimTarget(game.ads ? 60 : 35)) want = true;   // tiro automático: nunca para garra nem poção
     if (want) {
       TS.alt = !TS.alt;                          // armas semiautomáticas: "aperta e solta" sozinho
       inp.fire = inp.fire || (game.mode() === "auto" ? true : TS.alt);
@@ -559,7 +600,7 @@
     const g = game, c = g.w().cfg;
     setViewGun(g.w());
     const zm = g.team === "z";
-    gunRoot.visible = !zm; torch.visible = torchEnabled;
+    gunRoot.visible = !zm && !PotVM.busy(); torch.visible = torchEnabled;
     $("view").classList.toggle("zmode", zm); $("hud").classList.toggle("zhud", zm);
     const bobh = S.bob && g.moving ? Math.abs(Math.sin(g.bob)) * (g.sprinting ? 0.05 : 0.03) : 0;
     const sh = g.hurtT * 0.05 + g.shake * 0.03, sway = g.aimSway();
@@ -568,10 +609,10 @@
     camera.rotation.set(g.pitch + g.recoil + sway[1] + (sh ? (Math.random() - 0.5) * sh : 0), g.yaw + g.recoilYaw + sway[0] + (sh ? (Math.random() - 0.5) * sh : 0), camRoll);
     hfov += ((g.ads ? c.adsFov : S.fov) - hfov) * Math.min(1, dt * 12);
     camera.fov = vfovFor(hfov); camera.updateProjectionMatrix();
-    animateGun(dt, g); if (zm) knife.visible = false; ZArms.update(g, dt);
+    animateGun(dt, g); if (zm) knife.visible = false; ZArms.update(g, dt); PotVM.update(g, dt);
     flickerT -= dt;
     if (flickerT <= 0) { flickerT = rand(0.04, 0.2); lampLights[2].intensity = env.lamp * (Math.random() < 0.25 ? rand(0, 0.5) : 1); }
-    syncZombies(g); syncPickups(g); syncCracks(g); updateShocks(dt); syncAllies(g, dt); syncBoosts(g);
+    syncZombies(g); syncPickups(g); syncCracks(g); updateShocks(dt); syncAllies(g, dt); syncBoosts(g); PotFX.sync(g, g.time);
     fxBlood.update(dt); fxSpark.update(dt); fxBrass.update(dt); fxShell.update(dt); fxSmoke.update(dt); fxTrace.update(dt); updatePools(dt); updateDropped(dt);
   }
 
@@ -615,6 +656,11 @@
           break;
         }
         case "claw": spatial("melee", ev[1], ev[2], ev[3] ? 1 : 0.9, ev[3] ? rand(0.5, 0.6) : rand(0.65, 0.8), 0.1, 25); break;
+        case "pot_throw": spatial("whoosh", ev[2], ev[3], 0.8, rand(0.9, 1.1), 0.1, 25); break;
+        case "pot_break":
+          PotFX.burst(ev[1], ev[2], ev[3], ev[4]); spatial("glass", ev[2], ev[3], 1, rand(0.9, 1.1), 0.25, 40);
+          if (ev[1] === "fire") spatial("flame", ev[2], ev[3], 1, 1, 0.3, 45); else spatial("revive", ev[2], ev[3], 0.5, 1.5, 0.3, 30);
+          break;
         case "boost": spatial("pickup", ev[2], ev[3], 0.7, ev[1] === "speed" ? 1.4 : 1, 0.2, 30); break;
         case "boost_me": feedLine(ev[1] === "speed" ? "VELOCIDADE +40% POR 8 s" : "VIDA RECUPERADA", true, "hp"); Snd.play("pickup", 1, ev[1] === "speed" ? 1.5 : 1.1); buzz(30); break;
         case "zrespawn": if (ev[1] === Coop.st.id) feedLine("VOCÊ VOLTOU", false); break;
@@ -776,7 +822,7 @@
   const setText = (node, key, val) => { if (hudLast[key] !== val) { hudLast[key] = val; node.textContent = val; } };
   function updateHud(dt) {
     const g = game, s = g.w(), c = s.cfg;
-    Coop.hud(g);
+    Coop.hud(g); potsHud(g);
     setText(el.wave, "wave", "ONDA " + Math.max(1, g.wave));
     setText(el.zleft, "zleft", String(g.aliveZombies().length + g.toSpawn));
     setText(el.score, "score", String(g.score)); setText(el.kills, "kills", String(g.kills));
@@ -868,6 +914,10 @@
         if (f && !zPrevFire) Coop.claw(game); else if (a && !zPrevAds) Coop.claw(game, true);
         zPrevFire = f; zPrevAds = a; lastInp.fire = false; lastInp.ads = false;
       }   // infecção: zumbi ataca com as garras
+      else if (PotVM.busy()) {                                   // mãos ocupadas com a poção: clique arremessa
+        const f = !!lastInp.fire; if (f && !potPrevFire) PotVM.fire(); potPrevFire = f;
+        lastInp.fire = false; lastInp.ads = false; lastInp.reload = false;
+      } else potPrevFire = !!lastInp.fire;
       if (game.time > 12 && !$("tzone").hidden) $("tzone").hidden = true;
       game.update(dt, lastInp); Coop.afterUpdate(game, dt); processEvents(); syncGame(dt); updateHud(dt); updateWeather(dt);
       if (!game.alive && Coop.ended()) onDeath();

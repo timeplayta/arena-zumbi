@@ -20,7 +20,7 @@ print(json.dumps({'t':title,'b':body},ensure_ascii=False))")
   echo '<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>'
   echo '<script>'
   echo "const GAME_VERSION = $V, GAME_NOTES = $NOTES;"
-  (cd src && cat mapit.js logic.js app1.js app1b.js zhand.js app2.js zhead.js zhair.js zbody.js zanat.js app2b.js italiaview.js zview.js zelite.js app3.js app4.js app4b.js zarmsdata.js znet.js app5.js)
+  (cd src && cat mapit.js logic.js app1.js app1b.js zhand.js app2.js zhead.js zhair.js zbody.js zanat.js app2b.js italiaview.js zview.js zelite.js app3.js app4.js app4b.js zarmsdata.js znet.js potdata.js zpots.js app5.js)
   echo '</script>'
 } > index.html
 mkdir -p game/public && cp index.html game/public/index.html

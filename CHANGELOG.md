@@ -1,5 +1,13 @@
 # Novidades — Arena Zumbi
 
+## Poções arremessáveis (01/11/2026)
+- Modo Infecção: humanos têm molotov e poção de cura.
+- G pega o molotov, H pega a cura, 3 alterna. Clique arremessa.
+- Molotov: acende o pano e deixa uma poça de fogo que queima os infectados.
+- Cura: nuvem verde que cura quem está dentro.
+- Toda partida começa com 2 de cada. Loja: "Bolsa de poções" até 5.
+- Celular: botões FOGO e CURA.
+
 ## Ataques do infectado (01/11/2026)
 - Botão esquerdo: golpe normal a cada 1 segundo.
 - Botão direito: golpe pesado a cada 1,15 segundo, tira 35 de vida.

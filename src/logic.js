@@ -5,6 +5,7 @@ const Logic = (function () {
   const PLAYER_SPEED = 4.6, SPRINT_MULT = 1.65;
   const ZOMBIE_RESPAWN = 5;                                   // infecção: segundos até o infectado abatido voltar
   // parâmetros da IA dos bots: escolhidos por busca em ~600 partidas simuladas de Infecção (11 bots, mapa Itália)
+  const POT = { speed: 13, lift: 3, grav: 12, cd: 0.8, fire: { r: 3, dur: 6, dps: 100, after: 1.5 }, heal: { r: 3.5, dur: 6, hps: 16 } };
   const BOT_AI = { samples: 10, roamR: 28, wz: 1, wh: 0.3, wHigh: 0.6, roamT: 6, boostR: 25, stand: 26, flee: 7, sprint: 4, away: 7, range: 28, camp: false, spotMode: "mix", spread: 12, group: 2, gap: 3, moveErr: 1.6, fireVar: 1.2, clawR: 1.7 };
   const CLAW_DMG = 20, CLAW_DMG_HEAVY = 35;                   // infecção: golpe normal tira 20 · golpe pesado (botão direito) tira 35
   const CLAW_CD = 1.0, CLAW_CD_HEAVY = 1.15;                  // golpe normal (botão esquerdo) 1,0 s · golpe pesado (botão direito) 1,15 s                                       // infecção: intervalo entre ataques do infectado (s)
@@ -472,6 +473,7 @@ const Logic = (function () {
       // ---- co-op online ----
       this.coop = null; this.others = []; this.over = false; this.pout = []; this._tgt = null; this._shooter = null; this.lastShot = null;
       this.gm = ""; this.team = "h"; this.inf = null; this.gz = 0; this.vz = 0; this.boostT = 0; this.boosts = null;
+      this.pots = []; this.areas = []; this.potCd = 0; this.nextPot = 1;           // poções arremessáveis (teste, Infecção)
       this.zmap = new Map(); this.pmap = new Map(); this.snapT = 0; this.shotN = 0;
     }
     uniform(a, b) { return a + (b - a) * this.rnd(); }
@@ -666,14 +668,16 @@ const Logic = (function () {
       const sh = this._shooter;
       if (!c.melee) dmg *= this.dmgBoost;
       z.hp -= dmg; z.hitT = 0.12;
-      z.stagger = Math.max(z.stagger, (0.18 + (c.knock || 0) * 0.8) * (z.giant || z.tank ? 0.1 : z.samurai ? 0.5 : z.wraith ? 0 : 1));
+      if (!c.fire) z.stagger = Math.max(z.stagger, (0.18 + (c.knock || 0) * 0.8) * (z.giant || z.tank ? 0.1 : z.samurai ? 0.5 : z.wraith ? 0 : 1));
       if (zone === "legs" && !z.wraith) z.slowT = 3;
       if (c.knock) {
         const dx = z.x - this.px, dy = z.y - this.py, d = Math.hypot(dx, dy) || 1, kn = z.giant || z.tank ? 0.02 : z.wraith ? 0 : z.samurai ? 0.4 : z.brute ? 0.2 : 1;
         z.kx += (dx / d) * c.knock * 14 * kn; z.ky += (dy / d) * c.knock * 14 * kn;
       }
-      if (!sh) { this.hitmarkT = 0.14; this.hitmarkHead = head; }
-      this.events.push(["hit", p[0], p[1], p[2], head, z.id]);
+      if (!c.fire) {
+        if (!sh) { this.hitmarkT = 0.14; this.hitmarkHead = head; }
+        this.events.push(["hit", p[0], p[1], p[2], head, z.id]);
+      }
       if (z.hp <= 0) {
         z.state = "dead"; z.deadT = 0; z.headGone = head && z.hp < -20 && !z.wraith && !z.tank; z.untouch = false;
         const E = ELITE[z.kind], D = this.diff;
@@ -1292,8 +1296,9 @@ const Logic = (function () {
         const k = Math.exp(-6 * dt); this.kvx *= k; this.kvy *= k;
         if (Math.abs(this.kvx) + Math.abs(this.kvy) < 0.05) this.kvx = this.kvy = 0;
       }
-      if (this.coop && this.coop.role === "guest") { this.mirrorStep(dt); this.updateCracks(dt); return; }   // convidado: o mundo vem pelo anfitrião
-      if (this.gm === "infect") { this.updateInfect(dt); this.updateZombies(dt); this.updatePickups(dt); this.updateBoosts(dt); }
+      this.potCd = Math.max(0, this.potCd - dt);
+      if (this.coop && this.coop.role === "guest") { this.mirrorStep(dt); this.updateCracks(dt); this.potsVisual(dt); return; }   // convidado: o mundo vem pelo anfitrião
+      if (this.gm === "infect") { this.updateInfect(dt); this.updateZombies(dt); this.updatePickups(dt); this.updateBoosts(dt); this.updatePots(dt); }
       else if (this.gm === "explore") { this.updateBoosts(dt); }
       else { this.updateWaves(dt); this.updateZombies(dt); this.updatePickups(dt); this.updateCracks(dt); }
       if (this.coop && !this.alive && !this.over && !this.others.some((o) => o.alive)) this.over = true;
@@ -1402,19 +1407,97 @@ const Logic = (function () {
       const p = this.pickups.map((k) => [k.id, r2(k.x), r2(k.y), r2(k.h), k.landed ? 1 : 0, r2(k.pull)]);
       const me = this.coop.id, pl = [[me, r2(this.px), r2(this.py), r2(this.yaw), r2(this.pitch), Math.round(this.hp), this.maxHp, this.alive ? 1 : 0, this.w().cfg.id, this.crouchT > 0.5 ? 1 : 0, this.moving ? 1 : 0, Math.round(this.armor), this.kills, this.headshots, this.bonus, this.team || "h", this.armorMax, r2(this.gz)]];
       for (const o of this.others) pl.push([o.id, r2(o.x), r2(o.y), r2(o.yaw), r2(o.pitch), Math.round(o.hp), o.maxHp, o.alive ? 1 : 0, o.wi, o.cr, o.mv, Math.round(o.armor), o.kills, o.hs, o.bonus, o.team || "h", o.armorMax || 0, r2(o.gz || 0), o.bot ? o.name : ""]);
-      return { tm: r2(this.time), w: this.wave, zl: this.aliveZombies().length + this.toSpawn, sc: this.score, bw: this.between ? 1 : 0, pt: r2(this.pauseT), bn: this.banner, bs: this.bannerSub, bT: r2(this.bannerT), z, p, pl, zn: newZ, pn: newP, inf: this.inf ? [this.inf.ph, Math.ceil(this.inf.t), this.inf.hu, this.inf.zo, this.inf.win] : 0, bo: this.boosts ? this.boosts.map((b) => (b.on ? 1 : 0)) : 0 };
+      return { tm: r2(this.time), w: this.wave, zl: this.aliveZombies().length + this.toSpawn, sc: this.score, bw: this.between ? 1 : 0, pt: r2(this.pauseT), bn: this.banner, bs: this.bannerSub, bT: r2(this.bannerT), z, p, pl, zn: newZ, pn: newP, inf: this.inf ? [this.inf.ph, Math.ceil(this.inf.t), this.inf.hu, this.inf.zo, this.inf.win] : 0, bo: this.boosts ? this.boosts.map((b) => (b.on ? 1 : 0)) : 0,
+        po: this.pots.length ? this.pots.map((p) => [p.id, p.k, r2(p.x), r2(p.y), r2(p.z), r2(p.vx), r2(p.vy), r2(p.vz)]) : 0,
+        ar: this.areas.length ? this.areas.map((a) => [a.id, a.k, r2(a.x), r2(a.y), r2(a.z), r2(a.r), r2(a.t)]) : 0 };
     }
     // registros estáticos de zumbis e itens novos (enviados uma vez)
     staticZombie(q) { return { id: q.id, x: q.x, y: q.y, hp: q.maxHp, sp: q.speed, k: q.kind, v: q.variant, dm: q.dmgMul, s: q.s, tn: q.tint, lm: q.limp ? 1 : 0, ap: q.armPose, ph: q.phase, pu: q.puppet || "" }; }
     staticPickup(k) { return { id: k.id, k: k.kind, x: k.x, y: k.y, ow: k.own || "" }; }
     mine(p) { return !p.own || !this.coop || p.own === this.coop.id; }          // item pessoal (infecção): só o dono vê
     // ---- MODO INFECÇÃO (anfitrião): um jogador vira zumbi e infecta os outros ----
+    // =====================================================================================================
+    //  POÇÕES ARREMESSÁVEIS (teste · só humanos no modo Infecção)
+    //  fogo: poça de 3 m por 6 s, 100 de dano/s nos zumbis (e queima mais 1,5 s depois de sair)
+    //  cura: nuvem de 3,5 m por 6 s, +16 de vida/s para os humanos dentro
+    // =====================================================================================================
+    throwPotion(id, k, o, d) {                                        // anfitrião: cria a garrafa voando
+      if (this.gm !== "infect" || (k !== "fire" && k !== "heal")) return false;
+      const me = id === this.coop.id, q = me ? { team: this.team || "h", alive: this.alive } : this.remote(id);
+      if (!q || (q.team || "h") !== "h" || !q.alive) return false;
+      const L = Math.hypot(d[0], d[1], d[2]) || 1, V = POT.speed;
+      this.pots.push({ id: this.nextPot++, k, own: id, x: o[0], y: o[1], z: o[2], vx: (d[0] / L) * V, vy: (d[1] / L) * V, vz: (d[2] / L) * V + POT.lift, t: 0 });
+      this.events.push(["pot_throw", k, o[0], o[1]]);
+      return true;
+    }
+    myThrow(k) {                                                      // jogador local: direção da mira
+      if (this.potCd > 0 || !this.alive || (this.team || "h") !== "h" || this.gm !== "infect") return null;
+      this.potCd = POT.cd;
+      const cp = Math.cos(this.pitch), d = [-Math.sin(this.yaw) * cp, Math.cos(this.yaw) * cp, Math.sin(this.pitch)];
+      const o = [this.px + d[0] * 0.4, this.py + d[1] * 0.4, (this.gz || 0) + EYE_H - CROUCH_DROP * (this.crouchT || 0) - 0.15];
+      return { k, o, d };
+    }
+    potHit(p) {                                                       // a garrafa bate em algo?
+      if (Math.abs(p.x) > ARENA || Math.abs(p.y) > ARENA) return true;
+      if (p.z <= groundAt(p.x, p.y, p.z - STEP)) return true;
+      for (const b of BOXES) if (p.x > b[0] && p.x < b[1] && p.y > b[2] && p.y < b[3] && p.z > b[5] && p.z < b[4]) return true;
+      for (const z of this.zombies) if (z.state !== "dead" && Math.hypot(z.x - p.x, z.y - p.y) < 0.6 && p.z > (z.gz || 0) + 0.1 && p.z < (z.gz || 0) + 2.1) return true;
+      return false;
+    }
+    updatePots(dt) {
+      for (let i = this.pots.length - 1; i >= 0; i--) {
+        const p = this.pots[i]; let hit = false;
+        p.t += dt;
+        for (let s = 0; s < 3 && !hit; s++) {
+          const h = dt / 3, px = p.x, py = p.y, pz = p.z;
+          p.vz -= POT.grav * h; p.x += p.vx * h; p.y += p.vy * h; p.z += p.vz * h;
+          if (this.potHit(p)) { hit = true; p.x = px; p.y = py; p.z = pz; }
+        }
+        if (!hit && p.t < 5) continue;
+        this.pots.splice(i, 1);
+        const gz = groundAt(p.x, p.y, p.z + 0.3), A = POT[p.k];
+        this.areas.push({ id: this.nextPot++, k: p.k, own: p.own, x: p.x, y: p.y, z: gz, r: A.r, t: A.dur, tick: 0 });
+        this.events.push(["pot_break", p.k, p.x, p.y, gz]);
+      }
+      const ps = this.infPlayers();
+      for (let i = this.areas.length - 1; i >= 0; i--) {
+        const a = this.areas[i]; a.t -= dt; a.tick -= dt;
+        if (a.t <= 0) { this.areas.splice(i, 1); continue; }
+        if (a.tick > 0) continue;
+        a.tick = 0.25;
+        const inside = (x, y, gz) => Math.hypot(x - a.x, y - a.y) < a.r && Math.abs((gz || 0) - a.z) < 1.6;
+        if (a.k === "fire") { for (const z of this.zombies) if (z.state !== "dead" && inside(z.x, z.y, z.gz)) { z.burnT = POT.fire.after; z.burnBy = a.own; z.burnIn = true; } }
+        else for (const q of ps) if (q.team === "h" && q.alive && inside(q.x, q.y, q.gz)) {
+          const P = q.p; if (P.hp < P.maxHp) { P.hp = Math.min(P.maxHp, P.hp + POT.heal.hps * 0.25); if (q.me) this.healT = 0.3; }
+        }
+      }
+      this.burnT = (this.burnT || 0) - dt;
+      if (this.burnT <= 0) {                                            // queimadura: 4 vezes por segundo
+        this.burnT = 0.25;
+        for (const z of this.zombies) {
+          if (z.state === "dead" || !(z.burnT > 0)) continue;
+          const dmg = (z.burnIn ? POT.fire.dps : POT.fire.dps * 0.5) * 0.25; z.burnIn = false; z.burnT -= 0.25;
+          this.burnZombie(z, dmg, z.burnBy);
+        }
+      }
+    }
+    burnZombie(z, dmg, own) {                                         // dano de fogo creditado a quem jogou
+      const c = { melee: true, knock: 0, fire: true }, p = [z.x, z.y, (z.gz || 0) + 1.2];
+      const o = own && own !== this.coop.id ? this.remote(own) : null;
+      if (o) this.asShooter(o, () => this.damageZombie(z, dmg, "body", p, c));
+      else { const sv = this._shooter; this._shooter = null; try { this.damageZombie(z, dmg, "body", p, c); } finally { this._shooter = sv; } }
+    }
+    potsVisual(dt) {                                                  // convidado: a garrafa continua voando entre um estado e outro
+      for (const p of this.pots) { p.vz -= POT.grav * dt; p.x += p.vx * dt; p.y += p.vy * dt; p.z += p.vz * dt; p.t += dt; }
+      for (const a of this.areas) a.t -= dt;
+    }
     infectStart() {
       this.gm = "infect"; this.inf = { ph: "prep", t: 10, hu: 0, zo: 0, win: "" }; this.team = "h";
       this.infVest(this);
       for (const o of this.others) { o.team = "h"; this.infVest(o); }
       const sp0 = this.ringSpot(0); this.px = sp0[0]; this.py = sp0[1];
       this.zombies = []; this.pickups = []; this.toSpawn = 0; this.queue = []; this.giantsLeft = 0; this.between = false; this.wave = 1;
+      this.pots = []; this.areas = []; this.potLeft = null;              // poções voltam para 2 (+bolsa) a cada partida
     }
     infVest(p) { p.armorMax = Math.max(p.armorMax || 0, 50); p.armor = p.armorMax; }   // infecção: todo humano começa com colete
     infectJoin(id) {                                                  // jogador entrou na sala de infecção
@@ -1757,6 +1840,8 @@ const Logic = (function () {
         if (!o) { o = { id: a[0], name: "", x: a[1], y: a[2], yaw: a[3], pitch: 0, hp: 100, maxHp: 100, alive: true, wi: "ax4", cr: 0, mv: 0, flash: 0, tx: a[1], ty: a[2], tyaw: a[3] }; this.others.push(o); }
         o.tx = a[1]; o.ty = a[2]; o.tyaw = a[3]; o.pitch = a[4]; o.hp = a[5]; o.maxHp = a[6]; o.alive = !!a[7]; o.wi = a[8]; o.cr = a[9]; o.mv = a[10]; o.team = a[15] || "h"; o.gz = a[17] || 0; if (a[18]) o.name = a[18];
       }
+      this.pots = s.po ? s.po.map((a) => ({ id: a[0], k: a[1], x: a[2], y: a[3], z: a[4], vx: a[5], vy: a[6], vz: a[7], t: 0 })) : [];
+      this.areas = s.ar ? s.ar.map((a) => ({ id: a[0], k: a[1], x: a[2], y: a[3], z: a[4], r: a[5], t: a[6] })) : [];
       if (s.bo) { if (!this.boosts) this.initBoosts(); s.bo.forEach((v, i) => { if (this.boosts[i]) this.boosts[i].on = !!v; }); }
       if (s.inf) { this.gm = "infect"; this.inf = { ph: s.inf[0], t: s.inf[1], hu: s.inf[2], zo: s.inf[3], win: s.inf[4] }; }
       this.others = this.others.filter((o) => seenO.has(o.id));
@@ -1799,7 +1884,7 @@ const Logic = (function () {
   }
 
   return {
-    Game, Zombie, Pickup, Nav, BOT_AI, buildSlot, groundAt, setMap, getMap: () => MAP, rangeFactor, damageAt, weaponStats, recoilPattern, pushOut, insideAny, clamp, wrapAngle, BOXES, OBSTACLES, LAMPS, WEAPONS, WEAPON_ORDER, DIFF, DIFF_ORDER, ELITE, SAM,
+    Game, Zombie, Pickup, Nav, BOT_AI, POT, buildSlot, groundAt, setMap, getMap: () => MAP, rangeFactor, damageAt, weaponStats, recoilPattern, pushOut, insideAny, clamp, wrapAngle, BOXES, OBSTACLES, LAMPS, WEAPONS, WEAPON_ORDER, DIFF, DIFF_ORDER, ELITE, SAM,
     C: { ZOMBIE_RESPAWN, ARENA, WALL_H, EYE_H, CROUCH_DROP, PLAYER_R, RADAR_RANGE: 18, SWITCH_TIME, MELEE_CD, PICK_TTL },
   };
 })();
