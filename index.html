@@ -693,7 +693,7 @@ table.sc td:first-child { font-family: var(--font-display); font-size: 22px; col
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
-const GAME_VERSION = 202611021606, GAME_NOTES = {"t": "Novos preços na loja (02/11/2026)", "b": ["Melhorias permanentes: 1.000 moedas no nível 1, +200 a cada nível.", "Revólver Trovão .50: 5.000 moedas. Titã M-60: 10.000 moedas."]};
+const GAME_VERSION = 202611021659, GAME_NOTES = {"t": "Bots treinados na Infecção (02/11/2026)", "b": ["Partidas equilibradas: humanos e infectados vencem cerca de metade das vezes.", "Bots infectados cansam ao correr, como o jogador, e só farejam quem está perto.", "Bots humanos fogem mais cedo, se espalham pelo mapa e atiram de mais longe."]};
 // ==MAPA ITÁLIA== (só o protótipo do modo Infecção)
 // Coordenadas lógicas: x = leste, y = norte, z = altura (m). Caixas sólidas: [x0, x1, y0, y1, topo, base, tipo, extra]
 const ITALIA = (function () {
@@ -880,7 +880,7 @@ const Logic = (function () {
   const ZOMBIE_RESPAWN = 5;                                   // infecção: segundos até o infectado abatido voltar
   // parâmetros da IA dos bots: escolhidos por busca em ~600 partidas simuladas de Infecção (11 bots, mapa Itália)
   const POT = { speed: 13, lift: 3, grav: 12, cd: 0.8, fire: { r: 3, dur: 6, dps: 100, after: 1.5 }, heal: { r: 3.5, dur: 6, hps: 16 } };
-  const BOT_AI = { samples: 10, roamR: 28, wz: 1, wh: 0.3, wHigh: 0.6, roamT: 6, boostR: 25, stand: 26, flee: 7, sprint: 4, away: 7, range: 28, camp: false, spotMode: "mix", spread: 12, group: 2, gap: 3, moveErr: 1.6, fireVar: 1.2, clawR: 1.7 };
+  const BOT_AI = { samples: 10, roamR: 38.19, wz: 1, wh: 0, wHigh: 0, roamT: 8.85, boostR: 25, stand: 21.49, flee: 12.75, sprint: 5.56, away: 5.14, range: 36.86, camp: false, spotMode: "mix", spread: 12, group: 1, gap: 4.69, moveErr: 2.03, fireVar: 0.89, clawR: 1.7, zSprint: 10, zStam: 1, zRepath: 0.5, zSense: 12.25, zMemory: 4 };   // treino 02/11: ~50% de vitória dos humanos (48 partidas só de bots)
   const ZOMBIE_SPEED = 1.1;                                    // infecção: infectado anda/corre 10% mais rápido que o humano
   const KNIFE_SPEED = ZOMBIE_SPEED;                            // faca na mão: mesma velocidade do infectado (andando e correndo)
   const CLAW_DMG = 20, CLAW_DMG_HEAVY = 35;                   // infecção: golpe normal tira 20 · golpe pesado (botão direito) tira 35
@@ -2467,12 +2467,26 @@ const Logic = (function () {
           let tg = null, bd = 1e9;
           for (const q of ps) if (q.team === "h" && q.alive) { const d = Math.hypot(q.x - o.x, q.y - o.y) + Math.abs(q.gz - oz) * 3; if (d < bd) { bd = d; tg = q; } }
           if (!tg) { o.mv = 0; continue; }
+          // faro do infectado: não enxerga através do mapa; persegue quem está ao alcance do faro (ou foi visto há pouco), senão procura
+          if (bd > AI.zSense) {
+            B.lkT = (B.lkT || 0) - dt;
+            if (B.lkT <= 0) {
+              if (!B.path || B.repath <= 0 || B.hunt !== "roam") { const r = Nav.randomNode(() => this.rnd()); this.botGo(o, r[0], r[1], r[2]); B.hunt = "roam"; B.repath = 4 + this.rnd() * 3; }
+              if (!this.botFollow(o, dt, sp)) { B.path = null; o.mv = 0; } else o.yaw = B.moveAng;
+              B.stam = Math.min(100, B.stam + 14 * dt); if (B.tired && B.stam > 25) B.tired = false;
+              continue;
+            }
+          } else { B.lkT = AI.zMemory; if (B.hunt === "roam") { B.hunt = ""; B.path = null; } }
           const dd = Math.hypot(tg.x - o.x, tg.y - o.y), same = Math.abs(tg.gz - oz) < 1.2, ang = Math.atan2(-(tg.x - o.x), tg.y - o.y);
-          if (dd < AI.clawR && same) { o.yaw = ang; this.claw(o.id, this.rnd() < 0.3); if (dd > 1.0) this.botMove(o, ang, sp * SPRINT_MULT, dt); else o.mv = 0; continue; }
-          if (same && dd < 9 && Nav.los(o.x, o.y, oz, tg.x, tg.y)) { o.yaw = ang; this.botMove(o, ang, sp * SPRINT_MULT, dt); B.path = null; continue; }
+          // infectado cansa como o jogador: só dispara (corrida) quando a presa está perto e ainda tem fôlego
+          const zRun = dd < AI.zSprint && !B.tired, zs2 = zRun ? sp * SPRINT_MULT : sp;
+          if (zRun && o.mv) { B.stam -= 22 * AI.zStam * dt; if (B.stam <= 0) { B.stam = 0; B.tired = true; } }
+          else { B.stam = Math.min(100, B.stam + 14 * dt); if (B.tired && B.stam > 25) B.tired = false; }
+          if (dd < AI.clawR && same) { o.yaw = ang; this.claw(o.id, this.rnd() < 0.3); if (dd > 1.0) this.botMove(o, ang, zs2, dt); else o.mv = 0; continue; }
+          if (same && dd < 9 && Nav.los(o.x, o.y, oz, tg.x, tg.y)) { o.yaw = ang; this.botMove(o, ang, zs2, dt); B.path = null; continue; }
           const moved = B.goal ? Math.hypot(B.goal[0] - tg.x, B.goal[1] - tg.y) : 99;
-          if (!B.path || B.repath <= 0 || moved > 2.5) { this.botGo(o, tg.x, tg.y, tg.gz, 8000); B.repath = 0.5 + this.rnd() * 0.4; }
-          if (!this.botFollow(o, dt, sp * SPRINT_MULT)) { o.yaw = ang; this.botMove(o, ang, sp * SPRINT_MULT, dt); }
+          if (!B.path || B.repath <= 0 || moved > 2.5) { this.botGo(o, tg.x, tg.y, tg.gz, 8000); B.repath = AI.zRepath + this.rnd() * 0.4; }
+          if (!this.botFollow(o, dt, zs2)) { o.yaw = ang; this.botMove(o, ang, zs2, dt); }
           else o.yaw = B.moveAng;
           continue;
         }

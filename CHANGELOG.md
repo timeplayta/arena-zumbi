@@ -1,5 +1,10 @@
 # Novidades — Arena Zumbi
 
+## Bots treinados na Infecção (02/11/2026)
+- Partidas equilibradas: humanos e infectados vencem cerca de metade das vezes.
+- Bots infectados cansam ao correr, como o jogador, e só farejam quem está perto.
+- Bots humanos fogem mais cedo, se espalham pelo mapa e atiram de mais longe.
+
 ## Novos preços na loja (02/11/2026)
 - Melhorias permanentes: 1.000 moedas no nível 1, +200 a cada nível.
 - Revólver Trovão .50: 5.000 moedas. Titã M-60: 10.000 moedas.
