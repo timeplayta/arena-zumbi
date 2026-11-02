@@ -1,5 +1,8 @@
 # Novidades — Arena Zumbi
 
+## Entrega automática da loja (02/11/2026)
+- Moedas compradas no site caem sozinhas na sua conta depois do pagamento.
+
 ## Comprar moedas (02/11/2026)
 - Toque nas suas moedas (menu ou loja) para abrir o site de compra de moedas.
 

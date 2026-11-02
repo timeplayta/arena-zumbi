@@ -26,6 +26,7 @@ button:disabled { opacity: 0.5; cursor: default; }
 table { width: 100%; border-collapse: collapse; font-size: 15px; }
 th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--line); }
 th { color: var(--muted); font-weight: 600; font-size: 13px; }
+td.ok { color: var(--ok); } td.bad { color: var(--bad); }
 td.n { text-align: right; font-variant-numeric: tabular-nums; color: var(--amber); }
 tr.pick { cursor: pointer; } tr.pick:hover td { background: #241c15; }
 .small { color: var(--muted); font-size: 13px; }
@@ -69,6 +70,12 @@ tr.pick { cursor: pointer; } tr.pick:hover td { background: #241c15; }
   </section>
 
   <section class="card">
+    <div class="top"><h2>Vendas da loja ZPAY</h2><button class="ghost" id="reloadZ" type="button">Atualizar</button></div>
+    <p class="small">Cada venda paga entra aqui. "Entregue" já foi para a conta. Nos outros casos, envie as moedas acima.</p>
+    <table><thead><tr><th>Quando</th><th>Conta</th><th style="text-align:right">Moedas</th><th>Resultado</th></tr></thead><tbody id="zlog"></tbody></table>
+  </section>
+
+  <section class="card">
     <h2>Trocar a senha do painel</h2>
     <form id="fPass" class="row"><div><label for="np">Senha nova (8 ou mais caracteres)</label><input id="np" type="password" autocomplete="new-password" minlength="8" required></div><button type="submit">Trocar</button></form>
     <p class="msg" id="mPass" role="status"></p>
@@ -108,6 +115,18 @@ async function refresh() {
     for (const l of L.slice(0, 15)) { const tr = document.createElement("tr"); tr.innerHTML = "<td></td><td class='n'></td><td class='small'></td>"; tr.children[0].textContent = l.name; tr.children[1].textContent = (l.coins > 0 ? "+" : "") + fmt(l.coins); tr.children[2].textContent = new Date(l.at).toLocaleString("pt-BR"); $("log").appendChild(tr); }
     if (!L.length) $("log").innerHTML = "<tr><td class='small'>Nenhum envio ainda.</td></tr>";
   } catch (e) {}
+  try {
+    const S = (await call("zpay")).sales || []; $("zlog").innerHTML = "";
+    for (const s of S.slice(0, 30)) {
+      const tr = document.createElement("tr"); tr.innerHTML = "<td class='small'></td><td></td><td class='n'></td><td></td>";
+      tr.children[0].textContent = new Date(s.at).toLocaleString("pt-BR"); tr.children[1].textContent = s.account || "—";
+      tr.children[2].textContent = s.coins ? fmt(s.coins) : "—"; tr.children[3].textContent = s.result || "";
+      tr.children[3].className = s.result === "entregue" ? "ok" : (/repetido|ignorado/.test(s.result) ? "small" : "bad");
+      tr.title = s.raw || ""; tr.addEventListener("click", () => { if (s.account) $("name").value = s.account; if (s.coins) $("coins").value = s.coins; });
+      tr.className = "pick"; $("zlog").appendChild(tr);
+    }
+    if (!S.length) $("zlog").innerHTML = "<tr><td class='small'>Nenhuma venda recebida ainda.</td></tr>";
+  } catch (e) {}
 }
 async function enter(k) {
   KEY = k;
@@ -132,6 +151,7 @@ $("fPass").addEventListener("submit", async (e) => {
   catch (err) { msg($("mPass"), err.message, false); }
 });
 $("reload").addEventListener("click", refresh);
+$("reloadZ").addEventListener("click", refresh);
 $("search").addEventListener("input", renderList);
 if (KEY) enter(KEY); else $("key").focus();
 </script></body></html>

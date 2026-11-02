@@ -95,10 +95,65 @@ function deliver(u) {
   u.wallet = JSON.stringify(w); u.credit = 0; return c;
 }
 
+// ---------------- vendas da loja ZPAY (URL de notificação POST) ----------------
+// a URL secreta fica só no painel da ZPAY; aqui guardamos só o resumo SHA-256 do segredo
+const ZPAY_HOOK_SHA = "220414200927108c6b8ce9f74124a860ae2283aab4ab09235b5fa90beffd1c8f";
+const ZPAY_COINS = { "6ae7fb23628b71ef671ec257": 250000, "6ae7faee628b71ef671ec254": 100000, "6ae7fa8c628b71ef671ec252": 45000, "6ae7fa59628b71ef671ec250": 20000, "6ae7fa15628b71ef671ec24e": 10000, "6ae7f973628b71ef671ec24c": 5000 };
+const coinsInName = (s) => { const m = String(s || "").match(/(\d{1,3}(?:[.\s]\d{3})+|\d+)\s*z\s*coins?/i); return m ? Number(m[1].replace(/[.\s]/g, "")) : 0; };
+// lê o aviso da venda sem depender de um formato fixo: id da venda, situação, conta do jogo e pacotes comprados
+function readSale(p) {
+  const pick = (o, ks) => { for (const k of ks) if (o && o[k] != null && typeof o[k] !== "object") return String(o[k]); return ""; };
+  const roots = [p, p && p.data, p && p.order, p && p.sale, p && p.venda, p && p.data && (p.data.order || p.data.sale)].filter((o) => o && typeof o === "object");
+  let id = "", status = "", account = "";
+  for (const o of roots) { id = id || pick(o, ["orderId", "saleId", "order_id", "sale_id", "_id", "id", "code", "codigo"]); status = status || pick(o, ["status", "paymentStatus", "payment_status", "situacao", "event", "type"]); }
+  const items = [], seen = new Set();
+  (function walk(o, depth) {
+    if (!o || typeof o !== "object" || depth > 8 || seen.has(o)) return; seen.add(o);
+    if (!Array.isArray(o)) {
+      const label = String(o.label || o.name || o.nome || o.key || o.field || o.title || "");
+      const val = o.value ?? o.valor ?? o.answer ?? o.resposta;
+      if (!account && val != null && typeof val !== "object" && /conta|nick|jogador|usu[aá]rio|player|login/i.test(label)) account = String(val);
+      for (const [k, v] of Object.entries(o)) if (!account && typeof v === "string" && /^(conta|nomeDaConta|nome_da_conta|account|gameAccount|nick|player|jogador)$/i.test(k)) account = v;
+      const pid = String(o.productId || o.product_id || (o.product && (o.product._id || o.product.id)) || o._id || o.id || "");
+      const per = ZPAY_COINS[pid] || coinsInName(o.productName || o.name || o.nome || o.title || (o.product && o.product.name));
+      if (per && (ZPAY_COINS[pid] || o.quantity != null || o.qty != null || o.price != null || o.productName)) {
+        const q = Math.max(1, Math.min(50, Math.trunc(Number(o.quantity ?? o.qty ?? o.quantidade ?? 1)) || 1));
+        items.push({ coins: per, q }); if (o.product) seen.add(o.product);
+        for (const [k, v] of Object.entries(o)) if (!/^(items|itens|products|produtos|cart|carrinho)$/i.test(k)) walk(v, depth + 1); // só procura a conta
+        return;
+      }
+    }
+    for (const v of Object.values(o)) walk(v, depth + 1);
+  })(p, 0);
+  return { id, status, account: cleanName(account), coins: items.reduce((s, i) => s + i.coins * i.q, 0) };
+}
+const PAID = /pag|paid|aprov|approv|conclu|complet|entreg|deliver|confirm|sucesso|success/i;
+const NOT_PAID = /pend|aguard|wait|cancel|refund|reemb|estorn|chargeback|expir|fail|falh|recus/i;
+
 export class Accounts {
   constructor(state) { this.st = state.storage; }
+  async zpay(raw, secret) {
+    if (!same(await sha256(secret), ZPAY_HOOK_SHA)) return J({ error: "Não encontrado." }, 404);
+    let p = {}; try { p = JSON.parse(raw || "{}"); } catch (e) { return J({ error: "JSON inválido." }, 400); }
+    const s = readSale(p), log = (await this.st.get("zpaylog")) || [];
+    const rec = { at: Date.now(), id: s.id, status: s.status, account: s.account, coins: s.coins, raw: raw.slice(0, 4000) };
+    const done = (r, code) => { rec.result = r; log.unshift(rec); return this.st.put("zpaylog", log.slice(0, 60)).then(() => J({ ok: code < 300, result: r }, code)); };
+    if (s.status && NOT_PAID.test(s.status) && !PAID.test(s.status)) return done("ignorado: venda não paga", 200);
+    if (!s.id) return done("sem id da venda", 200);
+    if (await this.st.get("zs:" + s.id)) return done("repetido: já entregue", 200);
+    if (!s.coins) return done("sem pacote de Zcoin", 200);
+    if (!s.account) return done("sem nome da conta", 200);
+    const u = await this.st.get("u:" + s.account.toLowerCase());
+    if (!u) return done("conta não encontrada", 200);
+    u.credit = (Number(u.credit) || 0) + s.coins; await this.st.put("u:" + u.key, u);
+    await this.st.put("zs:" + s.id, { at: Date.now(), name: u.name, coins: s.coins });
+    const alog = (await this.st.get("adminlog")) || []; alog.unshift({ at: Date.now(), name: u.name, coins: s.coins, via: "ZPAY" }); await this.st.put("adminlog", alog.slice(0, 50));
+    rec.account = u.name; return done("entregue", 200);
+  }
   async fetch(request) {
     const url = new URL(request.url), path = url.pathname.replace(/^\/api\//, "");
+    const hook = path.match(/^zpay\/([0-9a-f]{48})$/);
+    if (hook && request.method === "POST") { const t = await request.text(); if (t.length > 100000) return J({ error: "Dados grandes demais." }, 413); return this.zpay(t, hook[1]); }
     let body = {};
     if (request.method === "POST") { try { const t = await request.text(); if (t.length > 40000) return J({ error: "Dados grandes demais." }, 413); body = t ? JSON.parse(t) : {}; } catch (e) { return J({ error: "Pedido inválido." }, 400); } }
     const auth = (request.headers.get("authorization") || "").replace(/^Bearer\s+/i, "").trim();
@@ -171,6 +226,7 @@ export class Accounts {
       return J({ ok: true, name: u.name, coins: (Number(walletOf(u).coins) || 0) + u.credit });
     }
     if (cmd === "log") return J({ log: (await this.st.get("adminlog")) || [] });
+    if (cmd === "zpay") return J({ sales: (await this.st.get("zpaylog")) || [] });
     if (cmd === "setpass") {
       const np = String(body.newpass || ""); if (np.length < 8) return J({ error: "A senha nova precisa ter pelo menos 8 caracteres." }, 400);
       const salt = rand(16); await this.st.put("adminpass", { salt, hash: await hashPass(np, salt) });
