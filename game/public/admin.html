@@ -73,6 +73,7 @@ tr.pick { cursor: pointer; } tr.pick:hover td { background: #241c15; }
     <div class="top"><h2>Vendas da loja ZPAY</h2><button class="ghost" id="reloadZ" type="button">Atualizar</button></div>
     <p class="small">Cada venda paga entra aqui. "Entregue" já foi para a conta. Nos outros casos, envie as moedas acima.</p>
     <table><thead><tr><th>Quando</th><th>Conta</th><th style="text-align:right">Moedas</th><th>Resultado</th></tr></thead><tbody id="zlog"></tbody></table>
+    <div id="zraw" hidden style="margin-top:12px"><label for="zrawt">Dados da venda (copie e mande para o suporte)</label><textarea id="zrawt" readonly rows="8" style="width:100%;background:#120e0b;color:var(--text);border:1px solid var(--line);border-radius:8px;padding:10px;font:13px/1.4 ui-monospace,monospace"></textarea></div>
   </section>
 
   <section class="card">
@@ -122,7 +123,7 @@ async function refresh() {
       tr.children[0].textContent = new Date(s.at).toLocaleString("pt-BR"); tr.children[1].textContent = s.account || "—";
       tr.children[2].textContent = s.coins ? fmt(s.coins) : "—"; tr.children[3].textContent = s.result || "";
       tr.children[3].className = s.result === "entregue" ? "ok" : (/repetido|ignorado/.test(s.result) ? "small" : "bad");
-      tr.title = s.raw || ""; tr.addEventListener("click", () => { if (s.account) $("name").value = s.account; if (s.coins) $("coins").value = s.coins; });
+      tr.title = "Clique para ver os dados e preencher o envio"; tr.addEventListener("click", () => { if (s.account) $("name").value = s.account; if (s.coins) $("coins").value = s.coins; $("zraw").hidden = false; $("zrawt").value = s.raw || ""; $("zrawt").select(); });
       tr.className = "pick"; $("zlog").appendChild(tr);
     }
     if (!S.length) $("zlog").innerHTML = "<tr><td class='small'>Nenhuma venda recebida ainda.</td></tr>";

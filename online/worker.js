@@ -111,9 +111,9 @@ function readSale(p) {
     if (!o || typeof o !== "object" || depth > 8 || seen.has(o)) return; seen.add(o);
     if (!Array.isArray(o)) {
       const label = String(o.label || o.name || o.nome || o.key || o.field || o.title || "");
-      const val = o.value ?? o.valor ?? o.answer ?? o.resposta;
-      if (!account && val != null && typeof val !== "object" && /conta|nick|jogador|usu[aá]rio|player|login/i.test(label)) account = String(val);
-      for (const [k, v] of Object.entries(o)) if (!account && typeof v === "string" && /^(conta|nomeDaConta|nome_da_conta|account|gameAccount|nick|player|jogador)$/i.test(k)) account = v;
+      const val = o.value ?? o.valor ?? o.answer ?? o.resposta ?? o.response ?? o.text ?? o.content ?? o.input ?? o.data;
+      if (!account && val != null && typeof val !== "object" && String(val).trim() && /conta(?!ct)|nick|jogador|usu[aá]rio|player|login/i.test(label)) account = String(val);
+      for (const [k, v] of Object.entries(o)) if (!account && typeof v === "string" && v.trim() && /conta|nick|jogador|gameaccount|^account$|^player$/i.test(k)) account = v;
       const pid = String(o.productId || o.product_id || (o.product && (o.product._id || o.product.id)) || o._id || o.id || "");
       const per = ZPAY_COINS[pid] || coinsInName(o.productName || o.name || o.nome || o.title || (o.product && o.product.name));
       if (per && (ZPAY_COINS[pid] || o.quantity != null || o.qty != null || o.price != null || o.productName)) {
