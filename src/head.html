@@ -189,6 +189,9 @@ button.buy.alt { background: transparent; color: var(--fg); border: 1px solid #3
 #gate .lead { margin: 0 0 4px; font-size: 15px; }
 #gate input { width: 100%; box-sizing: border-box; }
 #gate .err { font-size: 14px; }
+#gate .err.ok { color: var(--muted); }
+#gate .row { gap: 10px; flex-wrap: wrap; }
+.who .linkbtn { background: none; border: 0; padding: 0; color: var(--muted); font: inherit; font-size: 13px; letter-spacing: 0.06em; text-decoration: underline; cursor: pointer; text-align: left; }
 .warn { font-size: 12px; color: var(--muted); line-height: 1.4; margin: 0; }
 #stage .ar { display: none; } #stage .ar.show { display: block; }
 #arfill { height: 100%; width: 100%; transform-origin: left; background: #8fb4d8; }
@@ -484,7 +487,7 @@ table.sc td:first-child { font-family: var(--font-display); font-size: 22px; col
       <section class="panel" data-panel="mission">
         <h2>Missão</h2>
         <div class="sec"><h3>Sobrevivente</h3>
-          <div class="field"><label for="pname">Nome no placar de recordes</label><input type="text" id="pname" maxlength="14" autocomplete="off"></div>
+          <div class="field"><label for="pname">Nome no placar de recordes (o da sua conta)</label><input type="text" id="pname" maxlength="14" autocomplete="off" readonly></div>
         </div>
         <div class="sec"><h3>Dificuldade</h3><div class="opts" id="optDiff"></div></div>
         <div class="sec"><h3>Ambiente</h3><div class="opts" id="optEnv"></div></div>
@@ -640,15 +643,15 @@ table.sc td:first-child { font-family: var(--font-display); font-size: 22px; col
   </div>
 
   <div class="overlay" id="gate">
-    <form class="card" id="gateForm" autocomplete="off" novalidate>
+    <form class="card" id="gateForm" novalidate>
       <div class="kicker">Bem-vindo</div>
       <h1 id="gateTitle">Arena Zumbi</h1>
-      <p class="lead">Diga seu nome e sua idade para entrar.</p>
-      <div class="field"><label for="gName">Nome</label><input type="text" id="gName" maxlength="14" autocomplete="off" autocapitalize="words" spellcheck="false"></div>
-      <div class="field"><label for="gAge">Idade</label><input type="number" id="gAge" min="5" max="99" inputmode="numeric" autocomplete="off"></div>
+      <p class="lead">Entre com seu nome e senha, ou crie uma conta nova. Suas moedas e compras ficam salvas na conta.</p>
+      <div class="field"><label for="gName">Nome</label><input type="text" id="gName" maxlength="14" autocomplete="username" autocapitalize="words" spellcheck="false"></div>
+      <div class="field"><label for="gPass">Senha</label><input type="password" id="gPass" maxlength="40" autocomplete="current-password"></div>
       <p class="err" id="gErr" role="alert" hidden></p>
       <p class="warn">Este jogo tem violência, sangue e criaturas assustadoras. Jogue com atenção ao seu bem-estar e faça pausas.</p>
-      <div class="row"><button class="play" type="submit">Entrar</button></div>
+      <div class="row"><button class="play" type="submit">Entrar</button><button class="btn" type="button" id="btnRegister">Criar conta</button><button class="btn" type="button" id="btnOffline" hidden>Jogar sem internet</button></div>
     </form>
   </div>
 

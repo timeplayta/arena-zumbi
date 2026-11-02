@@ -1,5 +1,11 @@
 # Novidades — Arena Zumbi
 
+## Contas com nome e senha (01/11/2026)
+- Agora você entra com nome e senha, ou cria uma conta nova.
+- Moedas, melhorias e compras ficam salvas na conta: entre de qualquer aparelho.
+- Todas as contas antigas foram resetadas: todo mundo começa do zero.
+- Sem internet dá para jogar sem conta (o progresso fica só no aparelho).
+
 ## Faca nova (01/11/2026)
 - Faca de combate agora é uma M9 Bayonet com luvas, com animações de sacar, golpear e parada.
 

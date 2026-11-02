@@ -8,7 +8,24 @@ const frame = (s) => { const b = Buffer.from(s), n = b.length; let h;
   return Buffer.concat([h, b]); };
 const send = (c, o) => { if (c.sock.destroyed) return; try { c.sock.write(frame(typeof o === "string" ? o : JSON.stringify(o))); } catch (e) {} };
 const closeC = (c) => { try { c.sock.write(Buffer.from([0x88, 0])); c.sock.end(); } catch (e) {} };
+// contas: usa a mesma classe do worker.js com armazenamento em memória
+let ACC = null;
+import(require("url").pathToFileURL(path.join(__dirname, "worker.js")).href).then((mod) => {
+  const mem = new Map();
+  ACC = new mod.Accounts({ storage: { get: async (k) => mem.get(k), put: async (k, v) => { mem.set(k, JSON.parse(JSON.stringify(v))); }, delete: async (k) => mem.delete(k) } });
+}).catch((e) => console.error("contas indisponíveis:", e.message));
 const server = http.createServer((req, res) => {
+  if (req.url.startsWith("/api/")) {
+    const cors = { "access-control-allow-origin": "*", "access-control-allow-headers": "content-type, authorization", "access-control-allow-methods": "GET, POST, OPTIONS" };
+    if (req.method === "OPTIONS") { res.writeHead(204, cors); return res.end(); }
+    let body = ""; req.on("data", (d) => (body += d));
+    req.on("end", async () => {
+      if (!ACC) { res.writeHead(503, cors); return res.end("{}"); }
+      const r = await ACC.fetch(new Request("http://x" + req.url, { method: req.method, body: req.method === "POST" ? body : undefined, headers: { authorization: req.headers.authorization || "" } }));
+      res.writeHead(r.status, { "content-type": "application/json", ...cors }); res.end(await r.text());
+    });
+    return;
+  }
   const f = path.join(DIR, req.url.split("?")[0] === "/" ? "index.html" : req.url.split("?")[0]);
   if (!f.startsWith(DIR) || !fs.existsSync(f)) { res.writeHead(404); return res.end("404"); }
   res.writeHead(200, { "Content-Type": f.endsWith(".html") ? "text/html; charset=utf-8" : "application/octet-stream" }); fs.createReadStream(f).pipe(res);

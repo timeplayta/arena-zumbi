@@ -45,7 +45,8 @@
       if (MELEE[o.melee]) wallet.melee = o.melee;
     } catch (e) {}
   }
-  function saveWallet() { try { localStorage.setItem(WALLET_KEY, JSON.stringify(wallet)); } catch (e) {} }
+  function saveWalletLocal() { try { localStorage.setItem(WALLET_KEY, JSON.stringify(wallet)); } catch (e) {} }
+  function saveWallet() { saveWalletLocal(); pushWallet(); }        // aparelho + conta online
   const ownsWeapon = (id) => !W[id].shop || !!wallet.own["w_" + id];
   const ownsCamo = (k) => !CAMOS[k].prem || !!wallet.own["c_" + k];
   const ownsMelee = (k) => k === "knife" || !!wallet.own["m_" + k];
@@ -58,21 +59,54 @@
     if (!ownsCamo(S.camo)) S.camo = "black";
     if (!ownsMelee(wallet.melee)) wallet.melee = "knife";
   }
+  // ---------------- contas online (nome + senha) ----------------
+  // reset geral das contas antigas (nome/idade, moedas, compras e recordes deste aparelho): acontece uma vez
+  const SESSION_KEY = "arena-zumbi-session", RESET_KEY = "arena-zumbi-reset-contas-1";
+  try {
+    if (!localStorage.getItem(RESET_KEY)) {
+      for (const k of [WALLET_KEY, PROFILE_KEY, SESSION_KEY, "arena-zumbi-scores"]) localStorage.removeItem(k);
+      localStorage.setItem(RESET_KEY, "1");
+    }
+  } catch (e) {}
+  const API = /^(localhost|127\.)/.test(location.hostname) ? location.origin + "/api/" : "https://arena-zumbi.playes.workers.dev/api/";
+  let session = null;                                                    // { name, token }
+  try { const o = JSON.parse(localStorage.getItem(SESSION_KEY) || "null"); if (o && o.token && o.name) session = { name: String(o.name).slice(0, 14), token: String(o.token) }; } catch (e) {}
+  async function api(path, body) {
+    const r = await fetch(API + path, { method: body ? "POST" : "GET", headers: Object.assign({ "content-type": "application/json" }, session ? { authorization: "Bearer " + session.token } : {}), body: body ? JSON.stringify(body) : undefined });
+    let j = null; try { j = await r.json(); } catch (e) {}
+    if (!j || r.status >= 500) { const err = new Error("offline"); throw err; }                 // servidor fora do ar: conta como sem internet
+    if (!r.ok) { const err = new Error(j.error || "Erro " + r.status); err.status = r.status; throw err; }
+    return j;
+  }
+  function applyServerWallet(str) {                                       // a conta manda: troca a carteira deste aparelho pela da conta
+    const fresh = newWallet();
+    for (const k in fresh) wallet[k] = fresh[k];
+    try { localStorage.setItem(WALLET_KEY, str || ""); } catch (e) {}
+    loadWallet(); sanitizeOwned(); saveWalletLocal();
+  }
+  // salva no aparelho na hora e manda para a conta logo depois (junta vários salvamentos seguidos)
+  let pushT = 0, pushing = false, dirty = false;
+  function pushWallet() {
+    if (!session) return;
+    dirty = true; clearTimeout(pushT);
+    pushT = setTimeout(async () => {
+      if (pushing || !session) return; pushing = true; dirty = false;
+      try { await api("save", { wallet: JSON.stringify(wallet) }); }
+      catch (e) { dirty = true; if (e.status === 401) logout(true); else pushT = setTimeout(pushWallet, 15000); }   // sem internet: tenta de novo depois
+      pushing = false;
+    }, 1200);
+  }
+  window.addEventListener("online", () => { if (dirty) pushWallet(); });
   loadWallet();
   sanitizeOwned();
 
   // ---------------- perfil ----------------
-  const profile = { name: "", age: 0 };
-  try {
-    const o = JSON.parse(localStorage.getItem(PROFILE_KEY) || "null");
-    if (o && typeof o.name === "string") { profile.name = o.name.slice(0, 14); profile.age = int(o.age, 0, 99); }
-  } catch (e) {}
-  if (profile.name) giftJuan100k();                                        // já logado como Juan: recebe na hora
+  const profile = { name: session ? session.name : "" };
   function updateWho() {
     const w = $("who");
     if (!profile.name) { w.hidden = true; return; }
     w.hidden = false;
-    w.innerHTML = "<b>" + esc(profile.name) + "</b><span>" + profile.age + " anos</span><span class=\"coin\">" + wallet.coins + "</span>";
+    w.innerHTML = "<b>" + esc(profile.name) + '</b><span class="coin">' + wallet.coins + '</span><button type="button" class="linkbtn" id="btnLogout">' + (session ? "Sair da conta" : "Entrar numa conta") + "</button>";
     $("storeCoins").textContent = String(wallet.coins);
   }
   // ---------------- tela de entrada ----------------
@@ -84,33 +118,60 @@
     if (on) { menuEl.setAttribute("inert", ""); menuEl.inert = true; } else { menuEl.removeAttribute("inert"); menuEl.inert = false; }
   }
   setGate(true);
-  $("gName").value = profile.name; $("gAge").value = profile.age ? String(profile.age) : "";
-  setTimeout(() => { try { ($("gName").value ? $("gAge") : $("gName")).focus(); } catch (e) {} }, 60);
-  function gateError(msg) { gErr.textContent = msg; gErr.hidden = false; }
-  // presente único de 100.000 moedas para o perfil "Juan" (vale ao entrar ou se já estiver logado)
-  function giftJuan100k() {
-    if (String(profile.name || "").trim().toLowerCase() !== "juan" || wallet.own.g_juan100k) return false;
-    wallet.own.g_juan100k = true; wallet.coins = Math.min(9999999, wallet.coins + 100000); saveWallet(); updateWho();
-    setTimeout(() => { try { feedLine("+100.000 MOEDAS DE PRESENTE", true); } catch (e) {} }, 1500);
-    return true;
+  function gateError(msg) { gErr.textContent = msg; gErr.hidden = !msg; gErr.classList.remove("ok"); }
+  function gateBusy(on, msg) {
+    for (const b of gateForm.querySelectorAll("button")) b.disabled = on;
+    if (msg) { gErr.textContent = msg; gErr.hidden = false; gErr.classList.add("ok"); }
   }
-  gateForm.addEventListener("submit", (e) => {
-    e.preventDefault();
-    const name = $("gName").value.replace(/\s+/g, " ").trim(), ageRaw = $("gAge").value.trim(), age = Number(ageRaw);
-    if (name.length < 2) { gateError("Digite seu nome (pelo menos 2 letras)."); $("gName").focus(); return; }
-    if (!/^\d{1,2}$/.test(ageRaw) || age < 5 || age > 99) { gateError("Digite uma idade válida (de 5 a 99)."); $("gAge").focus(); return; }
-    profile.name = name; profile.age = age; S.name = name;
-    // presente único de 50.000 moedas para o perfil "Juan", 98 anos
-    if (name.toLowerCase() === "juan" && age === 98 && !wallet.own.g_juan50k) {
-      wallet.own.g_juan50k = true; wallet.coins = Math.min(9999999, wallet.coins + 50000); saveWallet();
-    }
-    giftJuan100k();
-    try { localStorage.setItem(PROFILE_KEY, JSON.stringify(profile)); } catch (err) {}
-    saveSettings();
-    gErr.hidden = true;
-    setGate(false); updateWho(); renderMission(); renderSummary();
+  function enter(name, offline) {
+    profile.name = name; S.name = name; saveSettings();
+    try { $("pname").value = name; } catch (e) {}
+    gErr.hidden = true; gateBusy(false);
+    setGate(false); updateWho(); renderStore(); renderCustom(); renderMission(); renderSummary();
+    if (offline) setTimeout(() => { try { feedLine(session ? "SEM INTERNET · SEU PROGRESSO SERÁ SALVO DEPOIS" : "SEM CONTA · PROGRESSO SÓ NESTE APARELHO", false); } catch (e) {} }, 800);
     try { $("btnPlay").focus(); } catch (err) {}
+  }
+  function logout(expired) {
+    if (session && !expired) api("logout", {}).catch(() => {});
+    session = null; profile.name = ""; clearTimeout(pushT); dirty = false;
+    try { localStorage.removeItem(SESSION_KEY); localStorage.removeItem(WALLET_KEY); } catch (e) {}
+    applyServerWallet(""); updateWho(); setGate(true);
+    $("gName").value = ""; $("gPass").value = "";
+    gateError(expired ? "Sua sessão expirou. Entre de novo." : "");
+    setTimeout(() => { try { $("gName").focus(); } catch (e) {} }, 60);
+  }
+  menuEl.addEventListener("click", (e) => { if (e.target && e.target.id === "btnLogout") logout(false); });
+  async function doAuth(kind) {
+    const name = $("gName").value.replace(/\s+/g, " ").trim(), pass = $("gPass").value;
+    if (name.length < 2) { gateError("Digite seu nome (pelo menos 2 letras)."); $("gName").focus(); return; }
+    if (pass.length < 4) { gateError("A senha precisa ter pelo menos 4 caracteres."); $("gPass").focus(); return; }
+    gateBusy(true, kind === "register" ? "Criando conta..." : "Entrando...");
+    try {
+      const j = await api(kind, { name, pass });
+      session = { name: j.name, token: j.token };
+      try { localStorage.setItem(SESSION_KEY, JSON.stringify(session)); } catch (e) {}
+      applyServerWallet(j.wallet || "");
+      if (kind === "register") pushWallet();
+      $("gPass").value = "";
+      enter(j.name, false);
+    } catch (e) {
+      gateBusy(false);
+      gateError(e.status ? e.message : "Sem conexão com o servidor. Tente de novo ou jogue sem internet (o progresso fica só neste aparelho).");
+      $("btnOffline").hidden = !!e.status;
+    }
+  }
+  $("btnOffline").addEventListener("click", () => {                  // sem internet: joga com o progresso deste aparelho
+    const name = $("gName").value.replace(/\s+/g, " ").trim().slice(0, 14) || "Sobrevivente";
+    session = null; $("btnOffline").hidden = true; enter(name, true);
   });
+  gateForm.addEventListener("submit", (e) => { e.preventDefault(); doAuth("login"); });
+  $("btnRegister").addEventListener("click", () => doAuth("register"));
+  // já tem sessão: entra direto com o progresso da conta (sem internet, usa o que está salvo no aparelho)
+  if (session) {
+    $("gName").value = session.name; gateBusy(true, "Entrando como " + session.name + "...");
+    api("me").then((j) => { applyServerWallet(j.wallet || ""); enter(j.name, false); })
+      .catch((e) => { if (e.status === 401) logout(true); else enter(session.name, true); });
+  } else setTimeout(() => { try { $("gName").focus(); } catch (e) {} }, 60);
 
   // ---------------- compras ----------------
   const coin = (n) => '<span class="coin">' + n + "</span>";
