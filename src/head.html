@@ -186,7 +186,9 @@ button.buy.alt { background: transparent; color: var(--fg); border: 1px solid #3
 .stk { font-family: var(--font-display); letter-spacing: 0.08em; font-size: 18px; color: var(--ok); }
 #gate { z-index: 40; background: radial-gradient(ellipse at center, rgba(7, 9, 13, 0.9), rgba(3, 4, 6, 0.98)); }
 #gate .card { width: min(420px, 100%); display: flex; flex-direction: column; gap: 14px; }
-#gate h1 { font-size: clamp(54px, 14vw, 88px); }
+#gate h1 { font-size: min(clamp(54px, 14vw, 88px), 12vh); }
+#gate { align-items: safe center; }                                      /* tela baixa: rola sem cortar o topo do cartão */
+@media (max-height: 620px) { #gate .card { gap: 8px; } #gate .lead { font-size: 13px; } #gate .warn { font-size: 11px; } }
 #gate .lead { margin: 0 0 4px; font-size: 15px; }
 #gate input { width: 100%; box-sizing: border-box; }
 #gate .err { font-size: 14px; }
@@ -424,6 +426,10 @@ table.sc td:first-child { font-family: var(--font-display); font-size: 22px; col
   .m-dock { padding-top: 6px; margin-top: 6px; } .m-dock .sum { font-size: 16px; } .m-dock .sum small { font-size: 11px; }
   button.play { font-size: 22px; padding: 4px 22px 2px; }
 }
+/* ---------- idioma na tela de entrada ---------- */
+.langs { display: flex; gap: 6px; justify-content: flex-end; margin: -4px 0 6px; flex-wrap: wrap; }
+.langs button { background: none; border: 1px solid var(--line); color: var(--muted); font: inherit; font-size: 13px; padding: 3px 9px; cursor: pointer; letter-spacing: 0.04em; }
+.langs button.on { color: var(--amber); border-color: var(--amber); }
 </style>
 
 <div id="stage">
@@ -489,7 +495,7 @@ table.sc td:first-child { font-family: var(--font-display); font-size: 22px; col
   <div id="tedit" hidden><span>Arraste os botões para onde quiser</span><button type="button" class="btn" id="btnTeditReset">Restaurar</button><button type="button" class="btn" id="btnTeditDone">Pronto</button></div>
   <div id="menu">
     <div class="m-side">
-      <div class="brand"><div class="kicker">Tiro em primeira pessoa · 3D</div><h1>Arena <br>Zumbi</h1></div>
+      <div class="brand"><div class="kicker">Tiro em primeira pessoa · 3D</div><h1 translate="no">Arena <br>Zumbi</h1></div>
       <nav id="nav" aria-label="Menu principal">
         <button type="button" data-tab="mission" class="on">Missão</button>
         <button type="button" data-tab="arsenal">Arsenal</button>
@@ -592,6 +598,7 @@ table.sc td:first-child { font-family: var(--font-display); font-size: 22px; col
         <div class="sec"><h3>Interface</h3>
           <button type="button" class="tog" data-toggle="radar"><span>Mostrar radar</span><i></i></button>
           <button type="button" class="tog" data-toggle="hints"><span>Mostrar dicas de controle no início</span><i></i></button>
+          <div class="field"><label>Idioma</label><div class="opts" id="optLang" translate="no"></div></div>
         </div>
         <div><button type="button" class="ghost" id="btnReset">Restaurar padrões</button></div>
       </section>
@@ -664,8 +671,9 @@ table.sc td:first-child { font-family: var(--font-display); font-size: 22px; col
 
   <div class="overlay" id="gate">
     <form class="card" id="gateForm" novalidate>
+      <div class="langs" translate="no"><button type="button" data-lang="en">English</button><button type="button" data-lang="es">Español</button><button type="button" data-lang="pt">Português</button></div>
       <div class="kicker">Bem-vindo</div>
-      <h1 id="gateTitle">Arena Zumbi</h1>
+      <h1 id="gateTitle" translate="no">Arena Zumbi</h1>
       <p class="lead">Entre com seu nome e senha, ou crie uma conta nova. Suas moedas e compras ficam salvas na conta.</p>
       <div class="field"><label for="gName">Nome</label><input type="text" id="gName" maxlength="14" autocomplete="username" autocapitalize="words" spellcheck="false"></div>
       <div class="field"><label for="gPass">Senha</label><input type="password" id="gPass" maxlength="40" autocomplete="current-password"></div>

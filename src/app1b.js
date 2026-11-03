@@ -225,7 +225,7 @@
     const W = 512, H = 192, [c, x] = wdCv(W, H), r = wdR(seed);
     x.clearRect(0, 0, W, H);
     if (kind === "text") {
-      const words = ["SEM SAÍDA", "NÃO ENTRE", "ELES VÊM À NOITE", "CORRA", "FIM DOS TEMPOS", "QUARENTENA", "NÃO ABRA", "ACABOU"];
+      const words = ["SEM SAÍDA", "NÃO ENTRE", "ELES VÊM À NOITE", "CORRA", "FIM DOS TEMPOS", "QUARENTENA", "NÃO ABRA", "ACABOU"].map((w) => I18N.t(w));
       const w = words[seed % words.length];
       x.save(); x.translate(W / 2, H * 0.55); x.rotate((r() - 0.5) * 0.12);
       let fs = 78; x.font = "bold " + fs + "px Impact, 'Arial Black', sans-serif";

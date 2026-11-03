@@ -23,7 +23,7 @@
     name: "Sobrevivente", diff: "normal", env: "night", quality: "med", fov: 90, sens: 12, adsSens: 70,
     invertY: false, bob: true, radar: true, hints: true, gore: true, vol: 80,
     crossColor: "#ffffff", crossStyle: "cross", crossSize: 10, camo: "black",
-    loadout: ["ax4", "p45"], att: {},
+    loadout: ["ax4", "p45"], att: {}, lang: "",
     // som
     muted: false, volSfx: 100, volVoice: 100, volAmb: 70,
     // gráficos

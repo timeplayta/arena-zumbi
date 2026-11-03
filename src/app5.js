@@ -962,6 +962,7 @@
     const KEY = "arena-zumbi-ver";
     let seen = 0; try { seen = Number(localStorage.getItem(KEY)) || 0; } catch (e) {}
     const show = (title, notes, btn, fn) => {
+      notes = (notes && notes[I18N.get()]) || notes;                       // novidades no idioma do jogador (CHANGELOG.en.md / .es.md)
       const o = $("upd"); if (!o) return;
       $("updTitle").textContent = title;
       $("updBody").innerHTML = "<b>" + String(notes.t || "").replace(/[<>&]/g, "") + "</b>" + (notes.b || []).map((l) => "<div>• " + String(l).replace(/[<>&`*]/g, "") + "</div>").join("");

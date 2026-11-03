@@ -1,5 +1,10 @@
 # Novidades — Arena Zumbi
 
+## Idiomas: inglês, espanhol e português (02/11/2026)
+- Escolha o idioma em Ajustes > Interface > Idioma, ou na tela de entrada.
+- O jogo inteiro muda na hora: menus, loja, HUD, avisos e mensagens.
+- Na primeira vez, o jogo usa o idioma do aparelho (inglês se não for espanhol nem português).
+
 ## Correções nas armas (02/11/2026)
 - Clique rápido correndo com pistola, revólver, escopeta ou fuzil de precisão agora dispara (antes o clique se perdia).
 - Dá para guardar a faca logo depois do golpe (antes a tecla era ignorada até o golpe acabar).

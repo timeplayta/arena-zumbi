@@ -14,6 +14,17 @@
 
   // aplica na hora o efeito de cada ajuste
   function applySound() { Snd.setVolume(S.vol / 100); Snd.setMuted(S.muted); Snd.setMix(S.volSfx / 100, S.volVoice / 100, S.volAmb / 100); }
+  // idioma: inglês (principal), espanhol e português; a troca vale na hora para todo o jogo
+  const LANGS = { en: { n: "English", sub: "" }, es: { n: "Español", sub: "" }, pt: { n: "Português", sub: "" } };
+  function setLang(l) {
+    S.lang = l; I18N.set(l);
+    document.querySelectorAll("[data-lang]").forEach((b) => b.classList.toggle("on", b.getAttribute("data-lang") === I18N.get()));
+  }
+  document.addEventListener("click", (e) => {
+    const b = e.target.closest && e.target.closest("[data-lang]"); if (!b) return;
+    setLang(b.getAttribute("data-lang")); saveSettings(); try { renderSettings(); } catch (err) {}
+  });
+  setTimeout(() => setLang(S.lang || I18N.get()), 0);
   function applySetting(k) {
     if (k === "quality") { Object.assign(S, (QUALITY[S.quality] || QUALITY.med).set); applyQuality(); }
     else if (k === "shadows" || k === "res") applyQuality();
@@ -24,6 +35,7 @@
     else if (k === "showFps") $("fps").hidden = !S.showFps;
     else if (k === "touch" || k === "btnSize" || k === "btnAlpha" || k === "hudSize") applyTouchUI();
     else if (k === "camo") vmKey = "";
+    else if (k === "lang") setLang(S.lang);
     if (k === "camo" || k === "crossStyle" || k === "crossColor" || k === "crossSize") applyCrosshair();
   }
 
@@ -151,6 +163,7 @@
     const opts = (id, key, T) => { $(id).innerHTML = Object.keys(T).map((k) => optBtn(key, k, T[k].n, T[k].sub, String(S[key]) === k)).join(""); };
     opts("optQuality", "quality", QUALITY); opts("optShadows", "shadows", SHADOWS); opts("optFx", "fx", FXQ);
     opts("optFps", "fpsCap", FPSCAP); opts("optTouch", "touch", TOUCHM);
+    if (!S.lang) S.lang = I18N.get(); opts("optLang", "lang", LANGS);
     syncRanges(); syncToggles();
   }
   function fmtTime(s) { s = Math.floor(s); return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0"); }
