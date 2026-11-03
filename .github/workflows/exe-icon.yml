@@ -1,0 +1,18 @@
+# Põe o ícone do jogo (o mesmo do APK) no "Arena Zumbi.exe". Rodar à mão (workflow_dispatch); o .exe com ícone sai como artefato.
+name: Icone do exe
+on: workflow_dispatch
+jobs:
+  icon:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Extrair o exe
+        shell: pwsh
+        run: Expand-Archive windows/Arena-Zumbi-Windows.zip -DestinationPath out
+      - name: Trocar o icone
+        shell: pwsh
+        run: npx --yes rcedit@4.0.1 "out/Arena Zumbi/Arena Zumbi.exe" --set-icon windows/icon.ico
+      - uses: actions/upload-artifact@v4
+        with:
+          name: exe-com-icone
+          path: out/Arena Zumbi/Arena Zumbi.exe
