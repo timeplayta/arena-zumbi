@@ -1,5 +1,8 @@
 # Novidades — Arena Zumbi
 
+## Correção do .exe (02/11/2026)
+- O .exe abria uma versão antiga do jogo; agora abre a mais nova, com os idiomas.
+
 ## Idiomas: inglês, espanhol e português (02/11/2026)
 - Escolha o idioma em Ajustes > Interface > Idioma, ou na tela de entrada.
 - O jogo inteiro muda na hora: menus, loja, HUD, avisos e mensagens.
