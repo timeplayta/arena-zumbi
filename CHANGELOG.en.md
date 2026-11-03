@@ -1,5 +1,8 @@
 # What's new — Arena Zumbi
 
+## Test update (11/02/2026)
+- Testing automatic updates on the portable .exe. If you are reading this, it worked!
+
 ## .exe fix (11/02/2026)
 - The .exe was opening an old version of the game; now it opens the latest one, with languages.
 

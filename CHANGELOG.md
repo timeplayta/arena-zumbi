@@ -1,5 +1,8 @@
 # Novidades — Arena Zumbi
 
+## Atualização de teste (02/11/2026)
+- Teste da atualização automática do .exe portátil. Se você está lendo isto, funcionou!
+
 ## Correção do .exe (02/11/2026)
 - O .exe abria uma versão antiga do jogo; agora abre a mais nova, com os idiomas.
 
