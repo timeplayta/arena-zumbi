@@ -596,8 +596,8 @@
       knife.rotation.set(-0.1 - sprintBlend * 0.25, 0.3, 0.7 + sprintBlend * 0.2);
     } else knife.visible = false;
     if (g.flashT > 0) {
-      const s = c.flash * (0.8 + Math.random() * 0.6);
-      flashSprite.scale.set(s, s, 1); flashSprite.material.rotation = Math.random() * 6; flashSprite.visible = true; flashLight.intensity = 4;
+      const s = c.flash * (0.8 + Math.random() * 0.6) * (1 - 0.6 * a);       // mirando: clarão menor para não tapar o alvo
+      flashSprite.scale.set(s, s, 1); flashSprite.material.rotation = Math.random() * 6; flashSprite.visible = true; flashLight.intensity = 4 * (1 - 0.7 * a);
     } else { flashSprite.visible = false; flashLight.intensity = 0; }
     $("scope").style.opacity = c.scope ? String(clamp((a - 0.8) * 5, 0, 1)) : "0";
     $("cross").classList.toggle("scoped", !!c.scope && a > 0.8);

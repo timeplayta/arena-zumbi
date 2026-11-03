@@ -707,7 +707,7 @@ table.sc td:first-child { font-family: var(--font-display); font-size: 22px; col
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
-const GAME_VERSION = 202611022300, GAME_NOTES = {"t": "Braços com qualquer FOV e resolução (02/11/2026)", "b": ["Arma e braços ficam do mesmo tamanho em qualquer campo de visão e resolução: sem braço “voando” nem corte aparecendo."]};
+const GAME_VERSION = 202611030053, GAME_NOTES = {"t": "Correções nas armas (02/11/2026)", "b": ["Clique rápido correndo com pistola, revólver, escopeta ou fuzil de precisão agora dispara (antes o clique se perdia).", "Dá para guardar a faca logo depois do golpe (antes a tecla era ignorada até o golpe acabar).", "Revólver não ganha mais uma bala extra na recarga (tambor não tem câmara).", "Clarão do tiro menor ao mirar, para não tapar o alvo.", "Braços da faca e das poções não ficam mais amarelados em mapas com muita luz."]};
 // ==MAPA ITÁLIA== (só o protótipo do modo Infecção)
 // Coordenadas lógicas: x = leste, y = norte, z = altura (m). Caixas sólidas: [x0, x1, y0, y1, topo, base, tipo, extra]
 const ITALIA = (function () {
@@ -946,7 +946,7 @@ const Logic = (function () {
       rec: { v: 5.6, h: 0.5, bias: 0, climb: 0, build: 0.5, perm: 0.3, rec: 3.6, settle: 2 }, pierce: 2, fov: 14, speed: 0.85, adsSpeed: 0.55,
       attach: ["sil", "ext", "grip"], gripLabel: "Apoio ajustável", flash: 0.3, },
     // ---- armas vendidas na loja ----
-    revolver: { id: "revolver", name: "Revólver Trovão .50", cls: "Revólver", kind: "pistol", auto: false, modes: ["semi"], shop: true,
+    revolver: { id: "revolver", name: "Revólver Trovão .50", cls: "Revólver", kind: "pistol", auto: false, modes: ["semi"], shop: true, cyl: true,
       desc: "Seis tiros de pura força. Uma bala na cabeça derruba qualquer zumbi comum; o coice é brutal.",
       mag: 6, extMag: 8, reserve: 36, maxRes: 60, ammoPick: 12, dmg: 110, pellets: 1, delay: 0.5,
       reload: 2.6, reloadEmpty: 2.6, spread: 0.003, move: 0.012, shot: 0.04, ads: 0.35,
@@ -1403,9 +1403,9 @@ const Logic = (function () {
         this.reloading = true; this.reloadTotal = this.reloadT = c.reloadStart * this.reloadK;
         this.events.push(["reload_start", c.id, false]); return;
       }
-      const cap = c.magMax + (s.mag > 0 && !c.bolt ? 1 : 0);
+      const cap = c.magMax + (s.mag > 0 && !c.bolt && !c.cyl ? 1 : 0);
       if (s.mag >= cap || s.reserve <= 0) return;
-      this.reloading = true;
+      this.reloading = true; this.bufShot = false;
       this.reloadTotal = this.reloadT = (s.mag > 0 ? c.reload : c.reloadEmpty) * c.reloadMul * this.reloadK;
       this.events.push(["reload_start", c.id, s.mag === 0]);
     }
@@ -1418,8 +1418,9 @@ const Logic = (function () {
     }
 
     toggleKnife() {                                                  // tecla da faca: pega / guarda a faca
-      if (this.team === "z" || !this.alive || this.switchT > 0 || this.meleeT > 0) return;
-      this.cancelReload(); this.burstLeft = 0; this.ads = false;
+      if (this.team === "z" || !this.alive || this.switchT > 0) return;
+      if (this.meleeT > this.mel.cd - 0.25) { this.knifeQ = true; return; }      // no meio do golpe: guarda assim que o golpe sair
+      this.knifeQ = false; this.cancelReload(); this.burstLeft = 0; this.ads = false; this.bufShot = false;
       this.knifeOut = !this.knifeOut; this.switchT = SWITCH_TIME * 0.7; this.pending = null;
       this.events.push(["switch"]);
     }
@@ -1428,7 +1429,7 @@ const Logic = (function () {
         this.knifeOut = false; this.pending = i === this.cur ? null : i; this.switchT = SWITCH_TIME; this.events.push(["switch"]); return;
       }
       if (i === this.cur || i < 0 || i > 1 || this.switchT > 0 || !this.alive) return;
-      this.cancelReload(); this.burstLeft = 0; this.pending = i; this.switchT = SWITCH_TIME;
+      this.cancelReload(); this.burstLeft = 0; this.bufShot = false; this.pending = i; this.switchT = SWITCH_TIME;
       this.events.push(["switch"]);
     }
 
@@ -1735,7 +1736,7 @@ const Logic = (function () {
       const wantRun = !!inp.sprint && fwd > 0 && !this.ads && !this.exhausted && this.stamina > 0 && this.crouchT < 0.4 && this.moving;
       // atirar correndo: a arma volta para o centro (leva um instante), a corrida fica mais lenta e o recuo/dispersão pioram
       this.runShootT = Math.max(0, (this.runShootT || 0) - dt);
-      if (inp.fire && wantRun && this.team !== "z" && !this.knifeOut) { if (this.sprinting) this.cool = Math.max(this.cool, RUN_RAISE); this.runShootT = 0.45; }
+      if (inp.fire && wantRun && this.team !== "z" && !this.knifeOut) { if (this.sprinting) { this.cool = Math.max(this.cool, RUN_RAISE); if (!this.triggerWas) this.bufShot = true; } this.runShootT = 0.45; }
       this.runShoot = wantRun && this.runShootT > 0;
       this.sprinting = wantRun && !this.runShoot;
       if (this.team === "z") { this.stamina = 100; this.exhausted = false; }      // infectado: corrida infinita
@@ -1760,6 +1761,7 @@ const Logic = (function () {
       }
       this.cool = Math.max(0, this.cool - dt);
       this.meleeT = Math.max(0, this.meleeT - dt);
+      if (this.knifeQ && this.meleeT <= this.mel.cd - 0.25) this.toggleKnife();
       // troca de arma
       if (this.switchT > 0) {
         this.switchT -= dt;
@@ -1777,7 +1779,7 @@ const Logic = (function () {
               if (s.mag < c.magMax && s.reserve > 0) { this.reloadT = c.reload * this.reloadK; this.reloadTotal = this.reloadT; }
               else { this.reloading = false; this.reloadT = 0; this.events.push(["reload_done", c.id]); }
             } else {
-              const cap = c.magMax + (s.mag > 0 && !c.bolt ? 1 : 0), take = Math.min(cap - s.mag, s.reserve);
+              const cap = c.magMax + (s.mag > 0 && !c.bolt && !c.cyl ? 1 : 0), take = Math.min(cap - s.mag, s.reserve);
               s.mag += take; s.reserve -= take; this.reloading = false; this.reloadT = 0;
               this.events.push(["reload_done", c.id]);
             }
@@ -1788,11 +1790,12 @@ const Logic = (function () {
       if (this.knifeOut) { if (inp.fire && this.switchT <= 0) this.requestMelee(); this.triggerWas = !!inp.fire; this.burstLeft = 0; return; }
       // disparo
       const trigger = !!inp.fire, mode = this.mode();
-      let want = trigger && (mode === "auto" || !this.triggerWas);
+      let want = (trigger && (mode === "auto" || !this.triggerWas)) || !!this.bufShot;
       if (mode === "burst") { if (want && this.burstLeft <= 0) this.burstLeft = 3; want = this.burstLeft > 0; }
       else this.burstLeft = 0;
       const ready = !this.reloading && this.switchT <= 0 && this.cool <= 0 && this.meleeT < 0.4;
       if (want && ready) {
+        this.bufShot = false;
         if (s.mag > 0) {
           this.fireWeapon();
           if (mode === "burst") { this.burstLeft -= 1; if (this.burstLeft <= 0) this.cool = Math.max(this.cool, c.delay * 2.6); }
@@ -9316,6 +9319,8 @@ const Logic = (function () {
     // ---------- modelos GoldSrc (CS 1.6) convertidos: ver potdata.js ----------
     const texCache = {};
     const gsTex = (uri) => texCache[uri] || (texCache[uri] = new THREE.TextureLoader().load(uri));
+    // luz do ambiente forte (tarde) deixava a pele dos braços amarela/estourada: escurece o material na proporção da luz
+    function vmShade(mats) { const L = hemi.intensity + moon.intensity * 0.8, f = Math.max(0.45, Math.min(1, 1.15 / L)); for (const m of mats) m.color.setScalar(f); }
     function gsGeom(J, skinned) {
       const g = new THREE.BufferGeometry();
       g.setAttribute("position", new THREE.Float32BufferAttribute(J.pos, 3));
@@ -9434,7 +9439,7 @@ const Logic = (function () {
       for (let i = 0, n = Math.round(10 * fxK()) + 4; i < n; i++) fxSpark.emit(x, z + 0.2, -y, (Math.random() - 0.5) * 5, 1 + Math.random() * 3, (Math.random() - 0.5) * 5, 0.35 + Math.random() * 0.4, 1);
     }
     function clear() { for (const v of potV.values()) scene.remove(v); potV.clear(); for (const v of areaV.values()) scene.remove(v.root); areaV.clear(); for (const q of LT) { q.used = false; q.l.intensity = 0; } }
-    return { sync, burst, clear, gsGeom, flameTex, worldModels };
+    return { sync, burst, clear, gsGeom, flameTex, worldModels, vmShade };
   })();
   // ---------- primeira pessoa: mãos acendendo e arremessando (molotov ou garrafa de cura) ----------
   const PotVM = (() => {
@@ -9461,7 +9466,7 @@ const Logic = (function () {
       }
       const dur = (n) => J.anims[n].f.length / J.anims[n].fps;
       const mat = {}; keys.forEach((k, i) => { mat[k] = mats[i]; });
-      return { root: conv, bones, pose, dur, mat };
+      return { root: conv, bones, pose, dur, mat, mats };
     }
     function ensure() {
       if (V) return;
@@ -9495,7 +9500,7 @@ const Logic = (function () {
       if (!act) return;
       if (!g.alive || g.team === "z" || g.gm !== "infect") { stop(); return; }
       const k = Math.tan((camera.fov * Math.PI) / 360) / Math.tan((73.74 * Math.PI) / 360);   // modelo feito para FOV 90 (CS 1.6)
-      fovG.scale.set(k, k, 1);
+      fovG.scale.set(k, k, 1); PotFX.vmShade(V.mats);
       if (phase === "deploy") { t += dt * 1.5; if (t >= DEPLOY_END) { phase = "hold"; t = 0; if (want) { want = false; fire(); } } }
       else if (phase === "hold") t += dt;
       else if (phase === "pullpin") { t += dt; if (t >= V.dur("pullpin")) { phase = "throw"; t = 0; } }
@@ -9531,7 +9536,7 @@ const Logic = (function () {
           qa.set(a[o + 3], a[o + 4], a[o + 5], a[o + 6]); qb.set(b[o + 3], b[o + 4], b[o + 5], b[o + 6]); B.quaternion.copy(qa).slerp(qb, k);
         }
       }
-      return { root: conv, pose, dur: (n) => J.anims[n].f.length / J.anims[n].fps };
+      return { root: conv, pose, mats, dur: (n) => J.anims[n].f.length / J.anims[n].fps };
     }
     // devolve true quando a faca nova está na tela (aí a faca antiga fica escondida)
     function update(g, dt) {
@@ -9540,7 +9545,7 @@ const Logic = (function () {
       if (!V) { V = build(); fovG = new THREE.Group(); fovG.add(V.root); camera.add(fovG); }
       fovG.visible = true;
       const k = Math.tan((camera.fov * Math.PI) / 360) / Math.tan((73.74 * Math.PI) / 360);
-      fovG.scale.set(k, k, 1);
+      fovG.scale.set(k, k, 1); PotFX.vmShade(V.mats);
       if (!wasOn) { act = "draw"; t = 0; spd = V.dur("draw") / 0.5; }
       wasOn = true;
       if (g.meleeT > lastMel + 0.01) { act = side ? "midslash2" : "midslash1"; side ^= 1; t = 0; spd = V.dur(act) / Math.max(0.35, g.mel.cd); }   // golpe novo
@@ -10149,8 +10154,8 @@ const Logic = (function () {
       knife.rotation.set(-0.1 - sprintBlend * 0.25, 0.3, 0.7 + sprintBlend * 0.2);
     } else knife.visible = false;
     if (g.flashT > 0) {
-      const s = c.flash * (0.8 + Math.random() * 0.6);
-      flashSprite.scale.set(s, s, 1); flashSprite.material.rotation = Math.random() * 6; flashSprite.visible = true; flashLight.intensity = 4;
+      const s = c.flash * (0.8 + Math.random() * 0.6) * (1 - 0.6 * a);       // mirando: clarão menor para não tapar o alvo
+      flashSprite.scale.set(s, s, 1); flashSprite.material.rotation = Math.random() * 6; flashSprite.visible = true; flashLight.intensity = 4 * (1 - 0.7 * a);
     } else { flashSprite.visible = false; flashLight.intensity = 0; }
     $("scope").style.opacity = c.scope ? String(clamp((a - 0.8) * 5, 0, 1)) : "0";
     $("cross").classList.toggle("scoped", !!c.scope && a > 0.8);

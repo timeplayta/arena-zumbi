@@ -58,7 +58,7 @@ const Logic = (function () {
       rec: { v: 5.6, h: 0.5, bias: 0, climb: 0, build: 0.5, perm: 0.3, rec: 3.6, settle: 2 }, pierce: 2, fov: 14, speed: 0.85, adsSpeed: 0.55,
       attach: ["sil", "ext", "grip"], gripLabel: "Apoio ajustável", flash: 0.3, },
     // ---- armas vendidas na loja ----
-    revolver: { id: "revolver", name: "Revólver Trovão .50", cls: "Revólver", kind: "pistol", auto: false, modes: ["semi"], shop: true,
+    revolver: { id: "revolver", name: "Revólver Trovão .50", cls: "Revólver", kind: "pistol", auto: false, modes: ["semi"], shop: true, cyl: true,
       desc: "Seis tiros de pura força. Uma bala na cabeça derruba qualquer zumbi comum; o coice é brutal.",
       mag: 6, extMag: 8, reserve: 36, maxRes: 60, ammoPick: 12, dmg: 110, pellets: 1, delay: 0.5,
       reload: 2.6, reloadEmpty: 2.6, spread: 0.003, move: 0.012, shot: 0.04, ads: 0.35,
@@ -515,9 +515,9 @@ const Logic = (function () {
         this.reloading = true; this.reloadTotal = this.reloadT = c.reloadStart * this.reloadK;
         this.events.push(["reload_start", c.id, false]); return;
       }
-      const cap = c.magMax + (s.mag > 0 && !c.bolt ? 1 : 0);
+      const cap = c.magMax + (s.mag > 0 && !c.bolt && !c.cyl ? 1 : 0);
       if (s.mag >= cap || s.reserve <= 0) return;
-      this.reloading = true;
+      this.reloading = true; this.bufShot = false;
       this.reloadTotal = this.reloadT = (s.mag > 0 ? c.reload : c.reloadEmpty) * c.reloadMul * this.reloadK;
       this.events.push(["reload_start", c.id, s.mag === 0]);
     }
@@ -530,8 +530,9 @@ const Logic = (function () {
     }
 
     toggleKnife() {                                                  // tecla da faca: pega / guarda a faca
-      if (this.team === "z" || !this.alive || this.switchT > 0 || this.meleeT > 0) return;
-      this.cancelReload(); this.burstLeft = 0; this.ads = false;
+      if (this.team === "z" || !this.alive || this.switchT > 0) return;
+      if (this.meleeT > this.mel.cd - 0.25) { this.knifeQ = true; return; }      // no meio do golpe: guarda assim que o golpe sair
+      this.knifeQ = false; this.cancelReload(); this.burstLeft = 0; this.ads = false; this.bufShot = false;
       this.knifeOut = !this.knifeOut; this.switchT = SWITCH_TIME * 0.7; this.pending = null;
       this.events.push(["switch"]);
     }
@@ -540,7 +541,7 @@ const Logic = (function () {
         this.knifeOut = false; this.pending = i === this.cur ? null : i; this.switchT = SWITCH_TIME; this.events.push(["switch"]); return;
       }
       if (i === this.cur || i < 0 || i > 1 || this.switchT > 0 || !this.alive) return;
-      this.cancelReload(); this.burstLeft = 0; this.pending = i; this.switchT = SWITCH_TIME;
+      this.cancelReload(); this.burstLeft = 0; this.bufShot = false; this.pending = i; this.switchT = SWITCH_TIME;
       this.events.push(["switch"]);
     }
 
@@ -847,7 +848,7 @@ const Logic = (function () {
       const wantRun = !!inp.sprint && fwd > 0 && !this.ads && !this.exhausted && this.stamina > 0 && this.crouchT < 0.4 && this.moving;
       // atirar correndo: a arma volta para o centro (leva um instante), a corrida fica mais lenta e o recuo/dispersão pioram
       this.runShootT = Math.max(0, (this.runShootT || 0) - dt);
-      if (inp.fire && wantRun && this.team !== "z" && !this.knifeOut) { if (this.sprinting) this.cool = Math.max(this.cool, RUN_RAISE); this.runShootT = 0.45; }
+      if (inp.fire && wantRun && this.team !== "z" && !this.knifeOut) { if (this.sprinting) { this.cool = Math.max(this.cool, RUN_RAISE); if (!this.triggerWas) this.bufShot = true; } this.runShootT = 0.45; }
       this.runShoot = wantRun && this.runShootT > 0;
       this.sprinting = wantRun && !this.runShoot;
       if (this.team === "z") { this.stamina = 100; this.exhausted = false; }      // infectado: corrida infinita
@@ -872,6 +873,7 @@ const Logic = (function () {
       }
       this.cool = Math.max(0, this.cool - dt);
       this.meleeT = Math.max(0, this.meleeT - dt);
+      if (this.knifeQ && this.meleeT <= this.mel.cd - 0.25) this.toggleKnife();
       // troca de arma
       if (this.switchT > 0) {
         this.switchT -= dt;
@@ -889,7 +891,7 @@ const Logic = (function () {
               if (s.mag < c.magMax && s.reserve > 0) { this.reloadT = c.reload * this.reloadK; this.reloadTotal = this.reloadT; }
               else { this.reloading = false; this.reloadT = 0; this.events.push(["reload_done", c.id]); }
             } else {
-              const cap = c.magMax + (s.mag > 0 && !c.bolt ? 1 : 0), take = Math.min(cap - s.mag, s.reserve);
+              const cap = c.magMax + (s.mag > 0 && !c.bolt && !c.cyl ? 1 : 0), take = Math.min(cap - s.mag, s.reserve);
               s.mag += take; s.reserve -= take; this.reloading = false; this.reloadT = 0;
               this.events.push(["reload_done", c.id]);
             }
@@ -900,11 +902,12 @@ const Logic = (function () {
       if (this.knifeOut) { if (inp.fire && this.switchT <= 0) this.requestMelee(); this.triggerWas = !!inp.fire; this.burstLeft = 0; return; }
       // disparo
       const trigger = !!inp.fire, mode = this.mode();
-      let want = trigger && (mode === "auto" || !this.triggerWas);
+      let want = (trigger && (mode === "auto" || !this.triggerWas)) || !!this.bufShot;
       if (mode === "burst") { if (want && this.burstLeft <= 0) this.burstLeft = 3; want = this.burstLeft > 0; }
       else this.burstLeft = 0;
       const ready = !this.reloading && this.switchT <= 0 && this.cool <= 0 && this.meleeT < 0.4;
       if (want && ready) {
+        this.bufShot = false;
         if (s.mag > 0) {
           this.fireWeapon();
           if (mode === "burst") { this.burstLeft -= 1; if (this.burstLeft <= 0) this.cool = Math.max(this.cool, c.delay * 2.6); }

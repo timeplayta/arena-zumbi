@@ -30,6 +30,8 @@
     // ---------- modelos GoldSrc (CS 1.6) convertidos: ver potdata.js ----------
     const texCache = {};
     const gsTex = (uri) => texCache[uri] || (texCache[uri] = new THREE.TextureLoader().load(uri));
+    // luz do ambiente forte (tarde) deixava a pele dos braços amarela/estourada: escurece o material na proporção da luz
+    function vmShade(mats) { const L = hemi.intensity + moon.intensity * 0.8, f = Math.max(0.45, Math.min(1, 1.15 / L)); for (const m of mats) m.color.setScalar(f); }
     function gsGeom(J, skinned) {
       const g = new THREE.BufferGeometry();
       g.setAttribute("position", new THREE.Float32BufferAttribute(J.pos, 3));
@@ -148,7 +150,7 @@
       for (let i = 0, n = Math.round(10 * fxK()) + 4; i < n; i++) fxSpark.emit(x, z + 0.2, -y, (Math.random() - 0.5) * 5, 1 + Math.random() * 3, (Math.random() - 0.5) * 5, 0.35 + Math.random() * 0.4, 1);
     }
     function clear() { for (const v of potV.values()) scene.remove(v); potV.clear(); for (const v of areaV.values()) scene.remove(v.root); areaV.clear(); for (const q of LT) { q.used = false; q.l.intensity = 0; } }
-    return { sync, burst, clear, gsGeom, flameTex, worldModels };
+    return { sync, burst, clear, gsGeom, flameTex, worldModels, vmShade };
   })();
   // ---------- primeira pessoa: mãos acendendo e arremessando (molotov ou garrafa de cura) ----------
   const PotVM = (() => {
@@ -175,7 +177,7 @@
       }
       const dur = (n) => J.anims[n].f.length / J.anims[n].fps;
       const mat = {}; keys.forEach((k, i) => { mat[k] = mats[i]; });
-      return { root: conv, bones, pose, dur, mat };
+      return { root: conv, bones, pose, dur, mat, mats };
     }
     function ensure() {
       if (V) return;
@@ -209,7 +211,7 @@
       if (!act) return;
       if (!g.alive || g.team === "z" || g.gm !== "infect") { stop(); return; }
       const k = Math.tan((camera.fov * Math.PI) / 360) / Math.tan((73.74 * Math.PI) / 360);   // modelo feito para FOV 90 (CS 1.6)
-      fovG.scale.set(k, k, 1);
+      fovG.scale.set(k, k, 1); PotFX.vmShade(V.mats);
       if (phase === "deploy") { t += dt * 1.5; if (t >= DEPLOY_END) { phase = "hold"; t = 0; if (want) { want = false; fire(); } } }
       else if (phase === "hold") t += dt;
       else if (phase === "pullpin") { t += dt; if (t >= V.dur("pullpin")) { phase = "throw"; t = 0; } }
@@ -245,7 +247,7 @@
           qa.set(a[o + 3], a[o + 4], a[o + 5], a[o + 6]); qb.set(b[o + 3], b[o + 4], b[o + 5], b[o + 6]); B.quaternion.copy(qa).slerp(qb, k);
         }
       }
-      return { root: conv, pose, dur: (n) => J.anims[n].f.length / J.anims[n].fps };
+      return { root: conv, pose, mats, dur: (n) => J.anims[n].f.length / J.anims[n].fps };
     }
     // devolve true quando a faca nova está na tela (aí a faca antiga fica escondida)
     function update(g, dt) {
@@ -254,7 +256,7 @@
       if (!V) { V = build(); fovG = new THREE.Group(); fovG.add(V.root); camera.add(fovG); }
       fovG.visible = true;
       const k = Math.tan((camera.fov * Math.PI) / 360) / Math.tan((73.74 * Math.PI) / 360);
-      fovG.scale.set(k, k, 1);
+      fovG.scale.set(k, k, 1); PotFX.vmShade(V.mats);
       if (!wasOn) { act = "draw"; t = 0; spd = V.dur("draw") / 0.5; }
       wasOn = true;
       if (g.meleeT > lastMel + 0.01) { act = side ? "midslash2" : "midslash1"; side ^= 1; t = 0; spd = V.dur(act) / Math.max(0.35, g.mel.cd); }   // golpe novo

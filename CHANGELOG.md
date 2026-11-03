@@ -1,5 +1,12 @@
 # Novidades — Arena Zumbi
 
+## Correções nas armas (02/11/2026)
+- Clique rápido correndo com pistola, revólver, escopeta ou fuzil de precisão agora dispara (antes o clique se perdia).
+- Dá para guardar a faca logo depois do golpe (antes a tecla era ignorada até o golpe acabar).
+- Revólver não ganha mais uma bala extra na recarga (tambor não tem câmara).
+- Clarão do tiro menor ao mirar, para não tapar o alvo.
+- Braços da faca e das poções não ficam mais amarelados em mapas com muita luz.
+
 ## Braços com qualquer FOV e resolução (02/11/2026)
 - Arma e braços ficam do mesmo tamanho em qualquer campo de visão e resolução: sem braço “voando” nem corte aparecendo.
 
