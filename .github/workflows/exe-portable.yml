@@ -1,0 +1,26 @@
+# Gera "Arena-Zumbi-Portatil.exe": um único arquivo que se extrai sozinho e abre o jogo (não precisa da pasta).
+# Rodar à mão (workflow_dispatch). O jogo se atualiza sozinho ao abrir, então não precisa refazer a cada versão.
+name: Exe portatil
+on: workflow_dispatch
+jobs:
+  portable:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Extrair a pasta do jogo
+        shell: pwsh
+        run: Expand-Archive windows/Arena-Zumbi-Windows.zip -DestinationPath out
+      - name: Montar o exe portatil
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force build | Out-Null
+          $ico = (Resolve-Path windows/icon.ico).Path -replace '\\','/'
+          $cfg = @{ name = "arena-zumbi"; version = "1.2.0"; build = @{ appId = "com.arenazumbi.game"; productName = "Arena Zumbi"; electronVersion = "33.2.0"; win = @{ target = "portable"; icon = $ico }; portable = @{ artifactName = "Arena-Zumbi-Portatil.exe"; unpackDirName = "ArenaZumbi" }; directories = @{ output = "dist" } } }
+          $cfg | ConvertTo-Json -Depth 6 | Set-Content build/package.json -Encoding utf8
+          cd build
+          npm i --no-save electron-builder@25.1.8
+          npx electron-builder --win portable --prepackaged "../out/Arena Zumbi" --publish never
+      - uses: actions/upload-artifact@v4
+        with:
+          name: exe-portatil
+          path: build/dist/Arena-Zumbi-Portatil.exe
