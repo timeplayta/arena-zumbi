@@ -11,7 +11,9 @@ jobs:
         run: Expand-Archive windows/Arena-Zumbi-Windows.zip -DestinationPath out
       - name: Trocar o icone
         shell: pwsh
-        run: npx --yes rcedit@4.0.1 "out/Arena Zumbi/Arena Zumbi.exe" --set-icon windows/icon.ico
+        run: |
+          npm i --no-save rcedit@4.0.1
+          node -e "const m=require('rcedit'); const f=m.rcedit||m.default||m; f('out/Arena Zumbi/Arena Zumbi.exe',{icon:'windows/icon.ico'}).then(()=>console.log('icone ok')).catch(e=>{console.error(e);process.exit(1)})"
       - uses: actions/upload-artifact@v4
         with:
           name: exe-com-icone
