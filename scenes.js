@@ -49,7 +49,7 @@ module.exports = {
       const g = A.game; g.wave = 9; g.pauseT = 0; warm(2); g.bannerT = 0; g.banner = '';
       g.queue = []; spot(6, -19, 1.047);
       g.giantsLeft = 1; g.toSpawn = 1; g.spawnZombie(); g.giantsLeft = 0;
-      const gi = g.zombies[g.zombies.length - 1]; P.place(gi, 11, 0.05);
+      const gi = g.zombies[g.zombies.length - 1]; P.place(gi, 11, 0.05); g.banner = ''; g.bannerSub = ''; g.bannerT = 0;
       horde([[15, -0.4], [16, 0.45]], 40);
       Object.assign(P.cfg, { range: 30, keepMag: 20, hold: 'freeze', strafe: false, maxAng: 1.0 });
       P.sched.push([140, () => { gi.hp = Math.min(gi.hp, 50); }]);
@@ -71,7 +71,7 @@ module.exports = {
       g.inf.ph = 'play'; g.inf.t = 180;
       const bots = g.others.filter((q) => (q.team || 'h') !== 'z');
       for (let i = 0; i < 4 && i < bots.length; i++) g.becomeZombie(bots[i].id, true);
-      g.banner = 'A INFECÇÃO COMEÇOU'; g.bannerSub = 'Fuja dos zumbis por 3 minutos'; g.bannerT = 3;
+      g.banner = ''; g.bannerT = 0;
       const zs = g.others.filter((q) => q.team === 'z');
       const spots = [[14, 0.05], [17, -0.3], [16, 0.35], [20, 0.1]];
       zs.forEach((q, i) => { const sp = spots[i % spots.length]; const [x, y] = P.front(sp[0], sp[1]); q.x = x; q.y = y; const z = g.pz(q.id); if (z) { z.x = x; z.y = y; } });
