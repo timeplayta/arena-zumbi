@@ -1,5 +1,9 @@
 # Novedades — Arena Zumbi
 
+## Infección: golpes del zombi (08/11/2026)
+- El zombi infecta a un humano sin chaleco con 4 golpes y con chaleco con 6 golpes.
+- El golpe normal y el golpe pesado cuentan igual.
+
 ## Mira óptica transparente (08/11/2026)
 - La mira red dot ahora es un tubo con vidrio: se ve el objetivo a través de ella, con el punto rojo en el centro.
 

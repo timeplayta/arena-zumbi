@@ -1,5 +1,9 @@
 # What's new — Arena Zumbi
 
+## Infection: zombie hits (11/08/2026)
+- A zombie infects a human without a vest in 4 hits, and with a vest in 6 hits.
+- Normal and heavy hits count the same.
+
 ## See-through optical sight (11/08/2026)
 - The red dot sight is now a tube with glass: you can see the target through it, with the red dot in the center.
 

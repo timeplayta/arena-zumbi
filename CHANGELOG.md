@@ -1,5 +1,9 @@
 # Novidades — Arena Zumbi
 
+## Infecção: golpes do zumbi (08/11/2026)
+- O zumbi infecta um humano sem colete com 4 golpes e com colete com 6 golpes.
+- Golpe normal e golpe pesado contam igual.
+
 ## Mira óptica transparente (08/11/2026)
 - A mira red dot agora é um tubo com vidro: dá para ver o alvo através dela, com o ponto vermelho no centro.
 

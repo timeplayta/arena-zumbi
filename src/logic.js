@@ -10,7 +10,7 @@ const Logic = (function () {
   const BOT_AI = { samples: 10, roamR: 40.51, wz: 1.17, wh: 0, wHigh: 0, roamT: 8.69, boostR: 25, stand: 18.34, flee: 10.21, sprint: 3.47, away: 7.52, range: 40, camp: true, spotMode: "mix", spread: 12, group: 2, gap: 5.4, moveErr: 2.06, fireVar: 0.81, clawR: 1.59, zSprint: 6.13, zStam: 1, zRepath: 1.08, zSense: 40, zMemory: 3.37, fov: 2.1, hear: 2.5, hMemory: 4, scan: 3.5, zShotHear: 22, zCall: 15 };   // treino 02/11: campo de visão de 120° (fov), ouvem só de perto (hear) e tiros (zShotHear); ~50% de vitória para cada lado (48 partidas só de bots)
   const ZOMBIE_SPEED = 1.1;                                    // infecção: infectado anda/corre 10% mais rápido que o humano
   const KNIFE_SPEED = ZOMBIE_SPEED;                            // faca na mão: mesma velocidade do infectado (andando e correndo)
-  const CLAW_DMG = 20, CLAW_DMG_HEAVY = 35;                   // infecção: golpe normal tira 20 · golpe pesado (botão direito) tira 35
+  const CLAW_HITS = 4, CLAW_HITS_VEST = 6;                     // infecção: humano sem colete cai com 4 golpes, com colete com 6 (golpe normal ou pesado conta 1)
   const CLAW_CD = 1.0, CLAW_CD_HEAVY = 1.15;                  // golpe normal (botão esquerdo) 1,0 s · golpe pesado (botão direito) 1,15 s                                       // infecção: intervalo entre ataques do infectado (s)
   const ATTACK_RANGE = 1.25, ZOMBIE_SEP = 0.75, RANGE = 90;
   const BODY_R = 0.34, BODY_H = 1.5, HEAD_Z = 1.67, HEAD_R = 0.21, LEG_H = 0.8;
@@ -1809,7 +1809,10 @@ const Logic = (function () {
         if (h.team !== "h" || !h.alive) continue;
         const dx = h.x - x, dy = h.y - y, d = Math.hypot(dx, dy);
         if (d > reach || d < 1e-3 || (dx * fx + dy * fy) / d < 0.3 || Math.abs(h.gz - cg) > 1.6) continue;
-        const dmg = heavy ? CLAW_DMG_HEAVY : CLAW_DMG; if (h.me) this.hurt(dmg, z, {}); else this.hurtRemote(h.p, dmg, z, {});
+        // conta golpes, não pontos: sem colete morre no 4º golpe, com colete no 6º (normal ou pesado valem 1 golpe)
+        const P = h.me ? this : h.p, mh = P.maxHp || 100, vest = (P.armor || 0) > 0, dmg = mh / (vest ? CLAW_HITS_VEST : CLAW_HITS) + 0.01;
+        if (vest) { P.armor = Math.max(0, P.armor - (P.armorMax || 50) / CLAW_HITS_VEST - 0.01); if (h.me) this.events.push(["armor", P.armor <= 0]); }
+        if (h.me) this.hurt(dmg, z, { pierce: true }); else this.hurtRemote(h.p, dmg, z, { pierce: true });
       }
     }
     infectEnd(w) {
