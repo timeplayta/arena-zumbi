@@ -38,6 +38,7 @@
       if (P.cfg.hold && g.gm !== 'infect') { g.toSpawn = Math.max(g.toSpawn, 30); if (P.cfg.hold === 'freeze') g.spawnT = 1e9; }
       const s = g.w && g.w();
       if (s && P.cfg.keepMag && s.mag < P.cfg.keepMag) s.mag = P.cfg.keepMag;
+      if (P.cfg.lockPos) { if (!P.lp) P.lp = [g.px, g.py]; g.px = P.lp[0]; g.py = P.lp[1]; }
       let fire = false;
       if (P.cfg.aim !== false) {
         const z = P.tgt = P.pick();

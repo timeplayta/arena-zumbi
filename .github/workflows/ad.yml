@@ -9,7 +9,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        scene: [ondas, armas, chefes, infeccao]
+        scene: [infeccao]
         fmt: [h, v]
     steps:
       - uses: actions/checkout@v4

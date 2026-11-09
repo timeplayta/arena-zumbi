@@ -78,7 +78,7 @@ module.exports = {
       // humanos (bots) ao lado do jogador
       const hs = g.others.filter((q) => q.team !== 'z');
       hs.slice(0, 3).forEach((q, i) => { const [x, y] = P.front(2.5 + i, [1.9, -1.9, 2.4][i]); q.x = x; q.y = y; });
-      Object.assign(P.cfg, { range: 26, strafe: false, maxAng: 1.0, baseYaw: 0, maxDev: 0.8, keepMag: 6 });
+      Object.assign(P.cfg, { range: 26, strafe: false, maxAng: 1.0, baseYaw: 0, maxDev: 0.8, keepMag: 6, lockPos: true });
       const tp = (q, x, y) => { q.x = x; q.y = y; const z = g.pz(q.id); if (z) { z.x = x; z.y = y; } };
       P.feedEvery = 12;
       P.feed = (g) => {   // infectados fora do corredor voltam pela borda da tela
