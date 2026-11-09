@@ -1,0 +1,36 @@
+name: Ad capture
+on:
+  push:
+    branches: [ad-video]
+jobs:
+  cap:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    strategy:
+      fail-fast: false
+      matrix:
+        scene: [ondas, armas, chefes, infeccao]
+        fmt: [h, v]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20' }
+      - run: npm i playwright@1.47.2 && npx playwright install --with-deps chromium
+      - name: Render
+        run: |
+          if [ "${{ matrix.fmt }}" = h ]; then W=1280; H=720; else W=720; H=1280; fi
+          node render.js ${{ matrix.scene }} $W $H out/f $(cat maxf 2>/dev/null || echo 0) 1
+      - name: Encode
+        run: |
+          sudo apt-get install -y ffmpeg >/dev/null
+          ffmpeg -y -framerate 30 -pattern_type glob -i 'out/f/f*.jpg' -c:v libx264 -crf 12 -preset fast -pix_fmt yuv420p out/${{ matrix.scene }}_${{ matrix.fmt }}.mp4
+          cp out/f/snd.json out/${{ matrix.scene }}_${{ matrix.fmt }}.snd.json
+          [ -f out/f/sndbufs.json ] && cp out/f/sndbufs.json out/ || true
+          mkdir -p out/sample && ls out/f/*.jpg | awk 'NR%15==1' | xargs -I{} cp {} out/sample/
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.scene }}_${{ matrix.fmt }}
+          path: |
+            out/*.mp4
+            out/*.json
+            out/sample
