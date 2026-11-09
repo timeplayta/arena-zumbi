@@ -1310,6 +1310,7 @@ const Logic = (function () {
         if (this.hp < 30) { this.hbT -= dt; if (this.hbT <= 0) { this.hbT = 0.5 + this.hp / 60; this.events.push(["heart"]); } }
       } else { this.moving = false; this.ads = false; }
       this.invulnT = Math.max(0, this.invulnT - dt); this.boostT = Math.max(0, this.boostT - dt);
+      for (const q of this.others) if (q.invulnT > 0) q.invulnT = Math.max(0, q.invulnT - dt);   // invencibilidade de quem renasceu (co-op/infecção) também acaba
       {                                                                        // chão: sobe degraus, cai de beiradas
         const g = groundAt(this.px, this.py, this.gz);
         if (g >= this.gz) { this.gz = g; this.vz = 0; }

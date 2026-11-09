@@ -715,7 +715,7 @@ table.sc td:first-child { font-family: var(--font-display); font-size: 22px; col
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
-const GAME_VERSION = 202611030200, GAME_NOTES = {"t": "Atualização de teste (02/11/2026)", "b": ["Teste da atualização automática do .exe portátil. Se você está lendo isto, funcionou!"], "en": {"t": "Test update (11/02/2026)", "b": ["Testing automatic updates on the portable .exe. If you are reading this, it worked!"]}, "es": {"t": "Actualización de prueba (02/11/2026)", "b": ["Prueba de la actualización automática del .exe portátil. Si estás leyendo esto, ¡funcionó!"]}};
+const GAME_VERSION = 202611090116, GAME_NOTES = {"t": "Correção no co-op (08/11/2026)", "b": ["Quem morria e renascia no co-op ficava imortal para sempre. Agora a proteção dura só 3 segundos."], "en": {"t": "Co-op fix (11/08/2026)", "b": ["Players who died and respawned in co-op stayed invincible forever. Now the protection lasts only 3 seconds."]}, "es": {"t": "Corrección en cooperativo (08/11/2026)", "b": ["Quien moría y reaparecía en cooperativo quedaba inmortal para siempre. Ahora la protección dura solo 3 segundos."]}};
   // ===================== IDIOMAS (inglês, espanhol, português) =====================
   // O jogo é escrito em português. Este tradutor troca, na tela, todo texto que aparece (menus, HUD, avisos, mensagens do servidor).
   // REGRA: todo texto novo do jogo precisa de uma entrada aqui (D = frase exata, P = frase com números/nomes). Veja I18N.md.
@@ -2540,6 +2540,7 @@ const Logic = (function () {
         if (this.hp < 30) { this.hbT -= dt; if (this.hbT <= 0) { this.hbT = 0.5 + this.hp / 60; this.events.push(["heart"]); } }
       } else { this.moving = false; this.ads = false; }
       this.invulnT = Math.max(0, this.invulnT - dt); this.boostT = Math.max(0, this.boostT - dt);
+      for (const q of this.others) if (q.invulnT > 0) q.invulnT = Math.max(0, q.invulnT - dt);   // invencibilidade de quem renasceu (co-op/infecção) também acaba
       {                                                                        // chão: sobe degraus, cai de beiradas
         const g = groundAt(this.px, this.py, this.gz);
         if (g >= this.gz) { this.gz = g; this.vz = 0; }

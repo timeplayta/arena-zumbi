@@ -1,5 +1,8 @@
 # Novidades — Arena Zumbi
 
+## Correção no co-op (08/11/2026)
+- Quem morria e renascia no co-op ficava imortal para sempre. Agora a proteção dura só 3 segundos.
+
 ## Atualização de teste (02/11/2026)
 - Teste da atualização automática do .exe portátil. Se você está lendo isto, funcionou!
 

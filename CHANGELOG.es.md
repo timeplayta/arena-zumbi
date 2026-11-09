@@ -1,5 +1,8 @@
 # Novedades — Arena Zumbi
 
+## Corrección en cooperativo (08/11/2026)
+- Quien moría y reaparecía en cooperativo quedaba inmortal para siempre. Ahora la protección dura solo 3 segundos.
+
 ## Actualización de prueba (02/11/2026)
 - Prueba de la actualización automática del .exe portátil. Si estás leyendo esto, ¡funcionó!
 

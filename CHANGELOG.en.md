@@ -1,5 +1,8 @@
 # What's new — Arena Zumbi
 
+## Co-op fix (11/08/2026)
+- Players who died and respawned in co-op stayed invincible forever. Now the protection lasts only 3 seconds.
+
 ## Test update (11/02/2026)
 - Testing automatic updates on the portable .exe. If you are reading this, it worked!
 
