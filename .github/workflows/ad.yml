@@ -26,7 +26,7 @@ jobs:
           ffmpeg -y -framerate 30 -pattern_type glob -i 'out/f/f*.jpg' -c:v libx264 -crf 12 -preset fast -pix_fmt yuv420p out/${{ matrix.scene }}_${{ matrix.fmt }}.mp4
           cp out/f/snd.json out/${{ matrix.scene }}_${{ matrix.fmt }}.snd.json
           [ -f out/f/sndbufs.json ] && cp out/f/sndbufs.json out/ || true
-          mkdir -p out/sample && ls out/f/*.jpg | awk 'NR%15==1' | xargs -I{} cp {} out/sample/
+          mkdir -p out/sample && ls out/f/*.jpg | awk 'NR%10==1' | xargs -I{} cp {} out/sample/
       - uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.scene }}_${{ matrix.fmt }}

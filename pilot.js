@@ -48,7 +48,7 @@
       if (P.cfg.pulse && fire) fire = f % 3 !== 2;
       A.setMouse(!!fire);
       if (P.cfg.strafe) {
-        const ph = Math.floor(f / 50) % 4;
+        const ph = Math.floor(f / 22) % 4;
         A.keys.delete('KeyA'); A.keys.delete('KeyD');
         if (ph === 1) A.keys.add('KeyA'); else if (ph === 3) A.keys.add('KeyD');
       }
