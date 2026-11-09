@@ -13,7 +13,7 @@ const INIT = `
   window.__vt = () => vt;
   window.__step = (ms) => { vt += ms; const cbs = q.splice(0); for (const cb of cbs) { try { cb(vt); } catch (e) { console.log('ERR ' + e.message + ' ' + (e.stack||'').split('\\n')[1]); } } };
   try {
-    localStorage.setItem('arena-zumbi-v2', JSON.stringify({ lang: 'pt', name: 'Sobrevivente', quality: 'high', shadows: 'full', fx: 'high', hints: false, showFps: false, fov: 90 }));
+    localStorage.setItem('arena-zumbi-v2', JSON.stringify({ lang: '__LANG__', name: 'Sobrevivente', quality: 'high', shadows: 'full', fx: 'high', hints: false, showFps: false, fov: 90 }));
   } catch (e) {}
 })();`;
 
@@ -22,7 +22,7 @@ async function open(w, h) {
   const page = await browser.newPage({ viewport: { width: w, height: h }, deviceScaleFactor: 1 });
   page.on('console', (m) => { const t = m.text(); if (/ERR|error/i.test(t)) console.log('[page]', t.slice(0, 200)); });
   page.on('pageerror', (e) => console.log('[pageerror]', e.message));
-  await page.addInitScript(INIT);
+  await page.addInitScript(INIT.replace('__LANG__', process.env.AD_LANG || 'pt'));
   await page.goto(SITE, { waitUntil: 'load', timeout: 120000 });
   await page.waitForFunction(() => window.__AZ && window.__step, null, { timeout: 120000 });
   await page.evaluate(() => {
