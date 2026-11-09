@@ -1,5 +1,9 @@
 # Novedades — Arena Zumbi
 
+## Infección: golpe pesado (08/11/2026)
+- El golpe pesado del zombi (botón derecho) vale 1,5 golpes.
+- Sin chaleco: 4 golpes normales o 3 pesados. Con chaleco: 6 normales o 4 pesados.
+
 ## Infección: golpes del zombi (08/11/2026)
 - El zombi infecta a un humano sin chaleco con 4 golpes y con chaleco con 6 golpes.
 - El golpe normal y el golpe pesado cuentan igual.

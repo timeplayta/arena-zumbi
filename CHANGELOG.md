@@ -1,5 +1,9 @@
 # Novidades — Arena Zumbi
 
+## Infecção: golpe pesado (08/11/2026)
+- O golpe pesado do zumbi (botão direito) vale 1,5 golpe.
+- Sem colete: 4 golpes normais ou 3 pesados. Com colete: 6 normais ou 4 pesados.
+
 ## Infecção: golpes do zumbi (08/11/2026)
 - O zumbi infecta um humano sem colete com 4 golpes e com colete com 6 golpes.
 - Golpe normal e golpe pesado contam igual.

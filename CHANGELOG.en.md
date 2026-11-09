@@ -1,5 +1,9 @@
 # What's new — Arena Zumbi
 
+## Infection: heavy hit (11/08/2026)
+- The zombie heavy hit (right button) counts as 1.5 hits.
+- Without a vest: 4 normal or 3 heavy hits. With a vest: 6 normal or 4 heavy hits.
+
 ## Infection: zombie hits (11/08/2026)
 - A zombie infects a human without a vest in 4 hits, and with a vest in 6 hits.
 - Normal and heavy hits count the same.
