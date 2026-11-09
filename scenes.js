@@ -18,9 +18,13 @@ module.exports = {
       const g = A.game; g.wave = 4; g.pauseT = 0; warm(2); g.bannerT = 0; g.banner = '';
       spot(6, -19, 1.047);
       horde([[9, 0.05], [12, -0.3], [13, 0.35], [15, -0.05], [17, 0.25], [11, 0.5], [16, -0.45], [19, -0.2], [20, 0.4], [18, 0.05], [21, -0.35]], 45);
-      Object.assign(P.cfg, { range: 30 });
-      P.sched.push([140, (g) => horde([[17, 0.1], [19, -0.3], [20, 0.35], [22, -0.1], [23, 0.2]], 45)]);
-      P.sched.push([220, (g) => horde([[16, -0.2], [18, 0.3], [21, 0.0]], 45)]);
+      Object.assign(P.cfg, { range: 30, baseYaw: 1.047, maxDev: 0.75, keepMag: 5, strafe: false });
+      P.feedEvery = 15;
+      P.feed = (g) => {   // sempre 7+ zumbis no corredor: os de fora entram pela borda da tela
+        const live = g.zombies.filter((z) => z.state !== 'dead');
+        let n = live.filter((z) => P.inLane(z.x, z.y)).length;
+        for (const z of live) { if (n >= 8) break; if (!P.inLane(z.x, z.y)) { const sd = Math.random() < 0.5 ? -1 : 1; const [x, y] = P.front(13 + Math.random() * 7, sd * (0.66 + Math.random() * 0.06), true); z.x = x; z.y = y; n++; z.hp = Math.min(z.hp, 45); } }
+      };
       warm(3);
     `,
   },
@@ -32,7 +36,7 @@ module.exports = {
       const g = A.game; g.wave = 6; g.pauseT = 0; warm(2); g.bannerT = 0; g.banner = '';
       spot(6, -19, 1.047);
       horde([[5.5, 0.08], [7, -0.25], [8, 0.3], [9.5, -0.05], [10.5, 0.35], [11, -0.35], [12.5, 0.15], [13.5, -0.2]], 80);
-      Object.assign(P.cfg, { range: 15, keepMag: 2, pulse: true, chest: true, maxTurn: 0.14, strafe: false, maxAng: 0.9 });
+      Object.assign(P.cfg, { range: 15, keepMag: 2, pulse: true, chest: true, maxTurn: 0.14, strafe: false, maxAng: 0.9, closeFirst: true, baseYaw: 1.047, maxDev: 0.75 });
       P.sched.push([120, (g) => horde([[9, 0.1], [10, -0.2], [11, 0.25], [12, -0.05]], 80)]);
       warm(3);
     `,
@@ -73,8 +77,17 @@ module.exports = {
       zs.forEach((q, i) => { const sp = spots[i % spots.length]; const [x, y] = P.front(sp[0], sp[1]); q.x = x; q.y = y; const z = g.pz(q.id); if (z) { z.x = x; z.y = y; } });
       // humanos (bots) ao lado do jogador
       const hs = g.others.filter((q) => q.team !== 'z');
-      hs.slice(0, 3).forEach((q, i) => { const [x, y] = P.front(3 + i, [1.2, -1.1, 1.6][i]); q.x = x; q.y = y; });
-      Object.assign(P.cfg, { range: 26, strafe: false, maxAng: 1.0 });
+      hs.slice(0, 3).forEach((q, i) => { const [x, y] = P.front(2.5 + i, [1.9, -1.9, 2.4][i]); q.x = x; q.y = y; });
+      Object.assign(P.cfg, { range: 26, strafe: false, maxAng: 1.0, baseYaw: 0, maxDev: 0.8, keepMag: 6 });
+      const tp = (q, x, y) => { q.x = x; q.y = y; const z = g.pz(q.id); if (z) { z.x = x; z.y = y; } };
+      P.feedEvery = 12;
+      P.feed = (g) => {   // infectados fora do corredor voltam pela borda da tela
+        const zq = g.others.filter((q) => q.team === 'z' && q.alive !== false);
+        let n = zq.filter((q) => P.inLane(q.x, q.y)).length;
+        for (const q of zq) { if (n >= 4) break; if (!P.inLane(q.x, q.y)) { const sd = Math.random() < 0.5 ? -1 : 1; const [x, y] = P.front(12 + Math.random() * 6, sd * (0.66 + Math.random() * 0.08), true); tp(q, x, y); n++; } }
+      };
+      // grupo junto antes do molotov
+      P.sched.push([92, (g) => { g.others.filter((q) => q.team === 'z').slice(0, 3).forEach((q, i) => { const [x, y] = P.front(12 + i * 0.8, [-0.06, 0.04, 0.12][i], true); tp(q, x, y); }); }]);
       // molotov: G (mira continua no alvo), clique, depois volta a atirar
       P.sched.push([100, () => { P.cfg.noFire = true; P.key('KeyG', true); }]);
       P.sched.push([102, () => { P.key('KeyG', false); P.cfg.pitchBias = 0.07; }]);
