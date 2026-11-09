@@ -1,5 +1,8 @@
 # Novidades — Arena Zumbi
 
+## Mira óptica transparente (08/11/2026)
+- A mira red dot agora é um tubo com vidro: dá para ver o alvo através dela, com o ponto vermelho no centro.
+
 ## Correção no co-op (08/11/2026)
 - Quem morria e renascia no co-op ficava imortal para sempre. Agora a proteção dura só 3 segundos.
 

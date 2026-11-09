@@ -1,5 +1,8 @@
 # What's new — Arena Zumbi
 
+## See-through optical sight (11/08/2026)
+- The red dot sight is now a tube with glass: you can see the target through it, with the red dot in the center.
+
 ## Co-op fix (11/08/2026)
 - Players who died and respawned in co-op stayed invincible forever. Now the protection lasts only 3 seconds.
 

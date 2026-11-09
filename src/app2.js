@@ -95,6 +95,9 @@
       glass: std({ color: 0x0c1a28, metalness: 0.2, roughness: 0.04, transparent: true, opacity: 0.88, emissive: 0x050c18, side: THREE.DoubleSide, envI: 2 }),
       lensA: std({ color: 0x3a1a5a, metalness: 0.6, roughness: 0.05, emissive: 0x100620, side: THREE.DoubleSide, envI: 2.5 }),
       dot: new THREE.MeshBasicMaterial({ color: 0xff2a20, fog: false }),
+      // vidro da mira red dot: transparente com leve reflexo azulado (dá para ver através)
+      rdGlass: std({ color: 0x9ec8e0, metalness: 0.1, roughness: 0.03, transparent: true, opacity: 0.16, depthWrite: false, side: THREE.DoubleSide, envI: 1.6 }),
+      rdDot: new THREE.MeshBasicMaterial({ color: 0xff2a20, fog: false, transparent: true, depthWrite: false }),
       white: new THREE.MeshBasicMaterial({ color: 0xf2f0e2 }),
       glove: std({ color: 0x111215, metalness: 0, roughness: 0.86, bumpMap: gunTex("cloth"), bumpScale: 0.0006, envI: 0.25 }),
       sleeve: std({ color: 0x2a3023, metalness: 0, roughness: 0.95, bumpMap: gunTex("cloth"), bumpScale: 0.0009, envI: 0.2 }),
@@ -148,9 +151,11 @@
     // mira red dot (tubo com lente, estilo T1/Aimpoint)
     const redDot = (u, v) => {
       box(0.022, 0.012, 0.03, K.park, 0, v + 0.006, u);
-      lathe([[0, 0], [0.0165, 0], [0.0175, 0.004], [0.0165, 0.008], [0.0165, 0.052], [0.0178, 0.056], [0.0165, 0.06], [0, 0.06]], K.park, v + 0.03, u - 0.03);
-      const lens = new THREE.Mesh(new THREE.CircleGeometry(0.0145, 20), K.lensA); lens.position.set(0, v + 0.03, -(u + 0.0302)); g.add(lens);
-      const d = new THREE.Mesh(new THREE.CircleGeometry(0.0012, 8), K.dot); d.position.set(0, v + 0.03, -(u + 0.028)); g.add(d);
+      // tubo oco (aberto nas pontas): olhando por ele vê-se o vidro e o alvo, não um bloco sólido
+      lathe([[0.0138, 0], [0.0165, 0], [0.0175, 0.004], [0.0165, 0.008], [0.0165, 0.052], [0.0178, 0.056], [0.0165, 0.06], [0.0138, 0.06], [0.0138, 0]], K.park, v + 0.03, u - 0.03, { seg: 28 });
+      const lens = new THREE.Mesh(new THREE.CircleGeometry(0.0139, 24), K.rdGlass); lens.position.set(0, v + 0.03, -(u + 0.0298)); lens.renderOrder = 2; g.add(lens);   // lente da frente
+      const lr = new THREE.Mesh(new THREE.CircleGeometry(0.0139, 24), K.rdGlass); lr.position.set(0, v + 0.03, -(u - 0.0295)); lr.renderOrder = 2; g.add(lr);       // lente de trás
+      const d = new THREE.Mesh(new THREE.CircleGeometry(0.0012, 10), K.rdDot); d.position.set(0, v + 0.03, -(u + 0.026)); d.renderOrder = 3; g.add(d);            // ponto vermelho
       cylY(0.0065, 0.008, K.park, 0, v + 0.05, u + 0.004); cylX(0.0065, 0.008, K.park, 0.02, v + 0.03, u + 0.004);
       return v + 0.03;
     };

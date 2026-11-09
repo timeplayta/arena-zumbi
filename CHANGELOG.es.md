@@ -1,5 +1,8 @@
 # Novedades — Arena Zumbi
 
+## Mira óptica transparente (08/11/2026)
+- La mira red dot ahora es un tubo con vidrio: se ve el objetivo a través de ella, con el punto rojo en el centro.
+
 ## Corrección en cooperativo (08/11/2026)
 - Quien moría y reaparecía en cooperativo quedaba inmortal para siempre. Ahora la protección dura solo 3 segundos.
 
