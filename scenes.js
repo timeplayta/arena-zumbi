@@ -31,9 +31,9 @@ module.exports = {
       warm(2); A.startGame(); warm(3); hide();
       const g = A.game; g.wave = 6; g.pauseT = 0; warm(2); g.bannerT = 0; g.banner = '';
       spot(6, -19, 1.047);
-      horde([[5.5, 0.1], [7, -0.35], [8, 0.4], [9.5, -0.05], [10.5, 0.55], [11, -0.6], [12.5, 0.2], [13.5, -0.25]], 80);
-      Object.assign(P.cfg, { range: 15, keepMag: 2, pulse: true, chest: true, maxTurn: 0.14 });
-      P.sched.push([120, (g) => horde([[9, 0.1], [10, -0.3], [11, 0.35], [12, -0.05]], 80)]);
+      horde([[5.5, 0.08], [7, -0.25], [8, 0.3], [9.5, -0.05], [10.5, 0.35], [11, -0.35], [12.5, 0.15], [13.5, -0.2]], 80);
+      Object.assign(P.cfg, { range: 15, keepMag: 2, pulse: true, chest: true, maxTurn: 0.14, strafe: false, maxAng: 0.9 });
+      P.sched.push([120, (g) => horde([[9, 0.1], [10, -0.2], [11, 0.25], [12, -0.05]], 80)]);
       warm(3);
     `,
   },
@@ -45,13 +45,13 @@ module.exports = {
       const g = A.game; g.wave = 9; g.pauseT = 0; warm(2); g.bannerT = 0; g.banner = '';
       g.queue = []; spot(6, -19, 1.047);
       g.giantsLeft = 1; g.toSpawn = 1; g.spawnZombie(); g.giantsLeft = 0;
-      const gi = g.zombies[g.zombies.length - 1]; P.place(gi, 13, 0.05);
-      horde([[9, -0.45], [10, 0.5]], 120); g.toSpawn = 0;
-      Object.assign(P.cfg, { range: 30, keepMag: 20 });
+      const gi = g.zombies[g.zombies.length - 1]; P.place(gi, 11, 0.05);
+      horde([[15, -0.4], [16, 0.45]], 40);
+      Object.assign(P.cfg, { range: 30, keepMag: 20, hold: 'freeze', strafe: false, maxAng: 1.0 });
       P.sched.push([140, () => { gi.hp = Math.min(gi.hp, 50); }]);
-      P.sched.push([160, (g) => { g.toSpawn = 0; const [x, y] = P.front(14, -0.2); g.spawnElite('tank', x, y); }]);
+      P.sched.push([160, (g) => { const [x, y] = P.front(13, -0.15); g.spawnElite('tank', x, y); }]);
       P.sched.push([300, (g) => { for (const z of g.zombies) if (z.kind === 'tank') z.hp = Math.min(z.hp, 40); }]);
-      P.sched.push([320, (g) => { const [x, y] = P.front(12, 0.3); g.spawnElite('samurai', x, y); }]);
+      P.sched.push([320, (g) => { const [x, y] = P.front(11, 0.25); g.spawnElite('samurai', x, y); }]);
       warm(3);
     `,
   },
@@ -74,14 +74,13 @@ module.exports = {
       // humanos (bots) ao lado do jogador
       const hs = g.others.filter((q) => q.team !== 'z');
       hs.slice(0, 3).forEach((q, i) => { const [x, y] = P.front(3 + i, [1.2, -1.1, 1.6][i]); q.x = x; q.y = y; });
-      Object.assign(P.cfg, { range: 26, strafe: false });
-      // molotov: G, mira no grupo, clique
-      P.sched.push([105, () => { P.cfg.aim = false; P.cfg.noFire = true; P.key('KeyG', true); }]);
-      P.sched.push([107, () => { P.key('KeyG', false); }]);
-      P.sched.push([110, (g) => { g.look(0, 0.1); }]);
-      P.sched.push([126, () => { P.cfg.noFire = false; P.cfg.holdFire = true; }]);
-      P.sched.push([129, () => { P.cfg.holdFire = false; }]);
-      P.sched.push([150, () => { delete P.cfg.holdFire; P.cfg.aim = true; }]);
+      Object.assign(P.cfg, { range: 26, strafe: false, maxAng: 1.0 });
+      // molotov: G (mira continua no alvo), clique, depois volta a atirar
+      P.sched.push([100, () => { P.cfg.noFire = true; P.key('KeyG', true); }]);
+      P.sched.push([102, () => { P.key('KeyG', false); P.cfg.pitchBias = 0.07; }]);
+      P.sched.push([122, () => { P.cfg.noFire = false; P.cfg.holdFire = true; }]);
+      P.sched.push([125, () => { P.cfg.holdFire = false; P.cfg.noFire = true; }]);
+      P.sched.push([185, () => { delete P.cfg.holdFire; P.cfg.noFire = false; P.cfg.pitchBias = 0; }]);
       warm(3);
     `,
   },

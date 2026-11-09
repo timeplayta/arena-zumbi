@@ -4,7 +4,7 @@
   const HEAD_Z = 1.67;
   const wrap = (a) => { while (a > Math.PI) a -= 2 * Math.PI; while (a < -Math.PI) a += 2 * Math.PI; return a; };
   const P = window.__pilot = {
-    f: 0, tgt: null, cfg: { range: 30, maxTurn: 0.11, gain: 0.32, fireTol: 0.05, keepMag: 0, strafe: true, god: true, pulse: false, pitchBias: 0 },
+    f: 0, tgt: null, cfg: { range: 30, maxTurn: 0.11, gain: 0.32, fireTol: 0.05, keepMag: 0, strafe: true, god: true, hold: true, pulse: false, pitchBias: 0 },
     sched: [],                      // [frame, fn]
     g() { return A.game; },
     key(code, down) { window.dispatchEvent(new KeyboardEvent(down ? 'keydown' : 'keyup', { code, key: code, bubbles: true })); },
@@ -20,7 +20,10 @@
         const dx = z.x - g.px, dy = z.y - g.py, d = Math.hypot(dx, dy);
         if (d > P.cfg.range || d < 0.3) continue;
         const da = Math.abs(wrap(Math.atan2(-dx, dy) - g.yaw));
-        const sc = d * 0.6 + da * 9 + (z === P.tgt ? -4 : 0);
+        if (da > (P.cfg.maxAng || 1.3)) continue;
+        const eh = g.eyeH(), hz = (z.gz || 0) + HEAD_Z * z.s * 0.9, c = g.cast(g.px, g.py, eh, dx / d, dy / d, (hz - eh) / d, null, d + 2);
+        if (c.kind === 'world' && c.t < d - 0.5) continue;           // atrás de parede: ignora
+        const sc = d * 0.6 + da * 14 + (z === P.tgt ? -4 : 0);
         if (sc < bs) { bs = sc; best = z; }
       }
       return best;
@@ -28,7 +31,8 @@
     tick() {
       const g = A.game, f = P.f;
       for (const s of P.sched) if (s[0] === f) { try { s[1](g); } catch (e) { console.log('ERR sched ' + e.message); } }
-      if (P.cfg.god && g.team !== 'z') { g.hp = g.maxHp; g.alive = true; }
+      if (P.cfg.god && g.team !== 'z') { g.hp = g.maxHp; g.alive = true; g.invulnT = 0.5; }
+      if (P.cfg.hold && g.gm !== 'infect') { g.toSpawn = Math.max(g.toSpawn, 30); if (P.cfg.hold === 'freeze') g.spawnT = 1e9; }
       const s = g.w && g.w();
       if (s && P.cfg.keepMag && s.mag < P.cfg.keepMag) s.mag = P.cfg.keepMag;
       let fire = false;
