@@ -8,17 +8,17 @@ const errors = [], log = (...a) => { const s = a.join(' '); console.log(s); fs.a
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 (async () => {
   const b = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--autoplay-policy=no-user-gesture-required'] });
-  const ctxOpt = PROFILE === 'mobile' ? { ...devices['Pixel 7'], viewport: { width: 915, height: 412 }, isMobile: true, hasTouch: true } : { viewport: { width: 1280, height: 720 } };
+  const ctxOpt = PROFILE === 'mobile' ? { ...devices['Pixel 7'], viewport: { width: 915, height: 412 }, isMobile: true, hasTouch: true } : PROFILE === 'small' ? { ...devices['Pixel 7'], viewport: { width: 740, height: 360 }, isMobile: true, hasTouch: true } : PROFILE === 'portrait' ? { ...devices['Pixel 7'], viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true } : { viewport: { width: 1280, height: 720 } };
   const ctx = await b.newContext(ctxOpt);
   await ctx.route(/workers\.dev|zpaysolution|supabase/, (r) => r.abort());      // nada de servidor de verdade
   const page = await ctx.newPage();
   page.on('pageerror', (e) => { errors.push('PAGEERROR ' + e.message + ' @ ' + (e.stack || '').split('\n').slice(1, 3).join(' | ')); log('PAGEERROR', e.message); });
   page.on('console', (m) => { if (m.type() === 'error') { const t = m.text(); if (!/net::ERR|Failed to load resource|ERR_FAILED|blocked/i.test(t)) { errors.push('CONSOLE ' + t.slice(0, 300)); log('CONSOLE', t.slice(0, 300)); } } });
-  await page.addInitScript(() => { try { localStorage.setItem('arena-zumbi-v2', JSON.stringify({ lang: 'pt' })); } catch (e) {} });
+  await page.addInitScript((touch) => { try { localStorage.setItem('arena-zumbi-v2', JSON.stringify({ lang: 'pt', touch: touch ? 'on' : 'auto' })); } catch (e) {} }, PROFILE !== 'desktop');
   await page.goto('file://' + path.resolve(HTML), { waitUntil: 'load', timeout: 120000 });
   await page.waitForFunction(() => window.__AZ, null, { timeout: 120000 });
   let shot = 0;
-  const snap = async (name) => { await sleep(400); await page.screenshot({ path: path.join(OUT, String(++shot).padStart(2, '0') + '_' + name + '.jpg'), type: 'jpeg', quality: 70, timeout: 120000 }); };
+  const snap = async (name) => { await sleep(400); const lay = await page.evaluate(() => { const out = []; const W = innerWidth, H = innerHeight; if (document.documentElement.scrollWidth > W + 2) out.push('hscroll ' + document.documentElement.scrollWidth); for (const b of document.querySelectorAll('button, .who, #hp, .ammo')) { if (!b.offsetParent) continue; const r = b.getBoundingClientRect(); if (r.width && (r.right > W + 1 || r.bottom > H + 1 || r.left < -1 || r.top < -1)) { const sc = b.closest('.overlay, .m-main, .panel, nav'); if (sc && sc.scrollHeight > sc.clientHeight + 2 && r.bottom > H) continue; out.push((b.id || b.className || b.tagName) + ' ' + [r.left, r.top, r.right, r.bottom].map(Math.round)); } } return out; }).catch(() => []); if (lay.length) { log('LAYOUT', name, JSON.stringify(lay.slice(0, 6))); errors.push('LAYOUT ' + name + ' ' + JSON.stringify(lay.slice(0, 4))); } await page.screenshot({ path: path.join(OUT, String(++shot).padStart(2, '0') + '_' + name + '.jpg'), type: 'jpeg', quality: 70, timeout: 120000 }); };
   const ev = (fn, arg) => page.evaluate(fn, arg).catch((e) => { errors.push('EVAL ' + e.message.slice(0, 200)); log('EVAL', e.message.slice(0, 200)); });
   const key = async (code, ms) => { await ev((c) => window.dispatchEvent(new KeyboardEvent('keydown', { code: c, key: c, bubbles: true })), code); await sleep(ms || 80); await ev((c) => window.dispatchEvent(new KeyboardEvent('keyup', { code: c, key: c, bubbles: true })), code); };
   const state = () => page.evaluate(() => { const A = window.__AZ, g = A.game; return { st: A.state, wave: g && g.wave, hp: g && Math.round(g.hp), alive: g && g.alive, w: g && g.w && g.w().cfg.id, mag: g && g.w && g.w().mag, z: g && g.zombies && g.zombies.length }; }).catch(() => ({}));
