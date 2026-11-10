@@ -96,6 +96,13 @@ button { font-family: inherit; color: inherit; }
 #team .down { opacity: 0.55; } #team .down s { background: var(--danger); }
 #inf { position: absolute; top: 14px; left: 50%; transform: translateX(-50%); font-family: var(--font-display); font-size: 26px; letter-spacing: 0.1em; padding: 2px 14px; background: rgba(0,0,0,0.5); border: 1px solid var(--line); white-space: nowrap; }
 #inf.z { color: #ff6a52; border-color: #8a2a20; }
+/* infectado abatido: contagem grande no centro */
+#respawn { position: absolute; left: 50%; top: 61%; transform: translate(-50%, -50%); text-align: center; pointer-events: none; z-index: 6; font-family: var(--font-display); color: #ff6a52; text-shadow: 0 4px 24px rgba(0, 0, 0, 0.85), 0 0 2px #000; }
+#respawn .rs-k { font-size: clamp(22px, 3.4vw, 34px); font-weight: 600; letter-spacing: 0.22em; color: #fff; }
+#respawn .rs-n { font-size: clamp(96px, 22vh, 190px); font-weight: 700; line-height: 0.9; font-variant-numeric: tabular-nums; }
+#respawn .rs-n.pop { animation: rsPop 0.5s ease-out; }
+#respawn .rs-n.txt { font-size: clamp(44px, 10vh, 92px); line-height: 1; margin-top: 6px; }
+@keyframes rsPop { 0% { transform: scale(1.45); opacity: 0.35; } 100% { transform: scale(1); opacity: 1; } }
 .hud.infmode .stats .stat { display: none; } .hud.infmode .wave { display: none; }
 .hud.zhud .ammo { display: none; }
 #view.zmode { filter: sepia(0.35) saturate(1.5) hue-rotate(-12deg) contrast(1.08); }
@@ -132,6 +139,7 @@ button.ghost:hover { border-color: var(--amber); color: var(--amber); }
 button:focus-visible, input:focus-visible { outline: 3px solid var(--fg); outline-offset: 2px; }
 kbd { flex: none; font-family: var(--font-display); font-size: 18px; font-weight: 600; letter-spacing: 0.04em; padding: 0 9px; min-width: 22px; text-align: center; line-height: 26px; border: 1px solid #3a4352; border-bottom-width: 3px; border-radius: 4px; background: #11151c; color: var(--fg); display: inline-block; }
 #dead h1 { color: var(--danger); }
+#dead h1.hwin { color: var(--ok); }
 .final { display: flex; flex-wrap: wrap; gap: 8px 30px; margin: 16px 0 14px; font-family: var(--font-display); font-size: 30px; letter-spacing: 0.06em; font-variant-numeric: tabular-nums; }
 .final span { color: var(--muted); font-size: 18px; display: block; letter-spacing: 0.14em; line-height: 1; }
 #newrec { color: var(--amber); font-family: var(--font-display); font-size: 28px; letter-spacing: 0.1em; margin-bottom: 10px; }
@@ -146,6 +154,18 @@ kbd { flex: none; font-family: var(--font-display); font-size: 18px; font-weight
   #dead .lead { margin: 4px 0 8px; font-size: 14px; }
   #dead button.play, #pause button.play { font-size: 24px; padding: 5px 24px 3px; } #dead button.ghost, #pause button.ghost { font-size: 19px; }
 }
+
+/* ---------- tela de carregamento (monta armas, faca, poções e mapa e compila os gráficos antes do menu) ---------- */
+#boot { position: fixed; inset: 0; z-index: 9999; display: grid; place-items: center; background: radial-gradient(ellipse at 50% 40%, #141a24, var(--bg) 70%); color: var(--fg); padding: 16px; transition: opacity 0.35s; }
+#boot.out { opacity: 0; pointer-events: none; }
+#boot .boot-in { width: min(460px, 100%); }
+#boot .boot-k { font-family: var(--font-display); font-size: 17px; letter-spacing: 0.22em; color: var(--muted); text-transform: uppercase; }
+#boot h1 { font-size: clamp(54px, 13vw, 96px); margin: 4px 0 22px; } #boot h1 span { color: var(--danger); }
+#boot .boot-bar { height: 8px; background: #1c2330; border: 1px solid var(--line); overflow: hidden; }
+#boot .boot-bar i { display: block; height: 100%; width: 0; background: var(--amber); transition: width 0.25s; }
+#boot .boot-row { display: flex; justify-content: space-between; gap: 12px; margin-top: 10px; font-size: 15px; color: #cfd6e0; }
+#boot .boot-row b { font-family: var(--font-display); font-size: 20px; letter-spacing: 0.06em; color: var(--amber); font-variant-numeric: tabular-nums; }
+@media (max-height: 420px) { #boot h1 { font-size: 48px; margin-bottom: 14px; } }
 
 /* ---------- menu ---------- */
 #menu { position: absolute; inset: 0; display: grid; grid-template-columns: minmax(190px, 270px) minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) auto; gap: 0 32px;
@@ -459,6 +479,14 @@ table.sc td:first-child { font-family: var(--font-display); font-size: 22px; col
 .langs button.on { color: var(--amber); border-color: var(--amber); }
 </style>
 
+<div id="boot" role="status" aria-live="polite">
+  <div class="boot-in">
+    <div class="boot-k">Tiro em primeira pessoa · 3D</div>
+    <h1 translate="no">Arena <span>Zumbi</span></h1>
+    <div class="boot-bar"><i id="bootBar"></i></div>
+    <div class="boot-row"><span id="bootMsg">Carregando…</span><b id="bootPct" translate="no">0%</b></div>
+  </div>
+</div>
 <div id="stage">
   <canvas id="view"></canvas>
   <div id="fx-vig"></div>
@@ -492,6 +520,7 @@ table.sc td:first-child { font-family: var(--font-display); font-size: 22px; col
     <div id="feed"></div>
     <div id="team"></div>
     <div id="inf" hidden></div>
+    <div id="respawn" hidden><div class="rs-k" id="respawnK">VOCÊ VOLTA EM</div><div class="rs-n" id="respawnN">5</div></div>
     <div id="banner"><div class="big" id="bannerBig"></div><div class="sub" id="bannerSub"></div></div>
     <div id="msg"></div>
     <div id="boss" hidden><div class="bname" id="bossName">GIGANTE</div><div class="bbar"><div id="bossfill"></div></div></div>
@@ -729,8 +758,8 @@ table.sc td:first-child { font-family: var(--font-display); font-size: 22px; col
 
   <div class="overlay" id="dead" hidden>
     <div class="card">
-      <div class="kicker">Fim de jogo</div>
-      <h1>Você morreu</h1>
+      <div class="kicker" id="deadKick">Fim de jogo</div>
+      <h1 id="deadTitle">Você morreu</h1>
       <div class="final">
         <div><span>ONDA</span><b id="fWave">0</b></div><div><span>PONTOS</span><b id="fScore">0</b></div>
         <div><span>ABATES</span><b id="fKills">0</b></div><div><span>HEADSHOTS</span><b id="fHead">0</b></div>
@@ -929,7 +958,7 @@ table.sc td:first-child { font-family: var(--font-display); font-size: 22px; col
       // ---------- atualização, pausa, fim de jogo ----------
       "Jogo atualizado!": ["Game updated!", "¡Juego actualizado!"], "Nova versão disponível": ["New version available", "Nueva versión disponible"], "Atualizar agora": ["Update now", "Actualizar ahora"], "OK": ["OK", "OK"],
       "Jogo pausado": ["Game paused", "Juego en pausa"], "Pausa": ["Paused", "Pausa"], "Clique para voltar à arena.": ["Click to return to the arena.", "Haz clic para volver a la arena."], "Continuar": ["Continue", "Continuar"], "Menu principal": ["Main menu", "Menú principal"],
-      "Fim de jogo": ["Game over", "Fin del juego"], "Você morreu": ["You died", "Has muerto"], "ONDA": ["WAVE", "OLEADA"], "PONTOS": ["SCORE", "PUNTOS"], "ABATES": ["KILLS", "BAJAS"], "HEADSHOTS": ["HEADSHOTS", "HEADSHOTS"],
+      "Fim de jogo": ["Game over", "Fin del juego"], "Carregando…": ["Loading…", "Cargando…"], "Preparando as armas…": ["Preparing the guns…", "Preparando las armas…"], "Preparando a faca e as poções…": ["Preparing the knife and potions…", "Preparando el cuchillo y las pociones…"], "Montando a vila italiana…": ["Building the Italian village…", "Montando el pueblo italiano…"], "Compilando os gráficos…": ["Compiling the graphics…", "Compilando los gráficos…"], "Pronto!": ["Ready!", "¡Listo!"], "Fim da Infecção": ["Infection over", "Fin de la Infección"], "PARTIDA ENCERRADA": ["MATCH OVER", "PARTIDA TERMINADA"], "Você morreu": ["You died", "Has muerto"], "ONDA": ["WAVE", "OLEADA"], "PONTOS": ["SCORE", "PUNTOS"], "ABATES": ["KILLS", "BAJAS"], "HEADSHOTS": ["HEADSHOTS", "HEADSHOTS"],
       "PRECISÃO": ["ACCURACY", "PRECISIÓN"], "TEMPO": ["TIME", "TIEMPO"], "MOEDAS GANHAS": ["COINS EARNED", "MONEDAS GANADAS"], "Novo recorde!": ["New high score!", "¡Nuevo récord!"], "ou": ["or", "o"], "para recomeçar.": ["to restart.", "para reiniciar."],
       // ---------- HUD ----------
       "Zumbis": ["Zombies", "Zombis"], "Moedas": ["Coins", "Monedas"], "VIDA": ["HEALTH", "VIDA"], "AUTO": ["AUTO", "AUTO"], "GIGANTE": ["GIANT", "GIGANTE"],
@@ -945,7 +974,7 @@ table.sc td:first-child { font-family: var(--font-display); font-size: 22px; col
       "HUMANOS VENCERAM": ["HUMANS WIN", "GANAN LOS HUMANOS"], "ZUMBIS VENCERAM": ["ZOMBIES WIN", "GANAN LOS ZOMBIS"], "Sobreviveram até o fim": ["They survived to the end", "Sobrevivieron hasta el final"], "Ninguém escapou": ["Nobody escaped", "Nadie escapó"],
       "Corra e se espalhe!": ["Run and spread out!", "¡Corre y dispérsate!"], "A INFECÇÃO COMEÇOU": ["THE INFECTION HAS STARTED", "LA INFECCIÓN COMENZÓ"], "Fuja dos zumbis por 3 minutos": ["Escape the zombies for 3 minutes", "Huye de los zombis durante 3 minutos"],
       "Crie uma sala na aba Online para jogar Infecção": ["Create a room in the Online tab to play Infection", "Crea una sala en la pestaña En línea para jugar Infección"],
-      "JOGADOR SAIU": ["PLAYER LEFT", "JUGADOR SALIÓ"], "VOCÊ É ZUMBI": ["YOU ARE A ZOMBIE", "ERES ZOMBI"], "Jogador": ["Player", "Jugador"],
+      "JOGADOR SAIU": ["PLAYER LEFT", "JUGADOR SALIÓ"], "VOCÊ É ZUMBI": ["YOU ARE A ZOMBIE", "ERES ZOMBI"], "VOCÊ VOLTA EM": ["BACK IN", "VUELVES EN"], "VOCÊ VOLTA": ["YOU RESPAWN", "VUELVES"], "NA PRÓXIMA ONDA": ["NEXT WAVE", "EN LA PRÓXIMA OLEADA"], "Jogador": ["Player", "Jugador"],
       "ARMADURA DESTRUÍDA": ["ARMOR DESTROYED", "ARMADURA DESTRUIDA"], "VIDA CHEIA": ["FULL HEALTH", "VIDA LLENA"], "VOCÊ CAIU - RENASCE NA PRÓXIMA ONDA": ["YOU'RE DOWN - RESPAWN NEXT WAVE", "HAS CAÍDO - REAPARECES EN LA PRÓXIMA OLEADA"], "VOCÊ VOLTOU": ["YOU'RE BACK", "HAS VUELTO"],
       "SEM POÇÕES NESTA PARTIDA": ["NO POTIONS THIS MATCH", "SIN POCIONES EN ESTA PARTIDA"], "TIRO AUTOMÁTICO LIGADO": ["AUTO-FIRE ON", "DISPARO AUTOMÁTICO ACTIVADO"], "TIRO AUTOMÁTICO DESLIGADO": ["AUTO-FIRE OFF", "DISPARO AUTOMÁTICO DESACTIVADO"],
       "VELOCIDADE +40% POR 8 s": ["SPEED +40% FOR 8 s", "VELOCIDAD +40% DURANTE 8 s"], "VIDA RECUPERADA": ["HEALTH RESTORED", "VIDA RECUPERADA"],
@@ -964,6 +993,7 @@ table.sc td:first-child { font-family: var(--font-display); font-size: 22px; col
       [/^próxima onda em (\d+)$/, "next wave in $1", "próxima oleada en $1"],
       [/^INFECÇÃO EM (\d+)$/, "INFECTION IN $1", "INFECCIÓN EN $1"],
       [/^VOCÊ VOLTA EM (\d+)$/, "BACK IN $1", "VUELVES EN $1"],
+      [/^HUMANOS (\d+)$/, "HUMANS $1", "HUMANOS $1"], [/^ZUMBIS (\d+)$/, "ZOMBIES $1", "ZOMBIS $1"], [/^VELOCIDADE (\d+) s$/, "SPEED $1 s", "VELOCIDAD $1 s"],
       [/^VOCÊ É ZUMBI · (.+)$/, (m, t) => "YOU ARE A ZOMBIE · " + t(m[1]), (m, t) => "ERES ZOMBI · " + t(m[1])],
       [/^(.+) É O PRIMEIRO ZUMBI(!?)$/, (m, t) => t(m[1]) + " IS THE FIRST ZOMBIE" + m[2], (m, t) => (m[1] === "VOCÊ" ? "ERES EL PRIMER ZOMBI" : t(m[1]) + " ES EL PRIMER ZOMBI") + m[2]],
       [/^(.+) VIROU ZUMBI(!?)$/, (m, t) => (m[1] === "VOCÊ" ? "YOU TURNED INTO A ZOMBIE" : t(m[1]) + " TURNED INTO A ZOMBIE") + m[2], (m, t) => (m[1] === "VOCÊ" ? "TE CONVERTISTE EN ZOMBI" : t(m[1]) + " SE CONVIRTIÓ EN ZOMBI") + m[2]],
@@ -3227,7 +3257,7 @@ const Logic = (function () {
           else { let gain = 0; this.slots.forEach((s, i) => { const b = s.reserve; s.reserve = Math.min(s.cfg.maxRes * (1 + this.perks.ammoPack), s.reserve + Math.round(s.cfg.ammoPick * (i === this.cur ? 1 : 0.5))); if (i === this.cur) gain = s.reserve - b; }); this.events.push(["pickup", "ammo", gain]); }
           break;
         case "clearbonus": for (const s of this.slots) s.reserve = Math.min(s.cfg.maxRes * (1 + this.perks.ammoPack), s.reserve + Math.round(s.cfg.ammoPick * 1.5 * this.diff.ammo)); break;
-        case "down": this.events.push(["dead"]); this.banner = "VOCÊ CAIU"; this.bannerSub = "Renasce na próxima onda"; this.bannerT = 4; break;
+        case "down": this.events.push(["dead"]); break;                       // aviso no centro da tela (znet: "Você volta na próxima onda")
         case "respawn": this.px = ev[1]; this.py = ev[2]; this.kvx = this.kvy = 0; this.invulnT = 3; this.banner = "DE VOLTA!"; this.bannerSub = "Você renasceu"; this.bannerT = 3;
           for (const s of this.slots) s.reserve = Math.max(s.reserve, Math.round(s.cfg.reserve * this.diff.ammo * 0.5)); break;
       }
@@ -5039,7 +5069,7 @@ const Logic = (function () {
   // clarão, luz do tiro e faca (vivem na câmera)
   const gunRoot = new THREE.Group();
   // braços e armas foram montados para FOV 90 em tela 16:9; vmFov comprime X/Y para a imagem ficar igual em qualquer FOV/resolução (sem mostrar o corte dos braços)
-  const vmFov = new THREE.Group(); camera.add(vmFov);
+  const vmFov = new THREE.Group(); vmFov.matrixAutoUpdate = false; camera.add(vmFov);
   vmFov.add(gunRoot);
   let vm = null, vmKey = "";
   const flashSprite = (function () {
@@ -5053,7 +5083,7 @@ const Logic = (function () {
     sp.visible = false;
     return sp;
   })();
-  const flashLight = new THREE.PointLight(0xffb060, 0, 9, 2);
+  const flashLight = new THREE.PointLight(0xffb060, 0, 9, 2); flashLight.position.set(0.2, -0.1, -0.9); camera.add(flashLight);   // fica sempre na cena: esconder a arma não muda a contagem de luzes (senão tudo recompila e trava)
   const knife = new THREE.Group();
   let knifeRig = null;
   const meleeSets = {};
@@ -5089,13 +5119,23 @@ const Logic = (function () {
   })();
   function setMeleeModel(id) { for (const k in meleeSets) meleeSets[k].visible = k === id; }
 
+  const vmCache = new Map();                                     // armas já montadas (trocar de arma não monta o modelo de novo)
+  function viewGun(c) {
+    const key = [c.id, S.camo, c.hasSil, c.hasExt, c.hasOptic, c.hasGrip].join("|");
+    let m = vmCache.get(key);
+    if (!m) {
+      if (vmCache.size > 24) { for (const [k, o] of vmCache) if (o !== vm) { gunRoot.remove(o.group); vmCache.delete(k); } }
+      m = buildGun(c.id, S.camo, { sil: c.hasSil, ext: c.hasExt, optic: c.hasOptic, grip: c.hasGrip }, true);
+      m.group.visible = false; gunRoot.add(m.group); vmCache.set(key, m);
+    }
+    return { m, key };
+  }
   function setViewGun(slot) {
-    const c = slot.cfg, key = [c.id, S.camo, c.hasSil, c.hasExt, c.hasOptic, c.hasGrip].join("|");
-    if (key === vmKey) return;
+    const { m, key } = viewGun(slot.cfg);
+    if (key === vmKey && m === vm) return;
     vmKey = key;
-    if (vm) { gunRoot.remove(vm.group); vm.muzzle.remove(flashSprite); vm.muzzle.remove(flashLight); }
-    vm = buildGun(c.id, S.camo, { sil: c.hasSil, ext: c.hasExt, optic: c.hasOptic, grip: c.hasGrip }, true);
-    gunRoot.add(vm.group); vm.muzzle.add(flashSprite); vm.muzzle.add(flashLight);
+    if (vm) { vm.group.visible = false; vm.muzzle.remove(flashSprite); }
+    vm = m; vm.group.visible = true; vm.muzzle.add(flashSprite);
   }
   // ======================================================================
   //  ROSTO, CABELO E FERIMENTOS DOS ZUMBIS
@@ -8894,7 +8934,7 @@ const Logic = (function () {
     if (!S.lang) S.lang = I18N.get(); opts("optLang", "lang", LANGS);
     syncRanges(); syncToggles();
   }
-  function fmtTime(s) { s = Math.floor(s); return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0"); }
+  function fmtTime(s) { s = Math.max(0, Math.floor(s || 0)); return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0"); }
   function renderScores() {
     const a = loadScores();
     $("scoreBox").innerHTML = a.length
@@ -9663,22 +9703,36 @@ const Logic = (function () {
       clearAllies();
     }
     // ---------------- HUD do time ----------------
-    let teamKey = "", infKey = "";
+    let teamKey = "", infKey = "", rsKey = 0;
     function infHud(g) {
       const e = $("inf"); if (!e) return;
       const on = g.gm === "infect" && !!g.inf;
       $("hud").classList.toggle("infmode", on);
-      let t = "";
+      let t = "", cd = 0;
       if (on) {
         const I = g.inf, mm = Math.floor(Math.max(0, I.t) / 60), ss = String(Math.max(0, Math.ceil(I.t)) % 60).padStart(2, "0");
         t = I.ph === "play" ? "HUMANOS " + I.hu + " · ZUMBIS " + I.zo + " · " + mm + ":" + ss : I.ph === "end" ? (I.win === "h" ? "HUMANOS VENCERAM" : "ZUMBIS VENCERAM") : "PREPARE-SE";
-        if (g.team === "z" && !g.alive && I.ph === "play") {           // infectado abatido: contagem para voltar
+        if (g.team === "z") t = "VOCÊ É ZUMBI · " + t;
+        if (g.team === "z" && !g.alive && I.ph === "play") {           // infectado abatido: contagem grande no centro
           if (!g._zDownAt) g._zDownAt = g.time;
-          t = "VOCÊ VOLTA EM " + Math.max(1, Math.ceil(Logic.C.ZOMBIE_RESPAWN - (g.time - g._zDownAt)));
-        } else { g._zDownAt = 0; if (g.team === "z") t = "VOCÊ É ZUMBI · " + t; }
+          cd = Math.max(1, Math.ceil(Logic.C.ZOMBIE_RESPAWN - (g.time - g._zDownAt)));
+        } else g._zDownAt = 0;
         if (g.boostT > 0) t += " · VELOCIDADE " + Math.ceil(g.boostT) + " s";
       }
       if (t !== infKey) { infKey = t; e.textContent = t; e.hidden = !t; e.classList.toggle("z", g.team === "z"); }
+      const down = !on && !!g.coop && !g.alive && active() && !ended();   // co-op: caído até a próxima onda
+      const rk = cd || (down ? "onda" : 0);
+      if (rk !== rsKey) {
+        rsKey = rk; const r = $("respawn"), n = $("respawnN"), k = $("respawnK");
+        if (r) {
+          r.hidden = !rk;
+          if (rk) {
+            k.textContent = cd ? "VOCÊ VOLTA EM" : "VOCÊ VOLTA";
+            n.textContent = cd ? String(cd) : "NA PRÓXIMA ONDA"; n.classList.toggle("txt", !cd);
+            n.classList.remove("pop"); void n.offsetWidth; n.classList.add("pop");
+          }
+        }
+      }
     }
     function hud(g) {
       const e = $("team"); if (!e) return;
@@ -9832,9 +9886,13 @@ const Logic = (function () {
       return { root, pool, wall, parts, light, fire, dur: a.t, r: a.r };
     }
     let warmed = false;
-    function warm() {                                              // compila os materiais das poções no começo da partida (sem travar no 1º arremesso)
+    function ensureLights() {                                      // luzes do fogo/cura: sempre na cena (a contagem de luzes não muda e nada recompila)
+      if (!LT.length) LT = [0, 1].map(() => { const l = new THREE.PointLight(0xff6a1a, 0, 9, 2); scene.add(l); return { l, used: false }; });
+    }
+    function warm() {                                              // compila os materiais das poções antes de usar (sem travar no 1º arremesso)
+      if (warmed) return;
       warmed = true;
-      LT = [0, 1].map(() => { const l = new THREE.PointLight(0xff6a1a, 0, 9, 2); scene.add(l); return { l, used: false }; });   // entram junto com a partida
+      ensureLights();
       const tmp = [bottle("fire"), bottle("heal")], ar = [areaView({ k: "fire", x: 0, y: 0, z: -50, r: 3, t: 1 }), areaView({ k: "heal", x: 0, y: 0, z: -50, r: 3.5, t: 1 })];
       try { renderer.compile(scene, camera); } catch (e) {}
       for (const o of tmp) scene.remove(o);
@@ -9875,7 +9933,7 @@ const Logic = (function () {
       for (let i = 0, n = Math.round(10 * fxK()) + 4; i < n; i++) fxSpark.emit(x, z + 0.2, -y, (Math.random() - 0.5) * 5, 1 + Math.random() * 3, (Math.random() - 0.5) * 5, 0.35 + Math.random() * 0.4, 1);
     }
     function clear() { for (const v of potV.values()) scene.remove(v); potV.clear(); for (const v of areaV.values()) scene.remove(v.root); areaV.clear(); for (const q of LT) { q.used = false; q.l.intensity = 0; } }
-    return { sync, burst, clear, gsGeom, flameTex, worldModels, vmShade };
+    return { sync, burst, clear, gsGeom, flameTex, worldModels, vmShade, warm, ensureLights };
   })();
   // ---------- primeira pessoa: mãos acendendo e arremessando (molotov ou garrafa de cura) ----------
   const PotVM = (() => {
@@ -9948,7 +10006,7 @@ const Logic = (function () {
       flame.visible = kind === "fire" && phase === "pullpin" && t > IGNITE;
       if (flame.visible) { const f = 0.8 + 0.3 * Math.sin(g.time * 33) + 0.1 * Math.sin(g.time * 71); flame.scale.set(2.6 * f, 4.4 * f, 1); }
     }
-    return { start, fire, update, stop, busy: () => act, holding, kind: () => kind };
+    return { start, fire, update, stop, busy: () => act, holding, kind: () => kind, prebuild: ensure };
   })();
   // ---------- faca M9 Bayonet em primeira pessoa (modelo de CS 1.6) ----------
   const KnifeVM = (() => {
@@ -9990,8 +10048,23 @@ const Logic = (function () {
       if (!act) V.pose("idle", (g.time * 0.6) % V.dur("idle"));
       return true;
     }
-    return { update };
+    function prebuild() { if (!V) { V = build(); fovG = new THREE.Group(); fovG.add(V.root); fovG.visible = false; camera.add(fovG); } }
+    return { update, prebuild };
   })();
+  // deixa faca e poções prontas antes de usar: monta os modelos no menu e compila/sobe as texturas no começo da partida
+  // (sem isso, a 1ª vez que puxa a faca, a cura ou o fogo trava a tela por alguns segundos em PC fraco e celular)
+  const upTex = new WeakSet();
+  function warmVM(gm) {
+    try { PotFX.ensureLights(); KnifeVM.prebuild(); PotVM.prebuild(); if (gm === "infect") PotFX.warm(); } catch (e) {}
+    const tv = torch.visible, gv = gunRoot.visible;
+    try { gunRoot.visible = true; for (const on of [false, true]) { torch.visible = on; renderer.compile(scene, camera); } } catch (e) {}
+    torch.visible = tv; gunRoot.visible = gv;
+    try {
+      scene.traverse((o) => { const m = o.material; if (!m) return; for (const x of Array.isArray(m) ? m : [m]) if (x.map && !upTex.has(x.map)) { upTex.add(x.map); renderer.initTexture(x.map); } });
+      if (PotFX.flameTex && !upTex.has(PotFX.flameTex)) { upTex.add(PotFX.flameTex); renderer.initTexture(PotFX.flameTex); }
+    } catch (e) {}
+  }
+
 
   // ======================================================================
   //  JOGO: estado, entrada, animação, HUD e laço principal
@@ -10149,6 +10222,7 @@ const Logic = (function () {
     $("hud").querySelector(".radar-box").hidden = !S.radar;
     applyCrosshair();
     state = "run"; applyEnv();
+    warmVM(game.gm);                                                // faca/poções prontas: não trava na 1ª vez que puxa
     last = performance.now(); mouseDown = false; adsHeld = false;
     resetTouch(); applyTouchUI();
     $("hint").textContent = touchOn() ? TOUCH_HINT : keyHint();
@@ -10178,6 +10252,12 @@ const Logic = (function () {
     resetTouch(); applyTouchUI();
     try { document.exitPointerLock(); } catch (e) {}
     const g = game, acc = g.shots ? Math.round((100 * g.hits) / g.shots) : 0;
+    {                                                            // Infecção: o título mostra quem venceu
+      const inf = g.gm === "infect" && !!g.inf, w = inf ? g.inf.win : "", hw = w === "h";
+      $("deadKick").textContent = inf ? "Fim da Infecção" : "Fim de jogo";
+      $("deadTitle").textContent = inf ? (w === "h" ? "HUMANOS VENCERAM" : w === "z" ? "ZUMBIS VENCERAM" : "PARTIDA ENCERRADA") : "Você morreu";
+      $("deadTitle").classList.toggle("hwin", !!hw);
+    }
     $("fWave").textContent = g.wave; $("fScore").textContent = g.score; $("fKills").textContent = g.kills;
     $("fHead").textContent = g.headshots; $("fAcc").textContent = acc + "%"; $("fTime").textContent = fmtTime(g.time);
     const top = g.score > 0 ? saveScore({ name: S.name || "Sobrevivente", score: g.score, wave: g.wave, kills: g.kills, diff: DIFF[S.diff].name, date: Date.now() }) : false;
@@ -10592,6 +10672,7 @@ const Logic = (function () {
     if (g.flashT > 0) {
       const s = c.flash * (0.8 + Math.random() * 0.6) * (1 - 0.6 * a);       // mirando: clarão menor para não tapar o alvo
       flashSprite.scale.set(s, s, 1); flashSprite.material.rotation = Math.random() * 6; flashSprite.visible = true; flashLight.intensity = 4 * (1 - 0.7 * a);
+      if (vm) { vm.muzzle.getWorldPosition(flashLight.position); camera.worldToLocal(flashLight.position); }
     } else { flashSprite.visible = false; flashLight.intensity = 0; }
     $("scope").style.opacity = c.scope ? String(clamp((a - 0.8) * 5, 0, 1)) : "0";
     $("cross").classList.toggle("scoped", !!c.scope && a > 0.8);
@@ -10930,7 +11011,12 @@ const Logic = (function () {
     } else if (state === "dead") {
       game.update(dt, {}); processEvents(); syncGame(dt); updateHud(dt); updateWeather(dt);
     } else if (state === "menu") menuTick(dt);
-    { const k = Math.tan((S.fov * Math.PI) / 360) / camera.aspect / 0.5625; vmFov.scale.set(k, k, 1); }   // 0,5625 = tan(45°)/(16/9): FOV 90 em 16:9
+    {                                                            // braços/arma iguais aos de FOV 90 em 16:9 (0,5625 = tan(45°)/(16/9))
+      const th = Math.tan((S.fov * Math.PI) / 360), T = th / camera.aspect;
+      if (camera.aspect >= 16 / 9 - 1e-3) { const k = T / 0.5625; vmFov.matrix.set(k, 0, 0, 0, 0, k, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1); }
+      else { const r = Math.min(1.35, 1 / camera.aspect / 0.5625), k = th * r, sx = th * (r - 1) * 0.8, cz = T - 0.5625 * k; vmFov.matrix.set(k, 0, sx, 0, 0, k, cz, 0, 0, 0, 1, 0, 0, 0, 0, 1); }   // tela mais estreita (celular em pé, 4:3): cabe na largura e encosta embaixo
+      vmFov.matrixWorldNeedsUpdate = true;
+    }
     renderer.render(scene, camera);
     if (state === "menu" && ui.tab === "arsenal" && pvRenderer) { pvPivot.rotation.y += dt * 0.7; pvRenderer.render(pvScene, pvCam); }
   }
@@ -10982,6 +11068,31 @@ const Logic = (function () {
   menuGame = makeMenuGame();
   resize(); applyQuality(); applyEnv(); applySound(); applyTouchUI(); $("fps").hidden = !S.showFps; renderAll(); showTab("mission");
   requestAnimationFrame(frame);
+
+  // ---------------- tela de carregamento ----------------
+  // monta tudo e compila os gráficos antes do menu: nada trava na hora de puxar a faca, a cura, o fogo, a lanterna ou trocar de arma
+  (async function bootPreload() {
+    const boot = $("boot"); if (!boot) return;
+    let done = false;
+    const finish = () => { if (done) return; done = true; boot.classList.add("out"); setTimeout(() => { boot.hidden = true; }, 400); };
+    setTimeout(finish, 45000);                                       // nunca prende o jogador no carregamento
+    const steps = [
+      ["Preparando as armas", () => { for (const id of WEAPON_ORDER) viewGun(L.buildSlot({ id, a: Object.assign({}, attOf(id)) }).cfg); setViewGun(L.buildSlot(loadoutSel()[0])); }],
+      ["Preparando a faca e as poções", () => { PotFX.ensureLights(); KnifeVM.prebuild(); PotVM.prebuild(); }],
+      ["Montando a vila italiana", () => { ensureItalia(); }],
+      ["Compilando os gráficos", () => { useMap("italia"); warmVM("infect"); renderer.render(scene, camera); }],
+      ["Compilando os gráficos", () => { useMap("arena"); warmVM("arena"); renderer.render(scene, camera); }],
+    ];
+    const wait = () => new Promise((r) => setTimeout(r, 40));
+    for (let i = 0; i < steps.length; i++) {
+      const pc = Math.round((i / steps.length) * 100) + "%";
+      $("bootMsg").textContent = steps[i][0] + "…"; $("bootPct").textContent = pc; $("bootBar").style.width = pc;
+      await wait();
+      try { steps[i][1](); } catch (e) { console.warn("preload", steps[i][0], e); }
+    }
+    $("bootPct").textContent = "100%"; $("bootBar").style.width = "100%"; $("bootMsg").textContent = "Pronto!";
+    await wait(); finish();
+  })();
 window.__AZ = { get game() { return game; }, get state() { return state; }, startGame, keys, setMouse(v) { mouseDown = v; }, setAds(v) { adsHeld = v; }, camera, S, KB, L, saveSettings, wallet, Coop };
 })();
 </script>
