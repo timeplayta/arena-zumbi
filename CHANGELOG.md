@@ -1,5 +1,9 @@
 # Novidades — Arena Zumbi
 
+## Trailer oficial (11/11/2026)
+- Saiu o trailer oficial do Arena Zumbi no YouTube!
+- Na aba Missão, toque no card do trailer para assistir. O vídeo abre no seu idioma.
+
 ## Infecção: infectado nas escadas (10/11/2026)
 - O infectado jogado por outro jogador não fica mais travado no céu nem andando parado ao subir as escadas e terraços da vila.
 - Os humanos agora veem o infectado na posição certa, em cima das escadas e terraços.

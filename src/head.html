@@ -185,6 +185,22 @@ kbd { flex: none; font-family: var(--font-display); font-size: 18px; font-weight
 .sec { background: var(--surface); border: 1px solid var(--line); padding: 16px 18px; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
 .sec h3 { margin: 0; font-family: var(--font-display); font-size: 20px; font-weight: 600; letter-spacing: 0.18em; color: var(--muted); text-transform: uppercase; }
 .sec p { margin: 0; font-size: 15px; line-height: 1.5; color: #cfd6e0; max-width: 70ch; }
+/* trailer no YouTube (aba Missão) */
+.trailer { display: grid; grid-template-columns: minmax(120px, 210px) minmax(0, 1fr); gap: 16px; align-items: center; padding: 10px; background: var(--surface); border: 1px solid var(--line); border-left: 3px solid var(--danger); text-align: left; color: var(--fg); min-width: 0; }
+.trailer[hidden] { display: none; }
+.trailer.live { cursor: pointer; } .trailer.live:hover, .trailer.live:focus-visible { border-color: var(--danger); background: rgba(255, 74, 61, 0.08); outline: none; }
+.tr-thumb { position: relative; aspect-ratio: 16 / 9; background: #111 center / cover no-repeat; overflow: hidden; }
+.tr-thumb::after { content: ""; position: absolute; inset: 0; background: radial-gradient(circle at 50% 50%, transparent 30%, rgba(0, 0, 0, 0.55)); }
+.tr-play { position: absolute; left: 50%; top: 50%; width: 46px; height: 32px; margin: -16px 0 0 -23px; border-radius: 8px; background: #ff0033; z-index: 1; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5); transition: transform 0.15s; }
+.tr-play::before { content: ""; position: absolute; left: 18px; top: 9px; border-style: solid; border-width: 7px 0 7px 12px; border-color: transparent transparent transparent #fff; }
+.trailer.live:hover .tr-play { transform: scale(1.1); }
+.tr-dur { position: absolute; right: 4px; bottom: 4px; z-index: 1; padding: 0 4px; background: rgba(0, 0, 0, 0.8); font-size: 12px; font-weight: 600; }
+.tr-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.tr-kick { font-family: var(--font-display); font-size: 17px; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: var(--danger); }
+.tr-title { font-family: var(--font-display); font-size: 26px; font-weight: 600; letter-spacing: 0.03em; line-height: 1.05; }
+.tr-sub { font-size: 14px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.trailer.live .tr-sub { color: var(--fg); font-weight: 600; }
+@media (max-height: 520px), (max-width: 640px) { .trailer { grid-template-columns: 112px minmax(0, 1fr); gap: 10px; padding: 6px; } .tr-title { font-size: 19px; } .tr-kick { font-size: 14px; } .tr-sub { font-size: 12px; } .tr-play { transform: scale(0.75); } .tr-dur { display: none; } }
 .opts { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; }
 .opt, .wcard, .chip, .tab { text-align: left; background: var(--surface-2); border: 1px solid var(--line); padding: 10px 12px; cursor: pointer; display: flex; flex-direction: column; gap: 2px; min-width: 0; border-radius: 2px; }
 .opt b, .wcard b, .chip b, .tab b { font-family: var(--font-display); font-size: 24px; font-weight: 600; letter-spacing: 0.06em; line-height: 1.05; text-transform: uppercase; }
@@ -552,6 +568,10 @@ table.sc td:first-child { font-family: var(--font-display); font-size: 22px; col
     <div class="m-main">
       <section class="panel" data-panel="mission">
         <h2>Missão</h2>
+        <div class="trailer" id="trailer" role="button" tabindex="0" hidden>
+          <span class="tr-thumb" id="trailerThumb"><span class="tr-play" aria-hidden="true"></span><span class="tr-dur" translate="no">1:00</span></span>
+          <span class="tr-info"><span class="tr-kick" id="trailerKick">Novo trailer</span><b class="tr-title">Arena Zumbi — Trailer oficial</b><span class="tr-sub" id="trailerSub" translate="no"></span></span>
+        </div>
         <div class="sec"><h3>Sobrevivente</h3>
           <div class="field"><label for="pname">Nome no placar de recordes (o da sua conta)</label><input type="text" id="pname" maxlength="14" autocomplete="off" readonly></div>
         </div>

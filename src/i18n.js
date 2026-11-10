@@ -67,6 +67,7 @@
       "Na loja · ver": ["In the store · view", "En la tienda · ver"], "Cadência": ["Fire rate", "Cadencia"], "Alcance útil": ["Effective range", "Alcance útil"], "Controle": ["Control", "Control"], "Precisão": ["Accuracy", "Precisión"], "Mobilidade": ["Mobility", "Movilidad"],
       // ---------- loja ----------
       "Suas moedas": ["Your coins", "Tus monedas"], "Comprar moedas": ["Buy coins", "Comprar monedas"],
+      "Novo trailer": ["New trailer", "Nuevo tráiler"], "Estreia do trailer": ["Trailer premiere", "Estreno del tráiler"], "Arena Zumbi — Trailer oficial": ["Arena Zumbi — Official trailer", "Arena Zumbi — Tráiler oficial"],
       "Você ganha moedas em toda partida: abates, ondas vencidas, headshots e zumbis especiais. Dificuldades mais altas pagam mais. Tudo que você compra fica salvo na sua conta.": ["You earn coins every match: kills, waves cleared, headshots and special zombies. Higher difficulties pay more. Everything you buy is saved to your account.", "Ganas monedas en cada partida: bajas, oleadas superadas, headshots y zombis especiales. Las dificultades más altas pagan más. Todo lo que compras se guarda en tu cuenta."],
       "Melhorias permanentes": ["Permanent upgrades", "Mejoras permanentes"], "Itens de uma partida": ["One-match items", "Objetos de una partida"], "Armas de fogo": ["Firearms", "Armas de fuego"],
       "Armas brancas (tecla 3 pega a faca)": ["Melee weapons (key 3 draws the knife)", "Armas blancas (la tecla 3 saca el cuchillo)"], "Acabamentos de arma": ["Weapon finishes", "Acabados de arma"],

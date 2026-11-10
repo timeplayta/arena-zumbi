@@ -1,5 +1,9 @@
 # Novedades — Arena Zumbi
 
+## Tráiler oficial (11/11/2026)
+- ¡Salió el tráiler oficial de Arena Zumbi en YouTube!
+- En la pestaña Misión, toca la tarjeta del tráiler para verlo. El video se abre en tu idioma.
+
 ## Infección: infectado en las escaleras (10/11/2026)
 - El infectado controlado por otro jugador ya no se queda trabado en el cielo ni caminando en el sitio al subir las escaleras y terrazas del pueblo.
 - Los humanos ahora ven al infectado en el lugar correcto, sobre escaleras y terrazas.

@@ -1,5 +1,9 @@
 # What's new — Arena Zumbi
 
+## Official trailer (11/11/2026)
+- The official Arena Zumbi trailer is out on YouTube!
+- On the Mission tab, tap the trailer card to watch it. The video opens in your language.
+
 ## Infection: infected on stairs (11/10/2026)
 - A player-controlled infected no longer gets stuck in the sky or walks in place when climbing the village stairs and terraces.
 - Humans now see the infected in the right place on stairs and terraces.
