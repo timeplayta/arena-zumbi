@@ -139,6 +139,7 @@ button.ghost:hover { border-color: var(--amber); color: var(--amber); }
 button:focus-visible, input:focus-visible { outline: 3px solid var(--fg); outline-offset: 2px; }
 kbd { flex: none; font-family: var(--font-display); font-size: 18px; font-weight: 600; letter-spacing: 0.04em; padding: 0 9px; min-width: 22px; text-align: center; line-height: 26px; border: 1px solid #3a4352; border-bottom-width: 3px; border-radius: 4px; background: #11151c; color: var(--fg); display: inline-block; }
 #dead h1 { color: var(--danger); }
+#dead h1.hwin { color: var(--ok); }
 .final { display: flex; flex-wrap: wrap; gap: 8px 30px; margin: 16px 0 14px; font-family: var(--font-display); font-size: 30px; letter-spacing: 0.06em; font-variant-numeric: tabular-nums; }
 .final span { color: var(--muted); font-size: 18px; display: block; letter-spacing: 0.14em; line-height: 1; }
 #newrec { color: var(--amber); font-family: var(--font-display); font-size: 28px; letter-spacing: 0.1em; margin-bottom: 10px; }
@@ -717,8 +718,8 @@ table.sc td:first-child { font-family: var(--font-display); font-size: 22px; col
 
   <div class="overlay" id="dead" hidden>
     <div class="card">
-      <div class="kicker">Fim de jogo</div>
-      <h1>Você morreu</h1>
+      <div class="kicker" id="deadKick">Fim de jogo</div>
+      <h1 id="deadTitle">Você morreu</h1>
       <div class="final">
         <div><span>ONDA</span><b id="fWave">0</b></div><div><span>PONTOS</span><b id="fScore">0</b></div>
         <div><span>ABATES</span><b id="fKills">0</b></div><div><span>HEADSHOTS</span><b id="fHead">0</b></div>

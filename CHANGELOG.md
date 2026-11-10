@@ -1,5 +1,9 @@
 # Novidades — Arena Zumbi
 
+## Infecção: tela final com o vencedor (09/11/2026)
+- No fim da Infecção, a tela mostra quem ganhou: "Humanos venceram" (em verde) ou "Zumbis venceram".
+- O tempo da partida não aparece mais negativo quando ela acaba logo no começo.
+
 ## Co-op: aviso ao cair (09/11/2026)
 - Ao cair no co-op, aparece no centro da tela "Você volta na próxima onda", para quem criou e para quem entrou na sala.
 - A contagem da Infecção ficou um pouco mais baixa, sem cobrir os avisos do jogo.

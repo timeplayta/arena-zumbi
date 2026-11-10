@@ -184,6 +184,12 @@
     resetTouch(); applyTouchUI();
     try { document.exitPointerLock(); } catch (e) {}
     const g = game, acc = g.shots ? Math.round((100 * g.hits) / g.shots) : 0;
+    {                                                            // Infecção: o título mostra quem venceu
+      const inf = g.gm === "infect" && !!g.inf, w = inf ? g.inf.win : "", hw = w === "h";
+      $("deadKick").textContent = inf ? "Fim da Infecção" : "Fim de jogo";
+      $("deadTitle").textContent = inf ? (w === "h" ? "HUMANOS VENCERAM" : w === "z" ? "ZUMBIS VENCERAM" : "PARTIDA ENCERRADA") : "Você morreu";
+      $("deadTitle").classList.toggle("hwin", !!hw);
+    }
     $("fWave").textContent = g.wave; $("fScore").textContent = g.score; $("fKills").textContent = g.kills;
     $("fHead").textContent = g.headshots; $("fAcc").textContent = acc + "%"; $("fTime").textContent = fmtTime(g.time);
     const top = g.score > 0 ? saveScore({ name: S.name || "Sobrevivente", score: g.score, wave: g.wave, kills: g.kills, diff: DIFF[S.diff].name, date: Date.now() }) : false;

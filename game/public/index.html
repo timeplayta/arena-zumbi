@@ -139,6 +139,7 @@ button.ghost:hover { border-color: var(--amber); color: var(--amber); }
 button:focus-visible, input:focus-visible { outline: 3px solid var(--fg); outline-offset: 2px; }
 kbd { flex: none; font-family: var(--font-display); font-size: 18px; font-weight: 600; letter-spacing: 0.04em; padding: 0 9px; min-width: 22px; text-align: center; line-height: 26px; border: 1px solid #3a4352; border-bottom-width: 3px; border-radius: 4px; background: #11151c; color: var(--fg); display: inline-block; }
 #dead h1 { color: var(--danger); }
+#dead h1.hwin { color: var(--ok); }
 .final { display: flex; flex-wrap: wrap; gap: 8px 30px; margin: 16px 0 14px; font-family: var(--font-display); font-size: 30px; letter-spacing: 0.06em; font-variant-numeric: tabular-nums; }
 .final span { color: var(--muted); font-size: 18px; display: block; letter-spacing: 0.14em; line-height: 1; }
 #newrec { color: var(--amber); font-family: var(--font-display); font-size: 28px; letter-spacing: 0.1em; margin-bottom: 10px; }
@@ -717,8 +718,8 @@ table.sc td:first-child { font-family: var(--font-display); font-size: 22px; col
 
   <div class="overlay" id="dead" hidden>
     <div class="card">
-      <div class="kicker">Fim de jogo</div>
-      <h1>Você morreu</h1>
+      <div class="kicker" id="deadKick">Fim de jogo</div>
+      <h1 id="deadTitle">Você morreu</h1>
       <div class="final">
         <div><span>ONDA</span><b id="fWave">0</b></div><div><span>PONTOS</span><b id="fScore">0</b></div>
         <div><span>ABATES</span><b id="fKills">0</b></div><div><span>HEADSHOTS</span><b id="fHead">0</b></div>
@@ -734,7 +735,7 @@ table.sc td:first-child { font-family: var(--font-display); font-size: 22px; col
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
-const GAME_VERSION = 202611100245, GAME_NOTES = {"t": "Co-op: aviso ao cair (09/11/2026)", "b": ["Ao cair no co-op, aparece no centro da tela \"Você volta na próxima onda\", para quem criou e para quem entrou na sala.", "A contagem da Infecção ficou um pouco mais baixa, sem cobrir os avisos do jogo."], "en": {"t": "Co-op: downed notice (11/09/2026)", "b": ["When you go down in co-op, \"You respawn next wave\" shows in the middle of the screen, for both the host and guests.", "The Infection countdown sits a little lower so it doesn't cover the game notices."]}, "es": {"t": "Cooperativo: aviso al caer (09/11/2026)", "b": ["Al caer en cooperativo, aparece en el centro de la pantalla \"Vuelves en la próxima oleada\", para quien creó la sala y para quien entró.", "La cuenta de la Infección quedó un poco más abajo, sin tapar los avisos del juego."]}};
+const GAME_VERSION = 202611100251, GAME_NOTES = {"t": "Infecção: tela final com o vencedor (09/11/2026)", "b": ["No fim da Infecção, a tela mostra quem ganhou: \"Humanos venceram\" (em verde) ou \"Zumbis venceram\".", "O tempo da partida não aparece mais negativo quando ela acaba logo no começo."], "en": {"t": "Infection: end screen shows the winner (11/09/2026)", "b": ["At the end of Infection, the screen shows who won: \"Humans win\" (in green) or \"Zombies win\".", "The match time no longer shows as negative when a match ends right at the start."]}, "es": {"t": "Infección: pantalla final con el ganador (09/11/2026)", "b": ["Al final de la Infección, la pantalla muestra quién ganó: \"Ganan los humanos\" (en verde) o \"Ganan los zombis\".", "El tiempo de la partida ya no aparece negativo cuando termina justo al empezar."]}};
   // ===================== IDIOMAS (inglês, espanhol, português) =====================
   // O jogo é escrito em português. Este tradutor troca, na tela, todo texto que aparece (menus, HUD, avisos, mensagens do servidor).
   // REGRA: todo texto novo do jogo precisa de uma entrada aqui (D = frase exata, P = frase com números/nomes). Veja I18N.md.
@@ -917,7 +918,7 @@ const GAME_VERSION = 202611100245, GAME_NOTES = {"t": "Co-op: aviso ao cair (09/
       // ---------- atualização, pausa, fim de jogo ----------
       "Jogo atualizado!": ["Game updated!", "¡Juego actualizado!"], "Nova versão disponível": ["New version available", "Nueva versión disponible"], "Atualizar agora": ["Update now", "Actualizar ahora"], "OK": ["OK", "OK"],
       "Jogo pausado": ["Game paused", "Juego en pausa"], "Pausa": ["Paused", "Pausa"], "Clique para voltar à arena.": ["Click to return to the arena.", "Haz clic para volver a la arena."], "Continuar": ["Continue", "Continuar"], "Menu principal": ["Main menu", "Menú principal"],
-      "Fim de jogo": ["Game over", "Fin del juego"], "Você morreu": ["You died", "Has muerto"], "ONDA": ["WAVE", "OLEADA"], "PONTOS": ["SCORE", "PUNTOS"], "ABATES": ["KILLS", "BAJAS"], "HEADSHOTS": ["HEADSHOTS", "HEADSHOTS"],
+      "Fim de jogo": ["Game over", "Fin del juego"], "Fim da Infecção": ["Infection over", "Fin de la Infección"], "PARTIDA ENCERRADA": ["MATCH OVER", "PARTIDA TERMINADA"], "Você morreu": ["You died", "Has muerto"], "ONDA": ["WAVE", "OLEADA"], "PONTOS": ["SCORE", "PUNTOS"], "ABATES": ["KILLS", "BAJAS"], "HEADSHOTS": ["HEADSHOTS", "HEADSHOTS"],
       "PRECISÃO": ["ACCURACY", "PRECISIÓN"], "TEMPO": ["TIME", "TIEMPO"], "MOEDAS GANHAS": ["COINS EARNED", "MONEDAS GANADAS"], "Novo recorde!": ["New high score!", "¡Nuevo récord!"], "ou": ["or", "o"], "para recomeçar.": ["to restart.", "para reiniciar."],
       // ---------- HUD ----------
       "Zumbis": ["Zombies", "Zombis"], "Moedas": ["Coins", "Monedas"], "VIDA": ["HEALTH", "VIDA"], "AUTO": ["AUTO", "AUTO"], "GIGANTE": ["GIANT", "GIGANTE"],
@@ -8883,7 +8884,7 @@ const Logic = (function () {
     if (!S.lang) S.lang = I18N.get(); opts("optLang", "lang", LANGS);
     syncRanges(); syncToggles();
   }
-  function fmtTime(s) { s = Math.floor(s); return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0"); }
+  function fmtTime(s) { s = Math.max(0, Math.floor(s || 0)); return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0"); }
   function renderScores() {
     const a = loadScores();
     $("scoreBox").innerHTML = a.length
@@ -10141,6 +10142,12 @@ const Logic = (function () {
     resetTouch(); applyTouchUI();
     try { document.exitPointerLock(); } catch (e) {}
     const g = game, acc = g.shots ? Math.round((100 * g.hits) / g.shots) : 0;
+    {                                                            // Infecção: o título mostra quem venceu
+      const inf = g.gm === "infect" && !!g.inf, w = inf ? g.inf.win : "", hw = w === "h";
+      $("deadKick").textContent = inf ? "Fim da Infecção" : "Fim de jogo";
+      $("deadTitle").textContent = inf ? (w === "h" ? "HUMANOS VENCERAM" : w === "z" ? "ZUMBIS VENCERAM" : "PARTIDA ENCERRADA") : "Você morreu";
+      $("deadTitle").classList.toggle("hwin", !!hw);
+    }
     $("fWave").textContent = g.wave; $("fScore").textContent = g.score; $("fKills").textContent = g.kills;
     $("fHead").textContent = g.headshots; $("fAcc").textContent = acc + "%"; $("fTime").textContent = fmtTime(g.time);
     const top = g.score > 0 ? saveScore({ name: S.name || "Sobrevivente", score: g.score, wave: g.wave, kills: g.kills, diff: DIFF[S.diff].name, date: Date.now() }) : false;

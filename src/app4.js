@@ -166,7 +166,7 @@
     if (!S.lang) S.lang = I18N.get(); opts("optLang", "lang", LANGS);
     syncRanges(); syncToggles();
   }
-  function fmtTime(s) { s = Math.floor(s); return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0"); }
+  function fmtTime(s) { s = Math.max(0, Math.floor(s || 0)); return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0"); }
   function renderScores() {
     const a = loadScores();
     $("scoreBox").innerHTML = a.length

@@ -1,5 +1,9 @@
 # What's new — Arena Zumbi
 
+## Infection: end screen shows the winner (11/09/2026)
+- At the end of Infection, the screen shows who won: "Humans win" (in green) or "Zombies win".
+- The match time no longer shows as negative when a match ends right at the start.
+
 ## Co-op: downed notice (11/09/2026)
 - When you go down in co-op, "You respawn next wave" shows in the middle of the screen, for both the host and guests.
 - The Infection countdown sits a little lower so it doesn't cover the game notices.

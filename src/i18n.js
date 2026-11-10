@@ -180,7 +180,7 @@
       // ---------- atualização, pausa, fim de jogo ----------
       "Jogo atualizado!": ["Game updated!", "¡Juego actualizado!"], "Nova versão disponível": ["New version available", "Nueva versión disponible"], "Atualizar agora": ["Update now", "Actualizar ahora"], "OK": ["OK", "OK"],
       "Jogo pausado": ["Game paused", "Juego en pausa"], "Pausa": ["Paused", "Pausa"], "Clique para voltar à arena.": ["Click to return to the arena.", "Haz clic para volver a la arena."], "Continuar": ["Continue", "Continuar"], "Menu principal": ["Main menu", "Menú principal"],
-      "Fim de jogo": ["Game over", "Fin del juego"], "Você morreu": ["You died", "Has muerto"], "ONDA": ["WAVE", "OLEADA"], "PONTOS": ["SCORE", "PUNTOS"], "ABATES": ["KILLS", "BAJAS"], "HEADSHOTS": ["HEADSHOTS", "HEADSHOTS"],
+      "Fim de jogo": ["Game over", "Fin del juego"], "Fim da Infecção": ["Infection over", "Fin de la Infección"], "PARTIDA ENCERRADA": ["MATCH OVER", "PARTIDA TERMINADA"], "Você morreu": ["You died", "Has muerto"], "ONDA": ["WAVE", "OLEADA"], "PONTOS": ["SCORE", "PUNTOS"], "ABATES": ["KILLS", "BAJAS"], "HEADSHOTS": ["HEADSHOTS", "HEADSHOTS"],
       "PRECISÃO": ["ACCURACY", "PRECISIÓN"], "TEMPO": ["TIME", "TIEMPO"], "MOEDAS GANHAS": ["COINS EARNED", "MONEDAS GANADAS"], "Novo recorde!": ["New high score!", "¡Nuevo récord!"], "ou": ["or", "o"], "para recomeçar.": ["to restart.", "para reiniciar."],
       // ---------- HUD ----------
       "Zumbis": ["Zombies", "Zombis"], "Moedas": ["Coins", "Monedas"], "VIDA": ["HEALTH", "VIDA"], "AUTO": ["AUTO", "AUTO"], "GIGANTE": ["GIANT", "GIGANTE"],
