@@ -155,6 +155,7 @@
     $("hud").querySelector(".radar-box").hidden = !S.radar;
     applyCrosshair();
     state = "run"; applyEnv();
+    warmVM(game.gm);                                                // faca/poções prontas: não trava na 1ª vez que puxa
     last = performance.now(); mouseDown = false; adsHeld = false;
     resetTouch(); applyTouchUI();
     $("hint").textContent = touchOn() ? TOUCH_HINT : keyHint();
@@ -604,6 +605,7 @@
     if (g.flashT > 0) {
       const s = c.flash * (0.8 + Math.random() * 0.6) * (1 - 0.6 * a);       // mirando: clarão menor para não tapar o alvo
       flashSprite.scale.set(s, s, 1); flashSprite.material.rotation = Math.random() * 6; flashSprite.visible = true; flashLight.intensity = 4 * (1 - 0.7 * a);
+      if (vm) { vm.muzzle.getWorldPosition(flashLight.position); camera.worldToLocal(flashLight.position); }
     } else { flashSprite.visible = false; flashLight.intensity = 0; }
     $("scope").style.opacity = c.scope ? String(clamp((a - 0.8) * 5, 0, 1)) : "0";
     $("cross").classList.toggle("scoped", !!c.scope && a > 0.8);
@@ -999,4 +1001,29 @@
   menuGame = makeMenuGame();
   resize(); applyQuality(); applyEnv(); applySound(); applyTouchUI(); $("fps").hidden = !S.showFps; renderAll(); showTab("mission");
   requestAnimationFrame(frame);
+
+  // ---------------- tela de carregamento ----------------
+  // monta tudo e compila os gráficos antes do menu: nada trava na hora de puxar a faca, a cura, o fogo, a lanterna ou trocar de arma
+  (async function bootPreload() {
+    const boot = $("boot"); if (!boot) return;
+    let done = false;
+    const finish = () => { if (done) return; done = true; boot.classList.add("out"); setTimeout(() => { boot.hidden = true; }, 400); };
+    setTimeout(finish, 45000);                                       // nunca prende o jogador no carregamento
+    const steps = [
+      ["Preparando as armas", () => { for (const id of WEAPON_ORDER) viewGun(L.buildSlot({ id, a: Object.assign({}, attOf(id)) }).cfg); setViewGun(L.buildSlot(loadoutSel()[0])); }],
+      ["Preparando a faca e as poções", () => { PotFX.ensureLights(); KnifeVM.prebuild(); PotVM.prebuild(); }],
+      ["Montando a vila italiana", () => { ensureItalia(); }],
+      ["Compilando os gráficos", () => { useMap("italia"); warmVM("infect"); renderer.render(scene, camera); }],
+      ["Compilando os gráficos", () => { useMap("arena"); warmVM("arena"); renderer.render(scene, camera); }],
+    ];
+    const wait = () => new Promise((r) => setTimeout(r, 40));
+    for (let i = 0; i < steps.length; i++) {
+      const pc = Math.round((i / steps.length) * 100) + "%";
+      $("bootMsg").textContent = steps[i][0] + "…"; $("bootPct").textContent = pc; $("bootBar").style.width = pc;
+      await wait();
+      try { steps[i][1](); } catch (e) { console.warn("preload", steps[i][0], e); }
+    }
+    $("bootPct").textContent = "100%"; $("bootBar").style.width = "100%"; $("bootMsg").textContent = "Pronto!";
+    await wait(); finish();
+  })();
 })();

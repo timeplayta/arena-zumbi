@@ -107,9 +107,13 @@
       return { root, pool, wall, parts, light, fire, dur: a.t, r: a.r };
     }
     let warmed = false;
-    function warm() {                                              // compila os materiais das poções no começo da partida (sem travar no 1º arremesso)
+    function ensureLights() {                                      // luzes do fogo/cura: sempre na cena (a contagem de luzes não muda e nada recompila)
+      if (!LT.length) LT = [0, 1].map(() => { const l = new THREE.PointLight(0xff6a1a, 0, 9, 2); scene.add(l); return { l, used: false }; });
+    }
+    function warm() {                                              // compila os materiais das poções antes de usar (sem travar no 1º arremesso)
+      if (warmed) return;
       warmed = true;
-      LT = [0, 1].map(() => { const l = new THREE.PointLight(0xff6a1a, 0, 9, 2); scene.add(l); return { l, used: false }; });   // entram junto com a partida
+      ensureLights();
       const tmp = [bottle("fire"), bottle("heal")], ar = [areaView({ k: "fire", x: 0, y: 0, z: -50, r: 3, t: 1 }), areaView({ k: "heal", x: 0, y: 0, z: -50, r: 3.5, t: 1 })];
       try { renderer.compile(scene, camera); } catch (e) {}
       for (const o of tmp) scene.remove(o);
@@ -150,7 +154,7 @@
       for (let i = 0, n = Math.round(10 * fxK()) + 4; i < n; i++) fxSpark.emit(x, z + 0.2, -y, (Math.random() - 0.5) * 5, 1 + Math.random() * 3, (Math.random() - 0.5) * 5, 0.35 + Math.random() * 0.4, 1);
     }
     function clear() { for (const v of potV.values()) scene.remove(v); potV.clear(); for (const v of areaV.values()) scene.remove(v.root); areaV.clear(); for (const q of LT) { q.used = false; q.l.intensity = 0; } }
-    return { sync, burst, clear, gsGeom, flameTex, worldModels, vmShade };
+    return { sync, burst, clear, gsGeom, flameTex, worldModels, vmShade, warm, ensureLights };
   })();
   // ---------- primeira pessoa: mãos acendendo e arremessando (molotov ou garrafa de cura) ----------
   const PotVM = (() => {
@@ -166,7 +170,7 @@
       conv.quaternion.setFromRotationMatrix(new THREE.Matrix4().set(0, -1, 0, 0, 0, 0, 1, 0, -1, 0, 0, 0, 0, 0, 0, 1)); conv.scale.setScalar(0.0254); conv.add(mesh);
       const qa = new THREE.Quaternion(), qb = new THREE.Quaternion();
       function pose(name, tt) {
-        const A = J.anims[name], nf = A.f.length, ft = tt * A.fps;
+        const A = J.anims[name], nf = A.f.length, ft = Math.max(0, tt * A.fps || 0);   // tempo negativo (Infecção antes de começar) quebrava a animação
         let f0 = Math.floor(ft), k = ft - f0; if (f0 >= nf - 1) { f0 = nf - 1; k = 0; }
         const f1 = Math.min(nf - 1, f0 + 1), a = A.f[f0], b = A.f[f1];
         for (let i = 0; i < bones.length; i++) {
@@ -223,7 +227,7 @@
       flame.visible = kind === "fire" && phase === "pullpin" && t > IGNITE;
       if (flame.visible) { const f = 0.8 + 0.3 * Math.sin(g.time * 33) + 0.1 * Math.sin(g.time * 71); flame.scale.set(2.6 * f, 4.4 * f, 1); }
     }
-    return { start, fire, update, stop, busy: () => act, holding, kind: () => kind };
+    return { start, fire, update, stop, busy: () => act, holding, kind: () => kind, prebuild: ensure };
   })();
   // ---------- faca M9 Bayonet em primeira pessoa (modelo de CS 1.6) ----------
   const KnifeVM = (() => {
@@ -238,7 +242,7 @@
       conv.quaternion.setFromRotationMatrix(new THREE.Matrix4().set(0, -1, 0, 0, 0, 0, 1, 0, -1, 0, 0, 0, 0, 0, 0, 1)); conv.scale.setScalar(0.0254); conv.add(mesh);
       const qa = new THREE.Quaternion(), qb = new THREE.Quaternion();
       function pose(name, tt) {
-        const A = J.anims[name], nf = A.f.length, ft = tt * A.fps;
+        const A = J.anims[name], nf = A.f.length, ft = Math.max(0, tt * A.fps || 0);   // tempo negativo (Infecção antes de começar) quebrava a animação
         let f0 = Math.floor(ft), k = ft - f0; if (f0 >= nf - 1) { f0 = nf - 1; k = 0; }
         const f1 = Math.min(nf - 1, f0 + 1), a = A.f[f0], b = A.f[f1];
         for (let i = 0; i < bones.length; i++) {
@@ -262,8 +266,23 @@
       if (g.meleeT > lastMel + 0.01) { act = side ? "midslash2" : "midslash1"; side ^= 1; t = 0; spd = V.dur(act) / Math.max(0.35, g.mel.cd); }   // golpe novo
       lastMel = g.meleeT;
       if (act) { t += dt * spd; if (t >= V.dur(act)) act = ""; else V.pose(act, t); }
-      if (!act) V.pose("idle", (g.time * 0.6) % V.dur("idle"));
+      if (!act) V.pose("idle", (((g.time * 0.6) % V.dur("idle")) + V.dur("idle")) % V.dur("idle"));
       return true;
     }
-    return { update };
+    function prebuild() { if (!V) { V = build(); fovG = new THREE.Group(); fovG.add(V.root); fovG.visible = false; camera.add(fovG); } }
+    return { update, prebuild };
   })();
+  // deixa faca e poções prontas antes de usar: monta os modelos no menu e compila/sobe as texturas no começo da partida
+  // (sem isso, a 1ª vez que puxa a faca, a cura ou o fogo trava a tela por alguns segundos em PC fraco e celular)
+  const upTex = new WeakSet();
+  function warmVM(gm) {
+    try { PotFX.ensureLights(); KnifeVM.prebuild(); PotVM.prebuild(); if (gm === "infect") PotFX.warm(); } catch (e) {}
+    const tv = torch.visible, gv = gunRoot.visible;
+    try { gunRoot.visible = true; for (const on of [false, true]) { torch.visible = on; renderer.compile(scene, camera); } } catch (e) {}
+    torch.visible = tv; gunRoot.visible = gv;
+    try {
+      scene.traverse((o) => { const m = o.material; if (!m) return; for (const x of Array.isArray(m) ? m : [m]) if (x.map && !upTex.has(x.map)) { upTex.add(x.map); renderer.initTexture(x.map); } });
+      if (PotFX.flameTex && !upTex.has(PotFX.flameTex)) { upTex.add(PotFX.flameTex); renderer.initTexture(PotFX.flameTex); }
+    } catch (e) {}
+  }
+

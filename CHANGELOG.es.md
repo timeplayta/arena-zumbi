@@ -1,5 +1,11 @@
 # Novedades — Arena Zumbi
 
+## Sin tirones: pantalla de carga (10/11/2026)
+- Nueva pantalla de carga: armas, cuchillo, pociones y el pueblo italiano se montan y los gráficos se preparan antes del menú.
+- Sacar el cuchillo, la cura o el fuego, encender la linterna y cambiar de arma ya no congelan la pantalla.
+- Cambiar de arma es más ligero: el arma ya no se vuelve a montar en cada cambio.
+- Corregido un error raro del cuchillo en la Infección antes de que empiece la partida.
+
 ## Infección: pantalla final con el ganador (09/11/2026)
 - Al final de la Infección, la pantalla muestra quién ganó: "Ganan los humanos" (en verde) o "Ganan los zombis".
 - El tiempo de la partida ya no aparece negativo cuando termina justo al empezar.

@@ -1,5 +1,11 @@
 # Novidades — Arena Zumbi
 
+## Sem travadas: tela de carregamento (10/11/2026)
+- Nova tela de carregamento: armas, faca, poções e a vila italiana são montadas e os gráficos são preparados antes do menu.
+- Puxar a faca, a cura ou o fogo, ligar a lanterna e trocar de arma não travam mais a tela.
+- Trocar de arma ficou mais leve: a arma não é montada de novo a cada troca.
+- Corrigido um erro raro da faca na Infecção antes da partida começar.
+
 ## Infecção: tela final com o vencedor (09/11/2026)
 - No fim da Infecção, a tela mostra quem ganhou: "Humanos venceram" (em verde) ou "Zumbis venceram".
 - O tempo da partida não aparece mais negativo quando ela acaba logo no começo.

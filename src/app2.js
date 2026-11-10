@@ -512,7 +512,7 @@
     sp.visible = false;
     return sp;
   })();
-  const flashLight = new THREE.PointLight(0xffb060, 0, 9, 2);
+  const flashLight = new THREE.PointLight(0xffb060, 0, 9, 2); flashLight.position.set(0.2, -0.1, -0.9); camera.add(flashLight);   // fica sempre na cena: esconder a arma não muda a contagem de luzes (senão tudo recompila e trava)
   const knife = new THREE.Group();
   let knifeRig = null;
   const meleeSets = {};
@@ -548,11 +548,21 @@
   })();
   function setMeleeModel(id) { for (const k in meleeSets) meleeSets[k].visible = k === id; }
 
+  const vmCache = new Map();                                     // armas já montadas (trocar de arma não monta o modelo de novo)
+  function viewGun(c) {
+    const key = [c.id, S.camo, c.hasSil, c.hasExt, c.hasOptic, c.hasGrip].join("|");
+    let m = vmCache.get(key);
+    if (!m) {
+      if (vmCache.size > 24) { for (const [k, o] of vmCache) if (o !== vm) { gunRoot.remove(o.group); vmCache.delete(k); } }
+      m = buildGun(c.id, S.camo, { sil: c.hasSil, ext: c.hasExt, optic: c.hasOptic, grip: c.hasGrip }, true);
+      m.group.visible = false; gunRoot.add(m.group); vmCache.set(key, m);
+    }
+    return { m, key };
+  }
   function setViewGun(slot) {
-    const c = slot.cfg, key = [c.id, S.camo, c.hasSil, c.hasExt, c.hasOptic, c.hasGrip].join("|");
-    if (key === vmKey) return;
+    const { m, key } = viewGun(slot.cfg);
+    if (key === vmKey && m === vm) return;
     vmKey = key;
-    if (vm) { gunRoot.remove(vm.group); vm.muzzle.remove(flashSprite); vm.muzzle.remove(flashLight); }
-    vm = buildGun(c.id, S.camo, { sil: c.hasSil, ext: c.hasExt, optic: c.hasOptic, grip: c.hasGrip }, true);
-    gunRoot.add(vm.group); vm.muzzle.add(flashSprite); vm.muzzle.add(flashLight);
+    if (vm) { vm.group.visible = false; vm.muzzle.remove(flashSprite); }
+    vm = m; vm.group.visible = true; vm.muzzle.add(flashSprite);
   }

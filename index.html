@@ -155,6 +155,18 @@ kbd { flex: none; font-family: var(--font-display); font-size: 18px; font-weight
   #dead button.play, #pause button.play { font-size: 24px; padding: 5px 24px 3px; } #dead button.ghost, #pause button.ghost { font-size: 19px; }
 }
 
+/* ---------- tela de carregamento (monta armas, faca, poções e mapa e compila os gráficos antes do menu) ---------- */
+#boot { position: fixed; inset: 0; z-index: 9999; display: grid; place-items: center; background: radial-gradient(ellipse at 50% 40%, #141a24, var(--bg) 70%); color: var(--fg); padding: 16px; transition: opacity 0.35s; }
+#boot.out { opacity: 0; pointer-events: none; }
+#boot .boot-in { width: min(460px, 100%); }
+#boot .boot-k { font-family: var(--font-display); font-size: 17px; letter-spacing: 0.22em; color: var(--muted); text-transform: uppercase; }
+#boot h1 { font-size: clamp(54px, 13vw, 96px); margin: 4px 0 22px; } #boot h1 span { color: var(--danger); }
+#boot .boot-bar { height: 8px; background: #1c2330; border: 1px solid var(--line); overflow: hidden; }
+#boot .boot-bar i { display: block; height: 100%; width: 0; background: var(--amber); transition: width 0.25s; }
+#boot .boot-row { display: flex; justify-content: space-between; gap: 12px; margin-top: 10px; font-size: 15px; color: #cfd6e0; }
+#boot .boot-row b { font-family: var(--font-display); font-size: 20px; letter-spacing: 0.06em; color: var(--amber); font-variant-numeric: tabular-nums; }
+@media (max-height: 420px) { #boot h1 { font-size: 48px; margin-bottom: 14px; } }
+
 /* ---------- menu ---------- */
 #menu { position: absolute; inset: 0; display: grid; grid-template-columns: minmax(190px, 270px) minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) auto; gap: 0 32px;
   padding-block: 22px; padding-left: max(24px, env(safe-area-inset-left, 0px)); padding-right: max(24px, env(safe-area-inset-right, 0px));
@@ -451,6 +463,14 @@ table.sc td:first-child { font-family: var(--font-display); font-size: 22px; col
 .langs button.on { color: var(--amber); border-color: var(--amber); }
 </style>
 
+<div id="boot" role="status" aria-live="polite">
+  <div class="boot-in">
+    <div class="boot-k">Tiro em primeira pessoa · 3D</div>
+    <h1 translate="no">Arena <span>Zumbi</span></h1>
+    <div class="boot-bar"><i id="bootBar"></i></div>
+    <div class="boot-row"><span id="bootMsg">Carregando…</span><b id="bootPct" translate="no">0%</b></div>
+  </div>
+</div>
 <div id="stage">
   <canvas id="view"></canvas>
   <div id="fx-vig"></div>
@@ -735,7 +755,7 @@ table.sc td:first-child { font-family: var(--font-display); font-size: 22px; col
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
-const GAME_VERSION = 202611100251, GAME_NOTES = {"t": "Infecção: tela final com o vencedor (09/11/2026)", "b": ["No fim da Infecção, a tela mostra quem ganhou: \"Humanos venceram\" (em verde) ou \"Zumbis venceram\".", "O tempo da partida não aparece mais negativo quando ela acaba logo no começo."], "en": {"t": "Infection: end screen shows the winner (11/09/2026)", "b": ["At the end of Infection, the screen shows who won: \"Humans win\" (in green) or \"Zombies win\".", "The match time no longer shows as negative when a match ends right at the start."]}, "es": {"t": "Infección: pantalla final con el ganador (09/11/2026)", "b": ["Al final de la Infección, la pantalla muestra quién ganó: \"Ganan los humanos\" (en verde) o \"Ganan los zombis\".", "El tiempo de la partida ya no aparece negativo cuando termina justo al empezar."]}};
+const GAME_VERSION = 202611100329, GAME_NOTES = {"t": "Sem travadas: tela de carregamento (10/11/2026)", "b": ["Nova tela de carregamento: armas, faca, poções e a vila italiana são montadas e os gráficos são preparados antes do menu.", "Puxar a faca, a cura ou o fogo, ligar a lanterna e trocar de arma não travam mais a tela.", "Trocar de arma ficou mais leve: a arma não é montada de novo a cada troca.", "Corrigido um erro raro da faca na Infecção antes da partida começar."], "en": {"t": "No more stutters: loading screen (11/10/2026)", "b": ["New loading screen: guns, knife, potions and the Italian village are built and the graphics are prepared before the menu.", "Pulling out the knife, the heal or the fire potion, turning on the flashlight and switching guns no longer freeze the screen.", "Switching guns is lighter: the gun is no longer rebuilt on every switch.", "Fixed a rare knife error in Infection before the match starts."]}, "es": {"t": "Sin tirones: pantalla de carga (10/11/2026)", "b": ["Nueva pantalla de carga: armas, cuchillo, pociones y el pueblo italiano se montan y los gráficos se preparan antes del menú.", "Sacar el cuchillo, la cura o el fuego, encender la linterna y cambiar de arma ya no congelan la pantalla.", "Cambiar de arma es más ligero: el arma ya no se vuelve a montar en cada cambio.", "Corregido un error raro del cuchillo en la Infección antes de que empiece la partida."]}};
   // ===================== IDIOMAS (inglês, espanhol, português) =====================
   // O jogo é escrito em português. Este tradutor troca, na tela, todo texto que aparece (menus, HUD, avisos, mensagens do servidor).
   // REGRA: todo texto novo do jogo precisa de uma entrada aqui (D = frase exata, P = frase com números/nomes). Veja I18N.md.
@@ -918,7 +938,7 @@ const GAME_VERSION = 202611100251, GAME_NOTES = {"t": "Infecção: tela final co
       // ---------- atualização, pausa, fim de jogo ----------
       "Jogo atualizado!": ["Game updated!", "¡Juego actualizado!"], "Nova versão disponível": ["New version available", "Nueva versión disponible"], "Atualizar agora": ["Update now", "Actualizar ahora"], "OK": ["OK", "OK"],
       "Jogo pausado": ["Game paused", "Juego en pausa"], "Pausa": ["Paused", "Pausa"], "Clique para voltar à arena.": ["Click to return to the arena.", "Haz clic para volver a la arena."], "Continuar": ["Continue", "Continuar"], "Menu principal": ["Main menu", "Menú principal"],
-      "Fim de jogo": ["Game over", "Fin del juego"], "Fim da Infecção": ["Infection over", "Fin de la Infección"], "PARTIDA ENCERRADA": ["MATCH OVER", "PARTIDA TERMINADA"], "Você morreu": ["You died", "Has muerto"], "ONDA": ["WAVE", "OLEADA"], "PONTOS": ["SCORE", "PUNTOS"], "ABATES": ["KILLS", "BAJAS"], "HEADSHOTS": ["HEADSHOTS", "HEADSHOTS"],
+      "Fim de jogo": ["Game over", "Fin del juego"], "Carregando…": ["Loading…", "Cargando…"], "Preparando as armas…": ["Preparing the guns…", "Preparando las armas…"], "Preparando a faca e as poções…": ["Preparing the knife and potions…", "Preparando el cuchillo y las pociones…"], "Montando a vila italiana…": ["Building the Italian village…", "Montando el pueblo italiano…"], "Compilando os gráficos…": ["Compiling the graphics…", "Compilando los gráficos…"], "Pronto!": ["Ready!", "¡Listo!"], "Fim da Infecção": ["Infection over", "Fin de la Infección"], "PARTIDA ENCERRADA": ["MATCH OVER", "PARTIDA TERMINADA"], "Você morreu": ["You died", "Has muerto"], "ONDA": ["WAVE", "OLEADA"], "PONTOS": ["SCORE", "PUNTOS"], "ABATES": ["KILLS", "BAJAS"], "HEADSHOTS": ["HEADSHOTS", "HEADSHOTS"],
       "PRECISÃO": ["ACCURACY", "PRECISIÓN"], "TEMPO": ["TIME", "TIEMPO"], "MOEDAS GANHAS": ["COINS EARNED", "MONEDAS GANADAS"], "Novo recorde!": ["New high score!", "¡Nuevo récord!"], "ou": ["or", "o"], "para recomeçar.": ["to restart.", "para reiniciar."],
       // ---------- HUD ----------
       "Zumbis": ["Zombies", "Zombis"], "Moedas": ["Coins", "Monedas"], "VIDA": ["HEALTH", "VIDA"], "AUTO": ["AUTO", "AUTO"], "GIGANTE": ["GIANT", "GIGANTE"],
@@ -5043,7 +5063,7 @@ const Logic = (function () {
     sp.visible = false;
     return sp;
   })();
-  const flashLight = new THREE.PointLight(0xffb060, 0, 9, 2);
+  const flashLight = new THREE.PointLight(0xffb060, 0, 9, 2); flashLight.position.set(0.2, -0.1, -0.9); camera.add(flashLight);   // fica sempre na cena: esconder a arma não muda a contagem de luzes (senão tudo recompila e trava)
   const knife = new THREE.Group();
   let knifeRig = null;
   const meleeSets = {};
@@ -5079,13 +5099,23 @@ const Logic = (function () {
   })();
   function setMeleeModel(id) { for (const k in meleeSets) meleeSets[k].visible = k === id; }
 
+  const vmCache = new Map();                                     // armas já montadas (trocar de arma não monta o modelo de novo)
+  function viewGun(c) {
+    const key = [c.id, S.camo, c.hasSil, c.hasExt, c.hasOptic, c.hasGrip].join("|");
+    let m = vmCache.get(key);
+    if (!m) {
+      if (vmCache.size > 24) { for (const [k, o] of vmCache) if (o !== vm) { gunRoot.remove(o.group); vmCache.delete(k); } }
+      m = buildGun(c.id, S.camo, { sil: c.hasSil, ext: c.hasExt, optic: c.hasOptic, grip: c.hasGrip }, true);
+      m.group.visible = false; gunRoot.add(m.group); vmCache.set(key, m);
+    }
+    return { m, key };
+  }
   function setViewGun(slot) {
-    const c = slot.cfg, key = [c.id, S.camo, c.hasSil, c.hasExt, c.hasOptic, c.hasGrip].join("|");
-    if (key === vmKey) return;
+    const { m, key } = viewGun(slot.cfg);
+    if (key === vmKey && m === vm) return;
     vmKey = key;
-    if (vm) { gunRoot.remove(vm.group); vm.muzzle.remove(flashSprite); vm.muzzle.remove(flashLight); }
-    vm = buildGun(c.id, S.camo, { sil: c.hasSil, ext: c.hasExt, optic: c.hasOptic, grip: c.hasGrip }, true);
-    gunRoot.add(vm.group); vm.muzzle.add(flashSprite); vm.muzzle.add(flashLight);
+    if (vm) { vm.group.visible = false; vm.muzzle.remove(flashSprite); }
+    vm = m; vm.group.visible = true; vm.muzzle.add(flashSprite);
   }
   // ======================================================================
   //  ROSTO, CABELO E FERIMENTOS DOS ZUMBIS
@@ -9796,9 +9826,13 @@ const Logic = (function () {
       return { root, pool, wall, parts, light, fire, dur: a.t, r: a.r };
     }
     let warmed = false;
-    function warm() {                                              // compila os materiais das poções no começo da partida (sem travar no 1º arremesso)
+    function ensureLights() {                                      // luzes do fogo/cura: sempre na cena (a contagem de luzes não muda e nada recompila)
+      if (!LT.length) LT = [0, 1].map(() => { const l = new THREE.PointLight(0xff6a1a, 0, 9, 2); scene.add(l); return { l, used: false }; });
+    }
+    function warm() {                                              // compila os materiais das poções antes de usar (sem travar no 1º arremesso)
+      if (warmed) return;
       warmed = true;
-      LT = [0, 1].map(() => { const l = new THREE.PointLight(0xff6a1a, 0, 9, 2); scene.add(l); return { l, used: false }; });   // entram junto com a partida
+      ensureLights();
       const tmp = [bottle("fire"), bottle("heal")], ar = [areaView({ k: "fire", x: 0, y: 0, z: -50, r: 3, t: 1 }), areaView({ k: "heal", x: 0, y: 0, z: -50, r: 3.5, t: 1 })];
       try { renderer.compile(scene, camera); } catch (e) {}
       for (const o of tmp) scene.remove(o);
@@ -9839,7 +9873,7 @@ const Logic = (function () {
       for (let i = 0, n = Math.round(10 * fxK()) + 4; i < n; i++) fxSpark.emit(x, z + 0.2, -y, (Math.random() - 0.5) * 5, 1 + Math.random() * 3, (Math.random() - 0.5) * 5, 0.35 + Math.random() * 0.4, 1);
     }
     function clear() { for (const v of potV.values()) scene.remove(v); potV.clear(); for (const v of areaV.values()) scene.remove(v.root); areaV.clear(); for (const q of LT) { q.used = false; q.l.intensity = 0; } }
-    return { sync, burst, clear, gsGeom, flameTex, worldModels, vmShade };
+    return { sync, burst, clear, gsGeom, flameTex, worldModels, vmShade, warm, ensureLights };
   })();
   // ---------- primeira pessoa: mãos acendendo e arremessando (molotov ou garrafa de cura) ----------
   const PotVM = (() => {
@@ -9855,7 +9889,7 @@ const Logic = (function () {
       conv.quaternion.setFromRotationMatrix(new THREE.Matrix4().set(0, -1, 0, 0, 0, 0, 1, 0, -1, 0, 0, 0, 0, 0, 0, 1)); conv.scale.setScalar(0.0254); conv.add(mesh);
       const qa = new THREE.Quaternion(), qb = new THREE.Quaternion();
       function pose(name, tt) {
-        const A = J.anims[name], nf = A.f.length, ft = tt * A.fps;
+        const A = J.anims[name], nf = A.f.length, ft = Math.max(0, tt * A.fps || 0);   // tempo negativo (Infecção antes de começar) quebrava a animação
         let f0 = Math.floor(ft), k = ft - f0; if (f0 >= nf - 1) { f0 = nf - 1; k = 0; }
         const f1 = Math.min(nf - 1, f0 + 1), a = A.f[f0], b = A.f[f1];
         for (let i = 0; i < bones.length; i++) {
@@ -9912,7 +9946,7 @@ const Logic = (function () {
       flame.visible = kind === "fire" && phase === "pullpin" && t > IGNITE;
       if (flame.visible) { const f = 0.8 + 0.3 * Math.sin(g.time * 33) + 0.1 * Math.sin(g.time * 71); flame.scale.set(2.6 * f, 4.4 * f, 1); }
     }
-    return { start, fire, update, stop, busy: () => act, holding, kind: () => kind };
+    return { start, fire, update, stop, busy: () => act, holding, kind: () => kind, prebuild: ensure };
   })();
   // ---------- faca M9 Bayonet em primeira pessoa (modelo de CS 1.6) ----------
   const KnifeVM = (() => {
@@ -9927,7 +9961,7 @@ const Logic = (function () {
       conv.quaternion.setFromRotationMatrix(new THREE.Matrix4().set(0, -1, 0, 0, 0, 0, 1, 0, -1, 0, 0, 0, 0, 0, 0, 1)); conv.scale.setScalar(0.0254); conv.add(mesh);
       const qa = new THREE.Quaternion(), qb = new THREE.Quaternion();
       function pose(name, tt) {
-        const A = J.anims[name], nf = A.f.length, ft = tt * A.fps;
+        const A = J.anims[name], nf = A.f.length, ft = Math.max(0, tt * A.fps || 0);   // tempo negativo (Infecção antes de começar) quebrava a animação
         let f0 = Math.floor(ft), k = ft - f0; if (f0 >= nf - 1) { f0 = nf - 1; k = 0; }
         const f1 = Math.min(nf - 1, f0 + 1), a = A.f[f0], b = A.f[f1];
         for (let i = 0; i < bones.length; i++) {
@@ -9951,11 +9985,26 @@ const Logic = (function () {
       if (g.meleeT > lastMel + 0.01) { act = side ? "midslash2" : "midslash1"; side ^= 1; t = 0; spd = V.dur(act) / Math.max(0.35, g.mel.cd); }   // golpe novo
       lastMel = g.meleeT;
       if (act) { t += dt * spd; if (t >= V.dur(act)) act = ""; else V.pose(act, t); }
-      if (!act) V.pose("idle", (g.time * 0.6) % V.dur("idle"));
+      if (!act) V.pose("idle", (((g.time * 0.6) % V.dur("idle")) + V.dur("idle")) % V.dur("idle"));
       return true;
     }
-    return { update };
+    function prebuild() { if (!V) { V = build(); fovG = new THREE.Group(); fovG.add(V.root); fovG.visible = false; camera.add(fovG); } }
+    return { update, prebuild };
   })();
+  // deixa faca e poções prontas antes de usar: monta os modelos no menu e compila/sobe as texturas no começo da partida
+  // (sem isso, a 1ª vez que puxa a faca, a cura ou o fogo trava a tela por alguns segundos em PC fraco e celular)
+  const upTex = new WeakSet();
+  function warmVM(gm) {
+    try { PotFX.ensureLights(); KnifeVM.prebuild(); PotVM.prebuild(); if (gm === "infect") PotFX.warm(); } catch (e) {}
+    const tv = torch.visible, gv = gunRoot.visible;
+    try { gunRoot.visible = true; for (const on of [false, true]) { torch.visible = on; renderer.compile(scene, camera); } } catch (e) {}
+    torch.visible = tv; gunRoot.visible = gv;
+    try {
+      scene.traverse((o) => { const m = o.material; if (!m) return; for (const x of Array.isArray(m) ? m : [m]) if (x.map && !upTex.has(x.map)) { upTex.add(x.map); renderer.initTexture(x.map); } });
+      if (PotFX.flameTex && !upTex.has(PotFX.flameTex)) { upTex.add(PotFX.flameTex); renderer.initTexture(PotFX.flameTex); }
+    } catch (e) {}
+  }
+
 
   // ======================================================================
   //  JOGO: estado, entrada, animação, HUD e laço principal
@@ -10113,6 +10162,7 @@ const Logic = (function () {
     $("hud").querySelector(".radar-box").hidden = !S.radar;
     applyCrosshair();
     state = "run"; applyEnv();
+    warmVM(game.gm);                                                // faca/poções prontas: não trava na 1ª vez que puxa
     last = performance.now(); mouseDown = false; adsHeld = false;
     resetTouch(); applyTouchUI();
     $("hint").textContent = touchOn() ? TOUCH_HINT : keyHint();
@@ -10562,6 +10612,7 @@ const Logic = (function () {
     if (g.flashT > 0) {
       const s = c.flash * (0.8 + Math.random() * 0.6) * (1 - 0.6 * a);       // mirando: clarão menor para não tapar o alvo
       flashSprite.scale.set(s, s, 1); flashSprite.material.rotation = Math.random() * 6; flashSprite.visible = true; flashLight.intensity = 4 * (1 - 0.7 * a);
+      if (vm) { vm.muzzle.getWorldPosition(flashLight.position); camera.worldToLocal(flashLight.position); }
     } else { flashSprite.visible = false; flashLight.intensity = 0; }
     $("scope").style.opacity = c.scope ? String(clamp((a - 0.8) * 5, 0, 1)) : "0";
     $("cross").classList.toggle("scoped", !!c.scope && a > 0.8);
@@ -10957,5 +11008,30 @@ const Logic = (function () {
   menuGame = makeMenuGame();
   resize(); applyQuality(); applyEnv(); applySound(); applyTouchUI(); $("fps").hidden = !S.showFps; renderAll(); showTab("mission");
   requestAnimationFrame(frame);
+
+  // ---------------- tela de carregamento ----------------
+  // monta tudo e compila os gráficos antes do menu: nada trava na hora de puxar a faca, a cura, o fogo, a lanterna ou trocar de arma
+  (async function bootPreload() {
+    const boot = $("boot"); if (!boot) return;
+    let done = false;
+    const finish = () => { if (done) return; done = true; boot.classList.add("out"); setTimeout(() => { boot.hidden = true; }, 400); };
+    setTimeout(finish, 45000);                                       // nunca prende o jogador no carregamento
+    const steps = [
+      ["Preparando as armas", () => { for (const id of WEAPON_ORDER) viewGun(L.buildSlot({ id, a: Object.assign({}, attOf(id)) }).cfg); setViewGun(L.buildSlot(loadoutSel()[0])); }],
+      ["Preparando a faca e as poções", () => { PotFX.ensureLights(); KnifeVM.prebuild(); PotVM.prebuild(); }],
+      ["Montando a vila italiana", () => { ensureItalia(); }],
+      ["Compilando os gráficos", () => { useMap("italia"); warmVM("infect"); renderer.render(scene, camera); }],
+      ["Compilando os gráficos", () => { useMap("arena"); warmVM("arena"); renderer.render(scene, camera); }],
+    ];
+    const wait = () => new Promise((r) => setTimeout(r, 40));
+    for (let i = 0; i < steps.length; i++) {
+      const pc = Math.round((i / steps.length) * 100) + "%";
+      $("bootMsg").textContent = steps[i][0] + "…"; $("bootPct").textContent = pc; $("bootBar").style.width = pc;
+      await wait();
+      try { steps[i][1](); } catch (e) { console.warn("preload", steps[i][0], e); }
+    }
+    $("bootPct").textContent = "100%"; $("bootBar").style.width = "100%"; $("bootMsg").textContent = "Pronto!";
+    await wait(); finish();
+  })();
 })();
 </script>

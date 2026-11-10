@@ -1,5 +1,11 @@
 # What's new — Arena Zumbi
 
+## No more stutters: loading screen (11/10/2026)
+- New loading screen: guns, knife, potions and the Italian village are built and the graphics are prepared before the menu.
+- Pulling out the knife, the heal or the fire potion, turning on the flashlight and switching guns no longer freeze the screen.
+- Switching guns is lighter: the gun is no longer rebuilt on every switch.
+- Fixed a rare knife error in Infection before the match starts.
+
 ## Infection: end screen shows the winner (11/09/2026)
 - At the end of Infection, the screen shows who won: "Humans win" (in green) or "Zombies win".
 - The match time no longer shows as negative when a match ends right at the start.
