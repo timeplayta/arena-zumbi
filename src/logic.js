@@ -1966,7 +1966,7 @@ const Logic = (function () {
           else { let gain = 0; this.slots.forEach((s, i) => { const b = s.reserve; s.reserve = Math.min(s.cfg.maxRes * (1 + this.perks.ammoPack), s.reserve + Math.round(s.cfg.ammoPick * (i === this.cur ? 1 : 0.5))); if (i === this.cur) gain = s.reserve - b; }); this.events.push(["pickup", "ammo", gain]); }
           break;
         case "clearbonus": for (const s of this.slots) s.reserve = Math.min(s.cfg.maxRes * (1 + this.perks.ammoPack), s.reserve + Math.round(s.cfg.ammoPick * 1.5 * this.diff.ammo)); break;
-        case "down": this.events.push(["dead"]); this.banner = "VOCÊ CAIU"; this.bannerSub = "Renasce na próxima onda"; this.bannerT = 4; break;
+        case "down": this.events.push(["dead"]); break;                       // aviso no centro da tela (znet: "Você volta na próxima onda")
         case "respawn": this.px = ev[1]; this.py = ev[2]; this.kvx = this.kvy = 0; this.invulnT = 3; this.banner = "DE VOLTA!"; this.bannerSub = "Você renasceu"; this.bannerT = 3;
           for (const s of this.slots) s.reserve = Math.max(s.reserve, Math.round(s.cfg.reserve * this.diff.ammo * 0.5)); break;
       }

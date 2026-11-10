@@ -1,5 +1,9 @@
 # Novedades — Arena Zumbi
 
+## Cooperativo: aviso al caer (09/11/2026)
+- Al caer en cooperativo, aparece en el centro de la pantalla "Vuelves en la próxima oleada", para quien creó la sala y para quien entró.
+- La cuenta de la Infección quedó un poco más abajo, sin tapar los avisos del juego.
+
 ## Infección: cuenta para volver (09/11/2026)
 - Zombi abatido: la cuenta "Vuelves en 5… 4…" aparece grande en el centro de la pantalla.
 - Inglés y español: la barra de humanos, zombis y tiempo de la Infección ahora se traduce.

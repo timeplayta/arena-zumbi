@@ -1,5 +1,9 @@
 # Novidades — Arena Zumbi
 
+## Co-op: aviso ao cair (09/11/2026)
+- Ao cair no co-op, aparece no centro da tela "Você volta na próxima onda", para quem criou e para quem entrou na sala.
+- A contagem da Infecção ficou um pouco mais baixa, sem cobrir os avisos do jogo.
+
 ## Infecção: contagem para voltar (09/11/2026)
 - Zumbi abatido: a contagem "Você volta em 5… 4…" aparece grande no centro da tela.
 - Inglês e espanhol: a barra de humanos, zumbis e tempo da Infecção agora é traduzida.

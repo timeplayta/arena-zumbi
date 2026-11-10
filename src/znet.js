@@ -397,9 +397,18 @@
         if (g.boostT > 0) t += " · VELOCIDADE " + Math.ceil(g.boostT) + " s";
       }
       if (t !== infKey) { infKey = t; e.textContent = t; e.hidden = !t; e.classList.toggle("z", g.team === "z"); }
-      if (cd !== rsKey) {
-        rsKey = cd; const r = $("respawn"), n = $("respawnN");
-        if (r) { r.hidden = !cd; if (cd) { n.textContent = String(cd); n.classList.remove("pop"); void n.offsetWidth; n.classList.add("pop"); } }
+      const down = !on && !!g.coop && !g.alive && active() && !ended();   // co-op: caído até a próxima onda
+      const rk = cd || (down ? "onda" : 0);
+      if (rk !== rsKey) {
+        rsKey = rk; const r = $("respawn"), n = $("respawnN"), k = $("respawnK");
+        if (r) {
+          r.hidden = !rk;
+          if (rk) {
+            k.textContent = cd ? "VOCÊ VOLTA EM" : "VOCÊ VOLTA";
+            n.textContent = cd ? String(cd) : "NA PRÓXIMA ONDA"; n.classList.toggle("txt", !cd);
+            n.classList.remove("pop"); void n.offsetWidth; n.classList.add("pop");
+          }
+        }
       }
     }
     function hud(g) {

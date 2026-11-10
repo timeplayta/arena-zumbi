@@ -1,5 +1,9 @@
 # What's new — Arena Zumbi
 
+## Co-op: downed notice (11/09/2026)
+- When you go down in co-op, "You respawn next wave" shows in the middle of the screen, for both the host and guests.
+- The Infection countdown sits a little lower so it doesn't cover the game notices.
+
 ## Infection: respawn countdown (11/09/2026)
 - Zombie taken down: the "Back in 5… 4…" countdown shows big in the middle of the screen.
 - English and Spanish: the Infection bar with humans, zombies and time is now translated.
