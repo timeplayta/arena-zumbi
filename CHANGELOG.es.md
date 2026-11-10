@@ -1,5 +1,10 @@
 # Novedades — Arena Zumbi
 
+## Correcciones (09/11/2026)
+- Celular en horizontal: las pantallas de fin de partida y de pausa caben enteras, sin desplazar; en táctil se oculta el aviso de teclas.
+- Pantallas 4:3, 16:10 y celular en vertical: el arma y los brazos se ven completos, apoyados abajo.
+- Revisión general: cooperativo (daño después de reaparecer), Infección, oleadas, armas y jefes probados de nuevo, sin errores.
+
 ## Infección: golpe pesado (08/11/2026)
 - El golpe pesado del zombi (botón derecho) vale 1,5 golpes.
 - Sin chaleco: 4 golpes normales o 3 pesados. Con chaleco: 6 normales o 4 pesados.

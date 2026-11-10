@@ -936,7 +936,12 @@
     } else if (state === "dead") {
       game.update(dt, {}); processEvents(); syncGame(dt); updateHud(dt); updateWeather(dt);
     } else if (state === "menu") menuTick(dt);
-    { const k = Math.tan((S.fov * Math.PI) / 360) / camera.aspect / 0.5625; vmFov.scale.set(k, k, 1); }   // 0,5625 = tan(45°)/(16/9): FOV 90 em 16:9
+    {                                                            // braços/arma iguais aos de FOV 90 em 16:9 (0,5625 = tan(45°)/(16/9))
+      const th = Math.tan((S.fov * Math.PI) / 360), T = th / camera.aspect;
+      if (camera.aspect >= 16 / 9 - 1e-3) { const k = T / 0.5625; vmFov.matrix.set(k, 0, 0, 0, 0, k, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1); }
+      else { const r = Math.min(1.35, 1 / camera.aspect / 0.5625), k = th * r, sx = th * (r - 1) * 0.8, cz = T - 0.5625 * k; vmFov.matrix.set(k, 0, sx, 0, 0, k, cz, 0, 0, 0, 1, 0, 0, 0, 0, 1); }   // tela mais estreita (celular em pé, 4:3): cabe na largura e encosta embaixo
+      vmFov.matrixWorldNeedsUpdate = true;
+    }
     renderer.render(scene, camera);
     if (state === "menu" && ui.tab === "arsenal" && pvRenderer) { pvPivot.rotation.y += dt * 0.7; pvRenderer.render(pvScene, pvCam); }
   }

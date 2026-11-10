@@ -1,5 +1,10 @@
 # Novidades — Arena Zumbi
 
+## Correções (09/11/2026)
+- Celular deitado: as telas de fim de jogo e de pausa cabem inteiras, sem rolar; no toque some o aviso de teclas.
+- Tela 4:3, 16:10 e celular em pé: a arma e os braços aparecem inteiros, encostados embaixo.
+- Revisão geral: co-op (dano depois de renascer), Infecção, ondas, armas e chefes testados de novo, sem erros.
+
 ## Infecção: golpe pesado (08/11/2026)
 - O golpe pesado do zumbi (botão direito) vale 1,5 golpe.
 - Sem colete: 4 golpes normais ou 3 pesados. Com colete: 6 normais ou 4 pesados.

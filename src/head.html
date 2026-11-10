@@ -135,6 +135,17 @@ kbd { flex: none; font-family: var(--font-display); font-size: 18px; font-weight
 .final { display: flex; flex-wrap: wrap; gap: 8px 30px; margin: 16px 0 14px; font-family: var(--font-display); font-size: 30px; letter-spacing: 0.06em; font-variant-numeric: tabular-nums; }
 .final span { color: var(--muted); font-size: 18px; display: block; letter-spacing: 0.14em; line-height: 1; }
 #newrec { color: var(--amber); font-family: var(--font-display); font-size: 28px; letter-spacing: 0.1em; margin-bottom: 10px; }
+#stage.touchmode #dead .lead { display: none; }                      /* "R ou Espaço" não serve no celular */
+@media (max-height: 520px) {                                        /* celular deitado: fim de jogo e pausa cabem sem rolar */
+  .overlay { padding-block: 10px; }
+  #dead h1, #pause h1 { font-size: min(64px, 15vh); }
+  #dead .kicker, #pause .kicker { font-size: 15px; }
+  .final { margin: 8px 0 6px; gap: 2px 20px; font-size: 22px; } .final span { font-size: 12px; }
+  #newrec { font-size: 20px; margin-bottom: 4px; }
+  #fCoinsNote { margin: 0 0 6px; font-size: 12px; }
+  #dead .lead { margin: 4px 0 8px; font-size: 14px; }
+  #dead button.play, #pause button.play { font-size: 24px; padding: 5px 24px 3px; } #dead button.ghost, #pause button.ghost { font-size: 19px; }
+}
 
 /* ---------- menu ---------- */
 #menu { position: absolute; inset: 0; display: grid; grid-template-columns: minmax(190px, 270px) minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) auto; gap: 0 32px;

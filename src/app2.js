@@ -498,7 +498,7 @@
   // clarão, luz do tiro e faca (vivem na câmera)
   const gunRoot = new THREE.Group();
   // braços e armas foram montados para FOV 90 em tela 16:9; vmFov comprime X/Y para a imagem ficar igual em qualquer FOV/resolução (sem mostrar o corte dos braços)
-  const vmFov = new THREE.Group(); camera.add(vmFov);
+  const vmFov = new THREE.Group(); vmFov.matrixAutoUpdate = false; camera.add(vmFov);
   vmFov.add(gunRoot);
   let vm = null, vmKey = "";
   const flashSprite = (function () {

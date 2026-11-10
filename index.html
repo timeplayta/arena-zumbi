@@ -135,6 +135,17 @@ kbd { flex: none; font-family: var(--font-display); font-size: 18px; font-weight
 .final { display: flex; flex-wrap: wrap; gap: 8px 30px; margin: 16px 0 14px; font-family: var(--font-display); font-size: 30px; letter-spacing: 0.06em; font-variant-numeric: tabular-nums; }
 .final span { color: var(--muted); font-size: 18px; display: block; letter-spacing: 0.14em; line-height: 1; }
 #newrec { color: var(--amber); font-family: var(--font-display); font-size: 28px; letter-spacing: 0.1em; margin-bottom: 10px; }
+#stage.touchmode #dead .lead { display: none; }                      /* "R ou Espaço" não serve no celular */
+@media (max-height: 520px) {                                        /* celular deitado: fim de jogo e pausa cabem sem rolar */
+  .overlay { padding-block: 10px; }
+  #dead h1, #pause h1 { font-size: min(64px, 15vh); }
+  #dead .kicker, #pause .kicker { font-size: 15px; }
+  .final { margin: 8px 0 6px; gap: 2px 20px; font-size: 22px; } .final span { font-size: 12px; }
+  #newrec { font-size: 20px; margin-bottom: 4px; }
+  #fCoinsNote { margin: 0 0 6px; font-size: 12px; }
+  #dead .lead { margin: 4px 0 8px; font-size: 14px; }
+  #dead button.play, #pause button.play { font-size: 24px; padding: 5px 24px 3px; } #dead button.ghost, #pause button.ghost { font-size: 19px; }
+}
 
 /* ---------- menu ---------- */
 #menu { position: absolute; inset: 0; display: grid; grid-template-columns: minmax(190px, 270px) minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) auto; gap: 0 32px;
@@ -715,7 +726,7 @@ table.sc td:first-child { font-family: var(--font-display); font-size: 22px; col
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
-const GAME_VERSION = 202611090149, GAME_NOTES = {"t": "Infecção: golpe pesado (08/11/2026)", "b": ["O golpe pesado do zumbi (botão direito) vale 1,5 golpe.", "Sem colete: 4 golpes normais ou 3 pesados. Com colete: 6 normais ou 4 pesados."], "en": {"t": "Infection: heavy hit (11/08/2026)", "b": ["The zombie heavy hit (right button) counts as 1.5 hits.", "Without a vest: 4 normal or 3 heavy hits. With a vest: 6 normal or 4 heavy hits."]}, "es": {"t": "Infección: golpe pesado (08/11/2026)", "b": ["El golpe pesado del zombi (botón derecho) vale 1,5 golpes.", "Sin chaleco: 4 golpes normales o 3 pesados. Con chaleco: 6 normales o 4 pesados."]}};
+const GAME_VERSION = 202611100224, GAME_NOTES = {"t": "Correções (09/11/2026)", "b": ["Celular deitado: as telas de fim de jogo e de pausa cabem inteiras, sem rolar; no toque some o aviso de teclas.", "Tela 4:3, 16:10 e celular em pé: a arma e os braços aparecem inteiros, encostados embaixo.", "Revisão geral: co-op (dano depois de renascer), Infecção, ondas, armas e chefes testados de novo, sem erros."], "en": {"t": "Fixes (11/09/2026)", "b": ["Phone in landscape: the game over and pause screens fit without scrolling; the key hint is hidden on touch.", "4:3, 16:10 and portrait screens: the gun and arms show in full, resting at the bottom.", "Full review: co-op (damage after respawning), Infection, waves, guns and bosses retested with no errors."]}, "es": {"t": "Correcciones (09/11/2026)", "b": ["Celular en horizontal: las pantallas de fin de partida y de pausa caben enteras, sin desplazar; en táctil se oculta el aviso de teclas.", "Pantallas 4:3, 16:10 y celular en vertical: el arma y los brazos se ven completos, apoyados abajo.", "Revisión general: cooperativo (daño después de reaparecer), Infección, oleadas, armas y jefes probados de nuevo, sin errores."]}};
   // ===================== IDIOMAS (inglês, espanhol, português) =====================
   // O jogo é escrito em português. Este tradutor troca, na tela, todo texto que aparece (menus, HUD, avisos, mensagens do servidor).
   // REGRA: todo texto novo do jogo precisa de uma entrada aqui (D = frase exata, P = frase com números/nomes). Veja I18N.md.
@@ -5008,7 +5019,7 @@ const Logic = (function () {
   // clarão, luz do tiro e faca (vivem na câmera)
   const gunRoot = new THREE.Group();
   // braços e armas foram montados para FOV 90 em tela 16:9; vmFov comprime X/Y para a imagem ficar igual em qualquer FOV/resolução (sem mostrar o corte dos braços)
-  const vmFov = new THREE.Group(); camera.add(vmFov);
+  const vmFov = new THREE.Group(); vmFov.matrixAutoUpdate = false; camera.add(vmFov);
   vmFov.add(gunRoot);
   let vm = null, vmKey = "";
   const flashSprite = (function () {
@@ -10859,7 +10870,12 @@ const Logic = (function () {
     } else if (state === "dead") {
       game.update(dt, {}); processEvents(); syncGame(dt); updateHud(dt); updateWeather(dt);
     } else if (state === "menu") menuTick(dt);
-    { const k = Math.tan((S.fov * Math.PI) / 360) / camera.aspect / 0.5625; vmFov.scale.set(k, k, 1); }   // 0,5625 = tan(45°)/(16/9): FOV 90 em 16:9
+    {                                                            // braços/arma iguais aos de FOV 90 em 16:9 (0,5625 = tan(45°)/(16/9))
+      const th = Math.tan((S.fov * Math.PI) / 360), T = th / camera.aspect;
+      if (camera.aspect >= 16 / 9 - 1e-3) { const k = T / 0.5625; vmFov.matrix.set(k, 0, 0, 0, 0, k, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1); }
+      else { const r = Math.min(1.35, 1 / camera.aspect / 0.5625), k = th * r, sx = th * (r - 1) * 0.8, cz = T - 0.5625 * k; vmFov.matrix.set(k, 0, sx, 0, 0, k, cz, 0, 0, 0, 1, 0, 0, 0, 0, 1); }   // tela mais estreita (celular em pé, 4:3): cabe na largura e encosta embaixo
+      vmFov.matrixWorldNeedsUpdate = true;
+    }
     renderer.render(scene, camera);
     if (state === "menu" && ui.tab === "arsenal" && pvRenderer) { pvPivot.rotation.y += dt * 0.7; pvRenderer.render(pvScene, pvCam); }
   }

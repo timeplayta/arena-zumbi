@@ -1,5 +1,10 @@
 # What's new — Arena Zumbi
 
+## Fixes (11/09/2026)
+- Phone in landscape: the game over and pause screens fit without scrolling; the key hint is hidden on touch.
+- 4:3, 16:10 and portrait screens: the gun and arms show in full, resting at the bottom.
+- Full review: co-op (damage after respawning), Infection, waves, guns and bosses retested with no errors.
+
 ## Infection: heavy hit (11/08/2026)
 - The zombie heavy hit (right button) counts as 1.5 hits.
 - Without a vest: 4 normal or 3 heavy hits. With a vest: 6 normal or 4 heavy hits.
