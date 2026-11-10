@@ -96,6 +96,12 @@ button { font-family: inherit; color: inherit; }
 #team .down { opacity: 0.55; } #team .down s { background: var(--danger); }
 #inf { position: absolute; top: 14px; left: 50%; transform: translateX(-50%); font-family: var(--font-display); font-size: 26px; letter-spacing: 0.1em; padding: 2px 14px; background: rgba(0,0,0,0.5); border: 1px solid var(--line); white-space: nowrap; }
 #inf.z { color: #ff6a52; border-color: #8a2a20; }
+/* infectado abatido: contagem grande no centro */
+#respawn { position: absolute; left: 50%; top: 42%; transform: translate(-50%, -50%); text-align: center; pointer-events: none; z-index: 6; font-family: var(--font-display); color: #ff6a52; text-shadow: 0 4px 24px rgba(0, 0, 0, 0.85), 0 0 2px #000; }
+#respawn .rs-k { font-size: clamp(22px, 3.4vw, 34px); font-weight: 600; letter-spacing: 0.22em; color: #fff; }
+#respawn .rs-n { font-size: clamp(96px, 22vh, 190px); font-weight: 700; line-height: 0.9; font-variant-numeric: tabular-nums; }
+#respawn .rs-n.pop { animation: rsPop 0.5s ease-out; }
+@keyframes rsPop { 0% { transform: scale(1.45); opacity: 0.35; } 100% { transform: scale(1); opacity: 1; } }
 .hud.infmode .stats .stat { display: none; } .hud.infmode .wave { display: none; }
 .hud.zhud .ammo { display: none; }
 #view.zmode { filter: sepia(0.35) saturate(1.5) hue-rotate(-12deg) contrast(1.08); }
@@ -476,6 +482,7 @@ table.sc td:first-child { font-family: var(--font-display); font-size: 22px; col
     <div id="feed"></div>
     <div id="team"></div>
     <div id="inf" hidden></div>
+    <div id="respawn" hidden><div class="rs-k">VOCÊ VOLTA EM</div><div class="rs-n" id="respawnN" translate="no">5</div></div>
     <div id="banner"><div class="big" id="bannerBig"></div><div class="sub" id="bannerSub"></div></div>
     <div id="msg"></div>
     <div id="boss" hidden><div class="bname" id="bossName">GIGANTE</div><div class="bbar"><div id="bossfill"></div></div></div>
@@ -726,7 +733,7 @@ table.sc td:first-child { font-family: var(--font-display); font-size: 22px; col
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
-const GAME_VERSION = 202611100224, GAME_NOTES = {"t": "Correções (09/11/2026)", "b": ["Celular deitado: as telas de fim de jogo e de pausa cabem inteiras, sem rolar; no toque some o aviso de teclas.", "Tela 4:3, 16:10 e celular em pé: a arma e os braços aparecem inteiros, encostados embaixo.", "Revisão geral: co-op (dano depois de renascer), Infecção, ondas, armas e chefes testados de novo, sem erros."], "en": {"t": "Fixes (11/09/2026)", "b": ["Phone in landscape: the game over and pause screens fit without scrolling; the key hint is hidden on touch.", "4:3, 16:10 and portrait screens: the gun and arms show in full, resting at the bottom.", "Full review: co-op (damage after respawning), Infection, waves, guns and bosses retested with no errors."]}, "es": {"t": "Correcciones (09/11/2026)", "b": ["Celular en horizontal: las pantallas de fin de partida y de pausa caben enteras, sin desplazar; en táctil se oculta el aviso de teclas.", "Pantallas 4:3, 16:10 y celular en vertical: el arma y los brazos se ven completos, apoyados abajo.", "Revisión general: cooperativo (daño después de reaparecer), Infección, oleadas, armas y jefes probados de nuevo, sin errores."]}};
+const GAME_VERSION = 202611100237, GAME_NOTES = {"t": "Infecção: contagem para voltar (09/11/2026)", "b": ["Zumbi abatido: a contagem \"Você volta em 5… 4…\" aparece grande no centro da tela.", "Inglês e espanhol: a barra de humanos, zumbis e tempo da Infecção agora é traduzida."], "en": {"t": "Infection: respawn countdown (11/09/2026)", "b": ["Zombie taken down: the \"Back in 5… 4…\" countdown shows big in the middle of the screen.", "English and Spanish: the Infection bar with humans, zombies and time is now translated."]}, "es": {"t": "Infección: cuenta para volver (09/11/2026)", "b": ["Zombi abatido: la cuenta \"Vuelves en 5… 4…\" aparece grande en el centro de la pantalla.", "Inglés y español: la barra de humanos, zombis y tiempo de la Infección ahora se traduce."]}};
   // ===================== IDIOMAS (inglês, espanhol, português) =====================
   // O jogo é escrito em português. Este tradutor troca, na tela, todo texto que aparece (menus, HUD, avisos, mensagens do servidor).
   // REGRA: todo texto novo do jogo precisa de uma entrada aqui (D = frase exata, P = frase com números/nomes). Veja I18N.md.
@@ -925,7 +932,7 @@ const GAME_VERSION = 202611100224, GAME_NOTES = {"t": "Correções (09/11/2026)"
       "HUMANOS VENCERAM": ["HUMANS WIN", "GANAN LOS HUMANOS"], "ZUMBIS VENCERAM": ["ZOMBIES WIN", "GANAN LOS ZOMBIS"], "Sobreviveram até o fim": ["They survived to the end", "Sobrevivieron hasta el final"], "Ninguém escapou": ["Nobody escaped", "Nadie escapó"],
       "Corra e se espalhe!": ["Run and spread out!", "¡Corre y dispérsate!"], "A INFECÇÃO COMEÇOU": ["THE INFECTION HAS STARTED", "LA INFECCIÓN COMENZÓ"], "Fuja dos zumbis por 3 minutos": ["Escape the zombies for 3 minutes", "Huye de los zombis durante 3 minutos"],
       "Crie uma sala na aba Online para jogar Infecção": ["Create a room in the Online tab to play Infection", "Crea una sala en la pestaña En línea para jugar Infección"],
-      "JOGADOR SAIU": ["PLAYER LEFT", "JUGADOR SALIÓ"], "VOCÊ É ZUMBI": ["YOU ARE A ZOMBIE", "ERES ZOMBI"], "Jogador": ["Player", "Jugador"],
+      "JOGADOR SAIU": ["PLAYER LEFT", "JUGADOR SALIÓ"], "VOCÊ É ZUMBI": ["YOU ARE A ZOMBIE", "ERES ZOMBI"], "VOCÊ VOLTA EM": ["BACK IN", "VUELVES EN"], "Jogador": ["Player", "Jugador"],
       "ARMADURA DESTRUÍDA": ["ARMOR DESTROYED", "ARMADURA DESTRUIDA"], "VIDA CHEIA": ["FULL HEALTH", "VIDA LLENA"], "VOCÊ CAIU - RENASCE NA PRÓXIMA ONDA": ["YOU'RE DOWN - RESPAWN NEXT WAVE", "HAS CAÍDO - REAPARECES EN LA PRÓXIMA OLEADA"], "VOCÊ VOLTOU": ["YOU'RE BACK", "HAS VUELTO"],
       "SEM POÇÕES NESTA PARTIDA": ["NO POTIONS THIS MATCH", "SIN POCIONES EN ESTA PARTIDA"], "TIRO AUTOMÁTICO LIGADO": ["AUTO-FIRE ON", "DISPARO AUTOMÁTICO ACTIVADO"], "TIRO AUTOMÁTICO DESLIGADO": ["AUTO-FIRE OFF", "DISPARO AUTOMÁTICO DESACTIVADO"],
       "VELOCIDADE +40% POR 8 s": ["SPEED +40% FOR 8 s", "VELOCIDAD +40% DURANTE 8 s"], "VIDA RECUPERADA": ["HEALTH RESTORED", "VIDA RECUPERADA"],
@@ -944,6 +951,7 @@ const GAME_VERSION = 202611100224, GAME_NOTES = {"t": "Correções (09/11/2026)"
       [/^próxima onda em (\d+)$/, "next wave in $1", "próxima oleada en $1"],
       [/^INFECÇÃO EM (\d+)$/, "INFECTION IN $1", "INFECCIÓN EN $1"],
       [/^VOCÊ VOLTA EM (\d+)$/, "BACK IN $1", "VUELVES EN $1"],
+      [/^HUMANOS (\d+)$/, "HUMANS $1", "HUMANOS $1"], [/^ZUMBIS (\d+)$/, "ZOMBIES $1", "ZOMBIS $1"], [/^VELOCIDADE (\d+) s$/, "SPEED $1 s", "VELOCIDAD $1 s"],
       [/^VOCÊ É ZUMBI · (.+)$/, (m, t) => "YOU ARE A ZOMBIE · " + t(m[1]), (m, t) => "ERES ZOMBI · " + t(m[1])],
       [/^(.+) É O PRIMEIRO ZUMBI(!?)$/, (m, t) => t(m[1]) + " IS THE FIRST ZOMBIE" + m[2], (m, t) => (m[1] === "VOCÊ" ? "ERES EL PRIMER ZOMBI" : t(m[1]) + " ES EL PRIMER ZOMBI") + m[2]],
       [/^(.+) VIROU ZUMBI(!?)$/, (m, t) => (m[1] === "VOCÊ" ? "YOU TURNED INTO A ZOMBIE" : t(m[1]) + " TURNED INTO A ZOMBIE") + m[2], (m, t) => (m[1] === "VOCÊ" ? "TE CONVERTISTE EN ZOMBI" : t(m[1]) + " SE CONVIRTIÓ EN ZOMBI") + m[2]],
@@ -9603,22 +9611,27 @@ const Logic = (function () {
       clearAllies();
     }
     // ---------------- HUD do time ----------------
-    let teamKey = "", infKey = "";
+    let teamKey = "", infKey = "", rsKey = 0;
     function infHud(g) {
       const e = $("inf"); if (!e) return;
       const on = g.gm === "infect" && !!g.inf;
       $("hud").classList.toggle("infmode", on);
-      let t = "";
+      let t = "", cd = 0;
       if (on) {
         const I = g.inf, mm = Math.floor(Math.max(0, I.t) / 60), ss = String(Math.max(0, Math.ceil(I.t)) % 60).padStart(2, "0");
         t = I.ph === "play" ? "HUMANOS " + I.hu + " · ZUMBIS " + I.zo + " · " + mm + ":" + ss : I.ph === "end" ? (I.win === "h" ? "HUMANOS VENCERAM" : "ZUMBIS VENCERAM") : "PREPARE-SE";
-        if (g.team === "z" && !g.alive && I.ph === "play") {           // infectado abatido: contagem para voltar
+        if (g.team === "z") t = "VOCÊ É ZUMBI · " + t;
+        if (g.team === "z" && !g.alive && I.ph === "play") {           // infectado abatido: contagem grande no centro
           if (!g._zDownAt) g._zDownAt = g.time;
-          t = "VOCÊ VOLTA EM " + Math.max(1, Math.ceil(Logic.C.ZOMBIE_RESPAWN - (g.time - g._zDownAt)));
-        } else { g._zDownAt = 0; if (g.team === "z") t = "VOCÊ É ZUMBI · " + t; }
+          cd = Math.max(1, Math.ceil(Logic.C.ZOMBIE_RESPAWN - (g.time - g._zDownAt)));
+        } else g._zDownAt = 0;
         if (g.boostT > 0) t += " · VELOCIDADE " + Math.ceil(g.boostT) + " s";
       }
       if (t !== infKey) { infKey = t; e.textContent = t; e.hidden = !t; e.classList.toggle("z", g.team === "z"); }
+      if (cd !== rsKey) {
+        rsKey = cd; const r = $("respawn"), n = $("respawnN");
+        if (r) { r.hidden = !cd; if (cd) { n.textContent = String(cd); n.classList.remove("pop"); void n.offsetWidth; n.classList.add("pop"); } }
+      }
     }
     function hud(g) {
       const e = $("team"); if (!e) return;

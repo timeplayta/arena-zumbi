@@ -1,5 +1,9 @@
 # Novedades — Arena Zumbi
 
+## Infección: cuenta para volver (09/11/2026)
+- Zombi abatido: la cuenta "Vuelves en 5… 4…" aparece grande en el centro de la pantalla.
+- Inglés y español: la barra de humanos, zombis y tiempo de la Infección ahora se traduce.
+
 ## Correcciones (09/11/2026)
 - Celular en horizontal: las pantallas de fin de partida y de pausa caben enteras, sin desplazar; en táctil se oculta el aviso de teclas.
 - Pantallas 4:3, 16:10 y celular en vertical: el arma y los brazos se ven completos, apoyados abajo.

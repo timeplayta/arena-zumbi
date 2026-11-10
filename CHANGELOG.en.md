@@ -1,5 +1,9 @@
 # What's new — Arena Zumbi
 
+## Infection: respawn countdown (11/09/2026)
+- Zombie taken down: the "Back in 5… 4…" countdown shows big in the middle of the screen.
+- English and Spanish: the Infection bar with humans, zombies and time is now translated.
+
 ## Fixes (11/09/2026)
 - Phone in landscape: the game over and pause screens fit without scrolling; the key hint is hidden on touch.
 - 4:3, 16:10 and portrait screens: the gun and arms show in full, resting at the bottom.

@@ -1,5 +1,9 @@
 # Novidades — Arena Zumbi
 
+## Infecção: contagem para voltar (09/11/2026)
+- Zumbi abatido: a contagem "Você volta em 5… 4…" aparece grande no centro da tela.
+- Inglês e espanhol: a barra de humanos, zumbis e tempo da Infecção agora é traduzida.
+
 ## Correções (09/11/2026)
 - Celular deitado: as telas de fim de jogo e de pausa cabem inteiras, sem rolar; no toque some o aviso de teclas.
 - Tela 4:3, 16:10 e celular em pé: a arma e os braços aparecem inteiros, encostados embaixo.

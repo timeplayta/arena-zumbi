@@ -96,6 +96,12 @@ button { font-family: inherit; color: inherit; }
 #team .down { opacity: 0.55; } #team .down s { background: var(--danger); }
 #inf { position: absolute; top: 14px; left: 50%; transform: translateX(-50%); font-family: var(--font-display); font-size: 26px; letter-spacing: 0.1em; padding: 2px 14px; background: rgba(0,0,0,0.5); border: 1px solid var(--line); white-space: nowrap; }
 #inf.z { color: #ff6a52; border-color: #8a2a20; }
+/* infectado abatido: contagem grande no centro */
+#respawn { position: absolute; left: 50%; top: 42%; transform: translate(-50%, -50%); text-align: center; pointer-events: none; z-index: 6; font-family: var(--font-display); color: #ff6a52; text-shadow: 0 4px 24px rgba(0, 0, 0, 0.85), 0 0 2px #000; }
+#respawn .rs-k { font-size: clamp(22px, 3.4vw, 34px); font-weight: 600; letter-spacing: 0.22em; color: #fff; }
+#respawn .rs-n { font-size: clamp(96px, 22vh, 190px); font-weight: 700; line-height: 0.9; font-variant-numeric: tabular-nums; }
+#respawn .rs-n.pop { animation: rsPop 0.5s ease-out; }
+@keyframes rsPop { 0% { transform: scale(1.45); opacity: 0.35; } 100% { transform: scale(1); opacity: 1; } }
 .hud.infmode .stats .stat { display: none; } .hud.infmode .wave { display: none; }
 .hud.zhud .ammo { display: none; }
 #view.zmode { filter: sepia(0.35) saturate(1.5) hue-rotate(-12deg) contrast(1.08); }
@@ -476,6 +482,7 @@ table.sc td:first-child { font-family: var(--font-display); font-size: 22px; col
     <div id="feed"></div>
     <div id="team"></div>
     <div id="inf" hidden></div>
+    <div id="respawn" hidden><div class="rs-k">VOCÊ VOLTA EM</div><div class="rs-n" id="respawnN" translate="no">5</div></div>
     <div id="banner"><div class="big" id="bannerBig"></div><div class="sub" id="bannerSub"></div></div>
     <div id="msg"></div>
     <div id="boss" hidden><div class="bname" id="bossName">GIGANTE</div><div class="bbar"><div id="bossfill"></div></div></div>

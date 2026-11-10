@@ -380,22 +380,27 @@
       clearAllies();
     }
     // ---------------- HUD do time ----------------
-    let teamKey = "", infKey = "";
+    let teamKey = "", infKey = "", rsKey = 0;
     function infHud(g) {
       const e = $("inf"); if (!e) return;
       const on = g.gm === "infect" && !!g.inf;
       $("hud").classList.toggle("infmode", on);
-      let t = "";
+      let t = "", cd = 0;
       if (on) {
         const I = g.inf, mm = Math.floor(Math.max(0, I.t) / 60), ss = String(Math.max(0, Math.ceil(I.t)) % 60).padStart(2, "0");
         t = I.ph === "play" ? "HUMANOS " + I.hu + " · ZUMBIS " + I.zo + " · " + mm + ":" + ss : I.ph === "end" ? (I.win === "h" ? "HUMANOS VENCERAM" : "ZUMBIS VENCERAM") : "PREPARE-SE";
-        if (g.team === "z" && !g.alive && I.ph === "play") {           // infectado abatido: contagem para voltar
+        if (g.team === "z") t = "VOCÊ É ZUMBI · " + t;
+        if (g.team === "z" && !g.alive && I.ph === "play") {           // infectado abatido: contagem grande no centro
           if (!g._zDownAt) g._zDownAt = g.time;
-          t = "VOCÊ VOLTA EM " + Math.max(1, Math.ceil(Logic.C.ZOMBIE_RESPAWN - (g.time - g._zDownAt)));
-        } else { g._zDownAt = 0; if (g.team === "z") t = "VOCÊ É ZUMBI · " + t; }
+          cd = Math.max(1, Math.ceil(Logic.C.ZOMBIE_RESPAWN - (g.time - g._zDownAt)));
+        } else g._zDownAt = 0;
         if (g.boostT > 0) t += " · VELOCIDADE " + Math.ceil(g.boostT) + " s";
       }
       if (t !== infKey) { infKey = t; e.textContent = t; e.hidden = !t; e.classList.toggle("z", g.team === "z"); }
+      if (cd !== rsKey) {
+        rsKey = cd; const r = $("respawn"), n = $("respawnN");
+        if (r) { r.hidden = !cd; if (cd) { n.textContent = String(cd); n.classList.remove("pop"); void n.offsetWidth; n.classList.add("pop"); } }
+      }
     }
     function hud(g) {
       const e = $("team"); if (!e) return;
