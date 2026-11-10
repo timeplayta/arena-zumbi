@@ -947,7 +947,10 @@
     {                                                            // braços/arma iguais aos de FOV 90 em 16:9 (0,5625 = tan(45°)/(16/9))
       const th = Math.tan((S.fov * Math.PI) / 360), T = th / camera.aspect;
       if (camera.aspect >= 16 / 9 - 1e-3) { const k = T / 0.5625; vmFov.matrix.set(k, 0, 0, 0, 0, k, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1); }
-      else { const r = Math.min(1.35, 1 / camera.aspect / 0.5625), k = th * r, sx = th * (r - 1) * 0.8, cz = T - 0.5625 * k; vmFov.matrix.set(k, 0, sx, 0, 0, k, cz, 0, 0, 0, 1, 0, 0, 0, 0, 1); }   // tela mais estreita (celular em pé, 4:3): cabe na largura e encosta embaixo
+      else {                                                       // tela mais estreita (4:3, 5:4, 16:10, celular em pé)
+        const k = Math.sqrt(th * T / 0.5625), cz = (T - 0.5625 * k) * (1 - adsT);   // tamanho entre "pela largura" e "pela altura"; sem mirar encosta embaixo, mirando fica centralizada (mira no meio da tela)
+        vmFov.matrix.set(k, 0, 0, 0, 0, k, cz, 0, 0, 0, 1, 0, 0, 0, 0, 1);
+      }
       vmFov.matrixWorldNeedsUpdate = true;
     }
     renderer.render(scene, camera);

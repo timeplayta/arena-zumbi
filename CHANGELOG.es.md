@@ -1,5 +1,9 @@
 # Novedades — Arena Zumbi
 
+## Pantallas 4:3 y resoluciones personalizadas (10/11/2026)
+- En 4:3, 5:4 y 16:10 (ej.: 1440x1080) el arma vuelve a su tamaño normal, sin quedar gigante.
+- Al apuntar, el arma queda recta en el centro de la pantalla; los disparos y el rastro salen del cañón correcto, sin torcerse a la izquierda.
+
 ## Sin tirones: pantalla de carga (10/11/2026)
 - Nueva pantalla de carga: armas, cuchillo, pociones y el pueblo italiano se montan y los gráficos se preparan antes del menú.
 - Sacar el cuchillo, la cura o el fuego, encender la linterna y cambiar de arma ya no congelan la pantalla.

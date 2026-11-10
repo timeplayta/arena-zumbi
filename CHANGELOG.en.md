@@ -1,5 +1,9 @@
 # What's new — Arena Zumbi
 
+## 4:3 screens and custom resolutions (11/10/2026)
+- On 4:3, 5:4 and 16:10 (e.g. 1440x1080) the gun is back to its normal size instead of huge.
+- When aiming, the gun sits straight in the center of the screen; shots and tracers come from the right muzzle, no longer skewed to the left.
+
 ## No more stutters: loading screen (11/10/2026)
 - New loading screen: guns, knife, potions and the Italian village are built and the graphics are prepared before the menu.
 - Pulling out the knife, the heal or the fire potion, turning on the flashlight and switching guns no longer freeze the screen.

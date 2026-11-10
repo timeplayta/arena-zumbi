@@ -1,5 +1,9 @@
 # Novidades — Arena Zumbi
 
+## Telas 4:3 e resoluções personalizadas (10/11/2026)
+- Em 4:3, 5:4 e 16:10 (ex.: 1440x1080) a arma volta ao tamanho normal, sem ficar gigante.
+- Mirando, a arma fica reta no centro da tela; os tiros e o rastro saem do cano certo, sem entortar para a esquerda.
+
 ## Sem travadas: tela de carregamento (10/11/2026)
 - Nova tela de carregamento: armas, faca, poções e a vila italiana são montadas e os gráficos são preparados antes do menu.
 - Puxar a faca, a cura ou o fogo, ligar a lanterna e trocar de arma não travam mais a tela.

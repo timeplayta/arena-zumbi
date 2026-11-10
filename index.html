@@ -755,7 +755,7 @@ table.sc td:first-child { font-family: var(--font-display); font-size: 22px; col
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
-const GAME_VERSION = 202611100329, GAME_NOTES = {"t": "Sem travadas: tela de carregamento (10/11/2026)", "b": ["Nova tela de carregamento: armas, faca, poções e a vila italiana são montadas e os gráficos são preparados antes do menu.", "Puxar a faca, a cura ou o fogo, ligar a lanterna e trocar de arma não travam mais a tela.", "Trocar de arma ficou mais leve: a arma não é montada de novo a cada troca.", "Corrigido um erro raro da faca na Infecção antes da partida começar."], "en": {"t": "No more stutters: loading screen (11/10/2026)", "b": ["New loading screen: guns, knife, potions and the Italian village are built and the graphics are prepared before the menu.", "Pulling out the knife, the heal or the fire potion, turning on the flashlight and switching guns no longer freeze the screen.", "Switching guns is lighter: the gun is no longer rebuilt on every switch.", "Fixed a rare knife error in Infection before the match starts."]}, "es": {"t": "Sin tirones: pantalla de carga (10/11/2026)", "b": ["Nueva pantalla de carga: armas, cuchillo, pociones y el pueblo italiano se montan y los gráficos se preparan antes del menú.", "Sacar el cuchillo, la cura o el fuego, encender la linterna y cambiar de arma ya no congelan la pantalla.", "Cambiar de arma es más ligero: el arma ya no se vuelve a montar en cada cambio.", "Corregido un error raro del cuchillo en la Infección antes de que empiece la partida."]}};
+const GAME_VERSION = 202611100346, GAME_NOTES = {"t": "Telas 4:3 e resoluções personalizadas (10/11/2026)", "b": ["Em 4:3, 5:4 e 16:10 (ex.: 1440x1080) a arma volta ao tamanho normal, sem ficar gigante.", "Mirando, a arma fica reta no centro da tela; os tiros e o rastro saem do cano certo, sem entortar para a esquerda."], "en": {"t": "4:3 screens and custom resolutions (11/10/2026)", "b": ["On 4:3, 5:4 and 16:10 (e.g. 1440x1080) the gun is back to its normal size instead of huge.", "When aiming, the gun sits straight in the center of the screen; shots and tracers come from the right muzzle, no longer skewed to the left."]}, "es": {"t": "Pantallas 4:3 y resoluciones personalizadas (10/11/2026)", "b": ["En 4:3, 5:4 y 16:10 (ej.: 1440x1080) el arma vuelve a su tamaño normal, sin quedar gigante.", "Al apuntar, el arma queda recta en el centro de la pantalla; los disparos y el rastro salen del cañón correcto, sin torcerse a la izquierda."]}};
   // ===================== IDIOMAS (inglês, espanhol, português) =====================
   // O jogo é escrito em português. Este tradutor troca, na tela, todo texto que aparece (menus, HUD, avisos, mensagens do servidor).
   // REGRA: todo texto novo do jogo precisa de uma entrada aqui (D = frase exata, P = frase com números/nomes). Veja I18N.md.
@@ -10954,7 +10954,10 @@ const Logic = (function () {
     {                                                            // braços/arma iguais aos de FOV 90 em 16:9 (0,5625 = tan(45°)/(16/9))
       const th = Math.tan((S.fov * Math.PI) / 360), T = th / camera.aspect;
       if (camera.aspect >= 16 / 9 - 1e-3) { const k = T / 0.5625; vmFov.matrix.set(k, 0, 0, 0, 0, k, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1); }
-      else { const r = Math.min(1.35, 1 / camera.aspect / 0.5625), k = th * r, sx = th * (r - 1) * 0.8, cz = T - 0.5625 * k; vmFov.matrix.set(k, 0, sx, 0, 0, k, cz, 0, 0, 0, 1, 0, 0, 0, 0, 1); }   // tela mais estreita (celular em pé, 4:3): cabe na largura e encosta embaixo
+      else {                                                       // tela mais estreita (4:3, 5:4, 16:10, celular em pé)
+        const k = Math.sqrt(th * T / 0.5625), cz = (T - 0.5625 * k) * (1 - adsT);   // tamanho entre "pela largura" e "pela altura"; sem mirar encosta embaixo, mirando fica centralizada (mira no meio da tela)
+        vmFov.matrix.set(k, 0, 0, 0, 0, k, cz, 0, 0, 0, 1, 0, 0, 0, 0, 1);
+      }
       vmFov.matrixWorldNeedsUpdate = true;
     }
     renderer.render(scene, camera);
