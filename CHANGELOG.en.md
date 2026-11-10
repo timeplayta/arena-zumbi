@@ -1,5 +1,10 @@
 # What's new — Arena Zumbi
 
+## Infection: infected on stairs (11/10/2026)
+- A player-controlled infected no longer gets stuck in the sky or walks in place when climbing the village stairs and terraces.
+- Humans now see the infected in the right place on stairs and terraces.
+- AI zombies no longer get stuck on walls and railings: they look for another route.
+
 ## 4:3 screens and custom resolutions (11/10/2026)
 - On 4:3, 5:4 and 16:10 (e.g. 1440x1080) the gun is back to its normal size instead of huge.
 - When aiming, the gun sits straight in the center of the screen; shots and tracers come from the right muzzle, no longer skewed to the left.

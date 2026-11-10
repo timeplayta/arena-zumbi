@@ -1170,7 +1170,7 @@ const Logic = (function () {
       const base = this.baseDmg();
       for (const z of this.zombies) {
         z.hitT = Math.max(0, z.hitT - dt);
-        if ((z.kx || z.ky) && !z.wraith) {
+        if ((z.kx || z.ky) && !z.wraith && !z.puppet) {
           [z.x, z.y] = pushOut(z.x + z.kx * dt, z.y + z.ky * dt, ZOMBIE_R * z.s);
           const k = Math.exp(-9 * dt); z.kx *= k; z.ky *= k;
           if (Math.abs(z.kx) + Math.abs(z.ky) < 0.01) z.kx = z.ky = 0;
@@ -1193,7 +1193,7 @@ const Logic = (function () {
           this.px = sx; this.py = sy; this.yaw = sw; this._tgt = null;
         } else this.zombieAI(z, dt, base);
       }
-      const live = this.aliveZombies().filter((z) => !z.wraith);
+      const live = this.aliveZombies().filter((z) => !z.wraith && !z.puppet);   // infectado (jogador) não é empurrado: a posição dele vem do jogador, e o empurrão no chão o tirava de escadas e terraços
       for (let i = 0; i < live.length; i++) {
         const a = live[i];
         for (let j = i + 1; j < live.length; j++) {
@@ -1571,7 +1571,19 @@ const Logic = (function () {
       o.x = q[0]; o.y = q[1]; o.mv = moved > 0.002 ? 1 : 0;
       const g = groundAt(o.x, o.y, o.gz || 0);                                   // escadas e beiradas
       if (g >= (o.gz || 0)) { o.gz = g; o.vz = 0; } else { o.vz = (o.vz || 0) - 22 * dt; o.gz = Math.max(g, o.gz + o.vz * dt); }
-      if (moved < spd * dt * 0.35) { B.stuck += dt; if (B.stuck > 0.5) { B.stuck = 0; B.detour = (this.rnd() < 0.5 ? -1 : 1) * (0.9 + this.rnd() * 1.2); B.detourT = 0.6 + this.rnd() * 0.8; B.wp = null; B.path = null; B.repath = 0; } }
+      B.stuckWin = Math.max(0, (B.stuckWin || 0) - dt); if (!B.stuckWin) B.stuckN = 0;
+      if (moved < spd * dt * 0.35) {
+        B.stuck += dt;
+        if (B.stuck > 0.5) {
+          B.stuck = 0; B.stuckN = (B.stuckN || 0) + 1; B.stuckWin = 4;
+          if (B.stuckN >= 3) {                                                   // preso de verdade (quina de escada/terraço): volta para o centro do nó do mapa mais perto
+            const id = Nav.locate(o.x, o.y, o.gz || 0), M = Nav.get();
+            if (id >= 0) { o.x = M.X[id]; o.y = M.Y[id]; o.gz = M.Z[id]; o.vz = 0; }
+            B.stuckN = 0;
+          }
+          B.detour = (this.rnd() < 0.5 ? -1 : 1) * (0.9 + this.rnd() * 1.2); B.detourT = 0.6 + this.rnd() * 0.8; B.wp = null; B.path = null; B.repath = 0;
+        }
+      }
       else B.stuck = Math.max(0, B.stuck - dt);
     }
     // IA dos bots ("treinada" em partidas simuladas: tools/tbots.js). BOT_AI guarda os parâmetros escolhidos.
@@ -1647,11 +1659,17 @@ const Logic = (function () {
           if (zRun && o.mv) { B.stam -= 22 * AI.zStam * dt; if (B.stam <= 0) { B.stam = 0; B.tired = true; } }
           else { B.stam = Math.min(100, B.stam + 14 * dt); if (B.tired && B.stam > 25) B.tired = false; }
           if (dd < AI.clawR && same) { o.yaw = ang; this.claw(o.id, this.rnd() < 0.3); if (dd > 1.0) this.botMove(o, ang, zs2, dt); else o.mv = 0; continue; }
-          if (same && dd < 9 && Nav.los(o.x, o.y, oz, tg.x, tg.y)) { o.yaw = ang; this.botMove(o, ang, zs2, dt); B.path = null; continue; }
+          if (same && dd < 9 && !(B.stuckN >= 2) && Nav.los(o.x, o.y, oz, tg.x, tg.y)) { o.yaw = ang; this.botMove(o, ang, zs2, dt); B.path = null; continue; }   // reto só se não está empacando
           const moved = B.goal ? Math.hypot(B.goal[0] - tg.x, B.goal[1] - tg.y) : 99;
           if (!B.path || B.repath <= 0 || moved > 2.5) { this.botGo(o, tg.x, tg.y, tg.gz, 8000); B.repath = AI.zRepath + this.rnd() * 0.4; }
-          if (!this.botFollow(o, dt, zs2)) { o.yaw = ang; this.botMove(o, ang, zs2, dt); }
-          else o.yaw = B.moveAng;
+          if (!this.botFollow(o, dt, zs2)) {
+            B.noPathT = (B.noPathT || 0) + dt;
+            if (B.noPathT > 1.2) {                                             // presa onde o caminho não chega: vai para o ponto alcançável mais perto dela (não fica andando parado na parede)
+              B.noPathT = 0; let best = null, bd = 1e9;
+              for (let k = 0; k < 14; k++) { const r = Nav.randomNode(() => this.rnd()); const d = Math.hypot(r[0] - tg.x, r[1] - tg.y) + Math.abs(r[2] - tg.gz); if (d < bd) { bd = d; best = r; } }
+              if (best) { this.botGo(o, best[0], best[1], best[2], 8000); B.repath = 2.5; }
+            } else { o.yaw = ang; this.botMove(o, ang, zs2, dt); }
+          } else { B.noPathT = 0; o.yaw = B.moveAng; }
           continue;
         }
         // humano: vai para um esconderijo, segura a posição atirando e foge pelo caminho quando o zumbi chega perto

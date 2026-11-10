@@ -755,7 +755,7 @@ table.sc td:first-child { font-family: var(--font-display); font-size: 22px; col
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
-const GAME_VERSION = 202611100346, GAME_NOTES = {"t": "Telas 4:3 e resoluções personalizadas (10/11/2026)", "b": ["Em 4:3, 5:4 e 16:10 (ex.: 1440x1080) a arma volta ao tamanho normal, sem ficar gigante.", "Mirando, a arma fica reta no centro da tela; os tiros e o rastro saem do cano certo, sem entortar para a esquerda."], "en": {"t": "4:3 screens and custom resolutions (11/10/2026)", "b": ["On 4:3, 5:4 and 16:10 (e.g. 1440x1080) the gun is back to its normal size instead of huge.", "When aiming, the gun sits straight in the center of the screen; shots and tracers come from the right muzzle, no longer skewed to the left."]}, "es": {"t": "Pantallas 4:3 y resoluciones personalizadas (10/11/2026)", "b": ["En 4:3, 5:4 y 16:10 (ej.: 1440x1080) el arma vuelve a su tamaño normal, sin quedar gigante.", "Al apuntar, el arma queda recta en el centro de la pantalla; los disparos y el rastro salen del cañón correcto, sin torcerse a la izquierda."]}};
+const GAME_VERSION = 202611100359, GAME_NOTES = {"t": "Infecção: infectado nas escadas (10/11/2026)", "b": ["O infectado jogado por outro jogador não fica mais travado no céu nem andando parado ao subir as escadas e terraços da vila.", "Os humanos agora veem o infectado na posição certa, em cima das escadas e terraços.", "Zumbis controlados pelo jogo não ficam mais empacados em paredes e grades: eles procuram outro caminho."], "en": {"t": "Infection: infected on stairs (11/10/2026)", "b": ["A player-controlled infected no longer gets stuck in the sky or walks in place when climbing the village stairs and terraces.", "Humans now see the infected in the right place on stairs and terraces.", "AI zombies no longer get stuck on walls and railings: they look for another route."]}, "es": {"t": "Infección: infectado en las escaleras (10/11/2026)", "b": ["El infectado controlado por otro jugador ya no se queda trabado en el cielo ni caminando en el sitio al subir las escaleras y terrazas del pueblo.", "Los humanos ahora ven al infectado en el lugar correcto, sobre escaleras y terrazas.", "Los zombis controlados por el juego ya no se atascan en paredes y barandas: buscan otro camino."]}};
   // ===================== IDIOMAS (inglês, espanhol, português) =====================
   // O jogo é escrito em português. Este tradutor troca, na tela, todo texto que aparece (menus, HUD, avisos, mensagens do servidor).
   // REGRA: todo texto novo do jogo precisa de uma entrada aqui (D = frase exata, P = frase com números/nomes). Veja I18N.md.
@@ -2441,7 +2441,7 @@ const Logic = (function () {
       const base = this.baseDmg();
       for (const z of this.zombies) {
         z.hitT = Math.max(0, z.hitT - dt);
-        if ((z.kx || z.ky) && !z.wraith) {
+        if ((z.kx || z.ky) && !z.wraith && !z.puppet) {
           [z.x, z.y] = pushOut(z.x + z.kx * dt, z.y + z.ky * dt, ZOMBIE_R * z.s);
           const k = Math.exp(-9 * dt); z.kx *= k; z.ky *= k;
           if (Math.abs(z.kx) + Math.abs(z.ky) < 0.01) z.kx = z.ky = 0;
@@ -2464,7 +2464,7 @@ const Logic = (function () {
           this.px = sx; this.py = sy; this.yaw = sw; this._tgt = null;
         } else this.zombieAI(z, dt, base);
       }
-      const live = this.aliveZombies().filter((z) => !z.wraith);
+      const live = this.aliveZombies().filter((z) => !z.wraith && !z.puppet);   // infectado (jogador) não é empurrado: a posição dele vem do jogador, e o empurrão no chão o tirava de escadas e terraços
       for (let i = 0; i < live.length; i++) {
         const a = live[i];
         for (let j = i + 1; j < live.length; j++) {
@@ -2842,7 +2842,19 @@ const Logic = (function () {
       o.x = q[0]; o.y = q[1]; o.mv = moved > 0.002 ? 1 : 0;
       const g = groundAt(o.x, o.y, o.gz || 0);                                   // escadas e beiradas
       if (g >= (o.gz || 0)) { o.gz = g; o.vz = 0; } else { o.vz = (o.vz || 0) - 22 * dt; o.gz = Math.max(g, o.gz + o.vz * dt); }
-      if (moved < spd * dt * 0.35) { B.stuck += dt; if (B.stuck > 0.5) { B.stuck = 0; B.detour = (this.rnd() < 0.5 ? -1 : 1) * (0.9 + this.rnd() * 1.2); B.detourT = 0.6 + this.rnd() * 0.8; B.wp = null; B.path = null; B.repath = 0; } }
+      B.stuckWin = Math.max(0, (B.stuckWin || 0) - dt); if (!B.stuckWin) B.stuckN = 0;
+      if (moved < spd * dt * 0.35) {
+        B.stuck += dt;
+        if (B.stuck > 0.5) {
+          B.stuck = 0; B.stuckN = (B.stuckN || 0) + 1; B.stuckWin = 4;
+          if (B.stuckN >= 3) {                                                   // preso de verdade (quina de escada/terraço): volta para o centro do nó do mapa mais perto
+            const id = Nav.locate(o.x, o.y, o.gz || 0), M = Nav.get();
+            if (id >= 0) { o.x = M.X[id]; o.y = M.Y[id]; o.gz = M.Z[id]; o.vz = 0; }
+            B.stuckN = 0;
+          }
+          B.detour = (this.rnd() < 0.5 ? -1 : 1) * (0.9 + this.rnd() * 1.2); B.detourT = 0.6 + this.rnd() * 0.8; B.wp = null; B.path = null; B.repath = 0;
+        }
+      }
       else B.stuck = Math.max(0, B.stuck - dt);
     }
     // IA dos bots ("treinada" em partidas simuladas: tools/tbots.js). BOT_AI guarda os parâmetros escolhidos.
@@ -2918,11 +2930,17 @@ const Logic = (function () {
           if (zRun && o.mv) { B.stam -= 22 * AI.zStam * dt; if (B.stam <= 0) { B.stam = 0; B.tired = true; } }
           else { B.stam = Math.min(100, B.stam + 14 * dt); if (B.tired && B.stam > 25) B.tired = false; }
           if (dd < AI.clawR && same) { o.yaw = ang; this.claw(o.id, this.rnd() < 0.3); if (dd > 1.0) this.botMove(o, ang, zs2, dt); else o.mv = 0; continue; }
-          if (same && dd < 9 && Nav.los(o.x, o.y, oz, tg.x, tg.y)) { o.yaw = ang; this.botMove(o, ang, zs2, dt); B.path = null; continue; }
+          if (same && dd < 9 && !(B.stuckN >= 2) && Nav.los(o.x, o.y, oz, tg.x, tg.y)) { o.yaw = ang; this.botMove(o, ang, zs2, dt); B.path = null; continue; }   // reto só se não está empacando
           const moved = B.goal ? Math.hypot(B.goal[0] - tg.x, B.goal[1] - tg.y) : 99;
           if (!B.path || B.repath <= 0 || moved > 2.5) { this.botGo(o, tg.x, tg.y, tg.gz, 8000); B.repath = AI.zRepath + this.rnd() * 0.4; }
-          if (!this.botFollow(o, dt, zs2)) { o.yaw = ang; this.botMove(o, ang, zs2, dt); }
-          else o.yaw = B.moveAng;
+          if (!this.botFollow(o, dt, zs2)) {
+            B.noPathT = (B.noPathT || 0) + dt;
+            if (B.noPathT > 1.2) {                                             // presa onde o caminho não chega: vai para o ponto alcançável mais perto dela (não fica andando parado na parede)
+              B.noPathT = 0; let best = null, bd = 1e9;
+              for (let k = 0; k < 14; k++) { const r = Nav.randomNode(() => this.rnd()); const d = Math.hypot(r[0] - tg.x, r[1] - tg.y) + Math.abs(r[2] - tg.gz); if (d < bd) { bd = d; best = r; } }
+              if (best) { this.botGo(o, best[0], best[1], best[2], 8000); B.repath = 2.5; }
+            } else { o.yaw = ang; this.botMove(o, ang, zs2, dt); }
+          } else { B.noPathT = 0; o.yaw = B.moveAng; }
           continue;
         }
         // humano: vai para um esconderijo, segura a posição atirando e foge pelo caminho quando o zumbi chega perto

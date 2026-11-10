@@ -1,5 +1,10 @@
 # Novidades — Arena Zumbi
 
+## Infecção: infectado nas escadas (10/11/2026)
+- O infectado jogado por outro jogador não fica mais travado no céu nem andando parado ao subir as escadas e terraços da vila.
+- Os humanos agora veem o infectado na posição certa, em cima das escadas e terraços.
+- Zumbis controlados pelo jogo não ficam mais empacados em paredes e grades: eles procuram outro caminho.
+
 ## Telas 4:3 e resoluções personalizadas (10/11/2026)
 - Em 4:3, 5:4 e 16:10 (ex.: 1440x1080) a arma volta ao tamanho normal, sem ficar gigante.
 - Mirando, a arma fica reta no centro da tela; os tiros e o rastro saem do cano certo, sem entortar para a esquerda.
