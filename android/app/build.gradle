@@ -6,15 +6,20 @@ android {
         applicationId 'com.arenazumbi.app'
         minSdk 24
         targetSdk 34
-        versionCode 4
-        versionName '1.2'
+        versionCode 5
+        versionName '1.3'
     }
     signingConfigs {
-        fixo {                                   // chave fixa: o APK novo instala por cima do antigo
-            storeFile file('../arena.keystore'); storePassword 'arenazumbi'; keyAlias 'arena'; keyPassword 'arenazumbi'
+        release {                                // chave secreta: vem dos segredos do GitHub (ANDROID_KEYSTORE_B64 / ANDROID_KEYSTORE_PASS), nunca do repositório
+            storeFile file(System.getenv('ANDROID_KEYSTORE') ?: 'release.keystore')
+            storeType 'pkcs12'
+            storePassword System.getenv('ANDROID_KEYSTORE_PASS')
+            keyAlias 'arena'
+            keyPassword System.getenv('ANDROID_KEYSTORE_PASS')
         }
     }
-    buildTypes { debug { signingConfig signingConfigs.fixo } }
+    buildTypes { release { signingConfig signingConfigs.release; minifyEnabled false; debuggable false } }
     compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
     aaptOptions { noCompress 'html' }
+    lint { checkReleaseBuilds false; abortOnError false }
 }

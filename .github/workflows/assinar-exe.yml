@@ -1,0 +1,51 @@
+# Assina "Arena Zumbi.exe" (Authenticode) com o certificado .pfx guardado nos segredos do GitHub:
+#   WINDOWS_PFX_B64      = conteúdo do .pfx em base64
+#   WINDOWS_PFX_PASSWORD = senha do .pfx
+# Roda quando o zip do Windows muda (e à mão). Se o exe já estiver assinado, não faz nada.
+name: Assinar exe
+on:
+  push:
+    branches: [main]
+    paths: ['windows/Arena-Zumbi-Windows.zip', '.github/workflows/assinar-exe.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency: { group: assinar-exe, cancel-in-progress: false }
+jobs:
+  sign:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Extrair
+        shell: pwsh
+        run: Expand-Archive windows/Arena-Zumbi-Windows.zip -DestinationPath out
+      - name: Assinar
+        id: sign
+        shell: pwsh
+        env:
+          PFX: ${{ secrets.WINDOWS_PFX_B64 }}
+          PFX_PASS: ${{ secrets.WINDOWS_PFX_PASSWORD }}
+        run: |
+          $exe = "out/Arena Zumbi/Arena Zumbi.exe"
+          if ((Get-AuthenticodeSignature $exe).Status -eq 'Valid') { Write-Host "ja assinado"; "changed=0" >> $env:GITHUB_OUTPUT; exit 0 }
+          if (-not $env:PFX) { Write-Host "::error::Falta o segredo WINDOWS_PFX_B64"; exit 1 }
+          $pfx = Join-Path $env:RUNNER_TEMP "cert.pfx"
+          [IO.File]::WriteAllBytes($pfx, [Convert]::FromBase64String($env:PFX))
+          $st = Get-ChildItem "${env:ProgramFiles(x86)}\Windows Kits\10\bin\*\x64\signtool.exe" | Sort-Object FullName | Select-Object -Last 1
+          & $st.FullName sign /f $pfx /p $env:PFX_PASS /fd SHA256 /tr http://timestamp.digicert.com /td SHA256 /d "Arena Zumbi" $exe
+          $code = $LASTEXITCODE; Remove-Item $pfx -Force
+          if ($code -ne 0) { exit $code }
+          $s = Get-AuthenticodeSignature $exe
+          Write-Host "Assinatura: $($s.Status) - $($s.SignerCertificate.Subject)"
+          "changed=1" >> $env:GITHUB_OUTPUT
+      - name: Refazer o zip e salvar
+        if: steps.sign.outputs.changed == '1'
+        shell: pwsh
+        run: |
+          Remove-Item windows/Arena-Zumbi-Windows.zip
+          tar -a -c -f windows/Arena-Zumbi-Windows.zip -C out "Arena Zumbi"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898283+github-actions[bot]@users.noreply.github.com"
+          git add windows/Arena-Zumbi-Windows.zip
+          git commit -m "Exe assinado automaticamente"
+          git pull --rebase; git push

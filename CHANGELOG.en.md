@@ -1,5 +1,10 @@
 # What's new — Arena Zumbi
 
+## Securely signed APK (11/12/2026)
+- The APK is now signed with a new, secret key. Nobody can publish a fake APK that installs over the game.
+- If you already have the game installed, it keeps updating by itself: you don't need to do anything.
+- To install the new APK over the old one, uninstall the old one first. Log in to your account before uninstalling so you don't lose your progress.
+
 ## Official trailer (11/11/2026)
 - The official Arena Zumbi trailer is out on YouTube!
 - On the Mission tab, tap the trailer card to watch it. The video opens in your language.

@@ -15,10 +15,22 @@ jobs:
         with: { distribution: temurin, java-version: '17' }
       - uses: gradle/actions/setup-gradle@v4
         with: { gradle-version: '8.9' }
-      - name: Compilar APK
-        run: gradle -p android assembleDebug --no-daemon
-      - name: Copiar APK
-        run: mkdir -p apk && cp android/app/build/outputs/apk/debug/app-debug.apk apk/Arena-Zumbi.apk
+      - name: Chave de assinatura (segredo)
+        env: { KS: '${{ secrets.ANDROID_KEYSTORE_B64 }}' }
+        run: |
+          if [ -z "$KS" ]; then echo "::error::Falta o segredo ANDROID_KEYSTORE_B64 (Settings > Secrets and variables > Actions)"; exit 1; fi
+          echo "$KS" | base64 -d > "$RUNNER_TEMP/release.keystore"
+      - name: Compilar APK assinado
+        env:
+          ANDROID_KEYSTORE: ${{ runner.temp }}/release.keystore
+          ANDROID_KEYSTORE_PASS: ${{ secrets.ANDROID_KEYSTORE_PASS }}
+        run: gradle -p android assembleRelease --no-daemon
+      - name: Conferir assinatura
+        run: |
+          AS=$(ls -d $ANDROID_HOME/build-tools/*/ | sort -V | tail -1)apksigner
+          $AS verify --print-certs android/app/build/outputs/apk/release/app-release.apk | head -4
+          mkdir -p apk && cp android/app/build/outputs/apk/release/app-release.apk apk/Arena-Zumbi.apk
+          rm -f "$RUNNER_TEMP/release.keystore"
       - uses: actions/upload-artifact@v4
         with: { name: Arena-Zumbi-APK, path: apk/Arena-Zumbi.apk }
       - name: Salvar APK no repositório

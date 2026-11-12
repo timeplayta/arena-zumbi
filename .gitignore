@@ -3,3 +3,9 @@ node_modules/
 android/.gradle/
 android/app/build/
 android/build/
+
+# chaves nunca vão para o repositório
+*.keystore
+*.jks
+*.p12
+*.pfx
