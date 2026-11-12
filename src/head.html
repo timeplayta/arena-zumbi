@@ -165,6 +165,16 @@ kbd { flex: none; font-family: var(--font-display); font-size: 18px; font-weight
 #boot .boot-bar i { display: block; height: 100%; width: 0; background: var(--amber); transition: width 0.25s; }
 #boot .boot-row { display: flex; justify-content: space-between; gap: 12px; margin-top: 10px; font-size: 15px; color: #cfd6e0; }
 #boot .boot-row b { font-family: var(--font-display); font-size: 20px; letter-spacing: 0.06em; color: var(--amber); font-variant-numeric: tabular-nums; }
+#appUpd { position: fixed; inset: 0; z-index: 9998; display: grid; place-items: center; background: rgba(4, 6, 9, 0.82); padding: 16px; }
+#appUpd[hidden] { display: none; }
+#appUpd .au-in { width: min(460px, 100%); background: var(--surface-2); border: 1px solid var(--line); border-top: 3px solid var(--amber); padding: 22px 22px 18px; color: var(--fg); text-align: left; }
+#appUpd .au-k { font-family: var(--font-display); font-size: 15px; letter-spacing: 0.2em; color: var(--muted); text-transform: uppercase; }
+#appUpd h2 { font-family: var(--font-display); font-size: 34px; letter-spacing: 0.04em; margin: 4px 0 10px; text-transform: uppercase; }
+#appUpd p { font-size: 15px; line-height: 1.45; color: #cfd6e0; margin: 0 0 8px; }
+#appUpd p.au-tip { font-size: 13px; color: var(--muted); }
+#appUpd .au-row { display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
+#appUpd .au-row .btn { flex: 1 1 160px; font-size: 19px; }
+#appUpd .au-row .btn.au-go { background: var(--amber); color: #111; border-color: var(--amber); }
 @media (max-height: 420px) { #boot h1 { font-size: 48px; margin-bottom: 14px; } }
 
 /* ---------- menu ---------- */
@@ -485,6 +495,15 @@ table.sc td:first-child { font-family: var(--font-display); font-size: 22px; col
     <h1 translate="no">Arena <span>Zumbi</span></h1>
     <div class="boot-bar"><i id="bootBar"></i></div>
     <div class="boot-row"><span id="bootMsg">Carregando…</span><b id="bootPct" translate="no">0%</b></div>
+  </div>
+</div>
+<div id="appUpd" hidden role="dialog" aria-modal="true" aria-labelledby="auTitle">
+  <div class="au-in">
+    <div class="au-k">Atualização do app</div>
+    <h2 id="auTitle">Instale o app novo</h2>
+    <p id="auTxt">Saiu uma versão nova do app, mais segura e assinada.</p>
+    <p class="au-tip" id="auTip">Entre na sua conta antes de desinstalar para não perder o progresso.</p>
+    <div class="au-row"><button class="btn au-go" id="auGo" type="button">Baixar agora</button><button class="btn" id="auLater" type="button">Depois</button></div>
   </div>
 </div>
 <div id="stage">

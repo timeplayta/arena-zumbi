@@ -1029,4 +1029,31 @@
     $("bootPct").textContent = "100%"; $("bootBar").style.width = "100%"; $("bootMsg").textContent = "Pronto!";
     await wait(); finish();
   })();
+
+  // ---------------- app antigo: pede para instalar o APK / .exe novo ----------------
+  // APK novo expõe AZ.appBuild() (≥ 5, chave nova); .exe novo abre o jogo com ?appv=2. Os antigos não têm isso.
+  (function appUpdate() {
+    const NEW_APK = "https://github.com/timeplayta/arena-zumbi/raw/main/apk/Arena-Zumbi.apk";
+    const NEW_EXE = "https://github.com/timeplayta/arena-zumbi/raw/main/windows/Arena-Zumbi-Windows.zip";
+    let kind = null;
+    try {
+      if (window.AZ && window.AZ.openUrl) { const b = window.AZ.appBuild ? Number(window.AZ.appBuild()) : 0; if (!(b >= 5)) kind = "apk"; }
+      else if (/Electron\//.test(navigator.userAgent)) { const v = Number(new URLSearchParams(location.search).get("appv")) || 0; if (v < 2) kind = "exe"; }
+    } catch (e) {}
+    const box = $("appUpd"); if (!kind || !box) return;
+    if (kind === "apk") {
+      $("auTxt").textContent = "Saiu uma versão nova do app para Android, mais segura e assinada. Baixe o APK novo, desinstale este app e instale o novo.";
+      $("auTip").textContent = "Entre na sua conta antes de desinstalar para não perder o progresso.";
+    } else {
+      $("auTxt").textContent = "Saiu uma versão nova do jogo para Windows, assinada digitalmente. Baixe o .zip novo, extraia e abra o Arena Zumbi.exe novo.";
+      $("auTip").textContent = "Seu progresso continua: é só substituir a pasta antiga.";
+    }
+    const open = (u) => { try { if (window.AZ && window.AZ.openUrl) { window.AZ.openUrl(u); return; } } catch (e) {} try { window.open(u, "_blank", "noopener"); } catch (e) {} };
+    $("auGo").onclick = () => open(kind === "apk" ? NEW_APK : NEW_EXE);
+    $("auLater").onclick = () => { box.hidden = true; };
+    const show = () => { box.hidden = false; };
+    const boot = $("boot");
+    if (boot && !boot.hidden) { const mo = new MutationObserver(() => { if (boot.hidden) { mo.disconnect(); show(); } }); mo.observe(boot, { attributes: true, attributeFilter: ["hidden"] }); setTimeout(show, 47000); }
+    else show();
+  })();
 })();

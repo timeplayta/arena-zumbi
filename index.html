@@ -165,6 +165,16 @@ kbd { flex: none; font-family: var(--font-display); font-size: 18px; font-weight
 #boot .boot-bar i { display: block; height: 100%; width: 0; background: var(--amber); transition: width 0.25s; }
 #boot .boot-row { display: flex; justify-content: space-between; gap: 12px; margin-top: 10px; font-size: 15px; color: #cfd6e0; }
 #boot .boot-row b { font-family: var(--font-display); font-size: 20px; letter-spacing: 0.06em; color: var(--amber); font-variant-numeric: tabular-nums; }
+#appUpd { position: fixed; inset: 0; z-index: 9998; display: grid; place-items: center; background: rgba(4, 6, 9, 0.82); padding: 16px; }
+#appUpd[hidden] { display: none; }
+#appUpd .au-in { width: min(460px, 100%); background: var(--surface-2); border: 1px solid var(--line); border-top: 3px solid var(--amber); padding: 22px 22px 18px; color: var(--fg); text-align: left; }
+#appUpd .au-k { font-family: var(--font-display); font-size: 15px; letter-spacing: 0.2em; color: var(--muted); text-transform: uppercase; }
+#appUpd h2 { font-family: var(--font-display); font-size: 34px; letter-spacing: 0.04em; margin: 4px 0 10px; text-transform: uppercase; }
+#appUpd p { font-size: 15px; line-height: 1.45; color: #cfd6e0; margin: 0 0 8px; }
+#appUpd p.au-tip { font-size: 13px; color: var(--muted); }
+#appUpd .au-row { display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
+#appUpd .au-row .btn { flex: 1 1 160px; font-size: 19px; }
+#appUpd .au-row .btn.au-go { background: var(--amber); color: #111; border-color: var(--amber); }
 @media (max-height: 420px) { #boot h1 { font-size: 48px; margin-bottom: 14px; } }
 
 /* ---------- menu ---------- */
@@ -487,6 +497,15 @@ table.sc td:first-child { font-family: var(--font-display); font-size: 22px; col
     <div class="boot-row"><span id="bootMsg">Carregando…</span><b id="bootPct" translate="no">0%</b></div>
   </div>
 </div>
+<div id="appUpd" hidden role="dialog" aria-modal="true" aria-labelledby="auTitle">
+  <div class="au-in">
+    <div class="au-k">Atualização do app</div>
+    <h2 id="auTitle">Instale o app novo</h2>
+    <p id="auTxt">Saiu uma versão nova do app, mais segura e assinada.</p>
+    <p class="au-tip" id="auTip">Entre na sua conta antes de desinstalar para não perder o progresso.</p>
+    <div class="au-row"><button class="btn au-go" id="auGo" type="button">Baixar agora</button><button class="btn" id="auLater" type="button">Depois</button></div>
+  </div>
+</div>
 <div id="stage">
   <canvas id="view"></canvas>
   <div id="fx-vig"></div>
@@ -775,7 +794,7 @@ table.sc td:first-child { font-family: var(--font-display); font-size: 22px; col
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
-const GAME_VERSION = 202611120524, GAME_NOTES = {"t": "APK com assinatura segura (12/11/2026)", "b": ["O APK agora é assinado com uma chave nova e secreta. Ninguém consegue publicar um APK falso que instale por cima do jogo.", "Se você já tem o jogo instalado, ele continua se atualizando sozinho: não precisa fazer nada.", "Para instalar o APK novo por cima do antigo, desinstale o antigo antes. Entre na sua conta antes de desinstalar para não perder o progresso."], "en": {"t": "Securely signed APK (11/12/2026)", "b": ["The APK is now signed with a new, secret key. Nobody can publish a fake APK that installs over the game.", "If you already have the game installed, it keeps updating by itself: you don't need to do anything.", "To install the new APK over the old one, uninstall the old one first. Log in to your account before uninstalling so you don't lose your progress."]}, "es": {"t": "APK con firma segura (12/11/2026)", "b": ["El APK ahora se firma con una clave nueva y secreta. Nadie puede publicar un APK falso que se instale encima del juego.", "Si ya tienes el juego instalado, sigue actualizándose solo: no tienes que hacer nada.", "Para instalar el APK nuevo encima del antiguo, desinstala el antiguo antes. Inicia sesión en tu cuenta antes de desinstalar para no perder tu progreso."]}};
+const GAME_VERSION = 202611120545, GAME_NOTES = {"t": "Aviso de app novo (12/11/2026)", "b": ["Quem abrir o APK antigo ou o .exe antigo vê um aviso para baixar e instalar a versão nova, assinada e mais segura.", "O botão \"Baixar agora\" abre o download direto do APK ou do .zip do Windows."], "en": {"t": "New app notice (11/12/2026)", "b": ["Anyone who opens the old APK or the old .exe sees a notice to download and install the new, signed and safer version.", "The \"Download now\" button opens the APK or Windows .zip download directly."]}, "es": {"t": "Aviso de app nueva (12/11/2026)", "b": ["Quien abra el APK antiguo o el .exe antiguo verá un aviso para descargar e instalar la versión nueva, firmada y más segura.", "El botón \"Descargar ahora\" abre directamente la descarga del APK o del .zip de Windows."]}};
   // ===================== IDIOMAS (inglês, espanhol, português) =====================
   // O jogo é escrito em português. Este tradutor troca, na tela, todo texto que aparece (menus, HUD, avisos, mensagens do servidor).
   // REGRA: todo texto novo do jogo precisa de uma entrada aqui (D = frase exata, P = frase com números/nomes). Veja I18N.md.
@@ -975,7 +994,7 @@ const GAME_VERSION = 202611120524, GAME_NOTES = {"t": "APK com assinatura segura
       "HUMANOS VENCERAM": ["HUMANS WIN", "GANAN LOS HUMANOS"], "ZUMBIS VENCERAM": ["ZOMBIES WIN", "GANAN LOS ZOMBIS"], "Sobreviveram até o fim": ["They survived to the end", "Sobrevivieron hasta el final"], "Ninguém escapou": ["Nobody escaped", "Nadie escapó"],
       "Corra e se espalhe!": ["Run and spread out!", "¡Corre y dispérsate!"], "A INFECÇÃO COMEÇOU": ["THE INFECTION HAS STARTED", "LA INFECCIÓN COMENZÓ"], "Fuja dos zumbis por 3 minutos": ["Escape the zombies for 3 minutes", "Huye de los zombis durante 3 minutos"],
       "Crie uma sala na aba Online para jogar Infecção": ["Create a room in the Online tab to play Infection", "Crea una sala en la pestaña En línea para jugar Infección"],
-      "JOGADOR SAIU": ["PLAYER LEFT", "JUGADOR SALIÓ"], "VOCÊ É ZUMBI": ["YOU ARE A ZOMBIE", "ERES ZOMBI"], "VOCÊ VOLTA EM": ["BACK IN", "VUELVES EN"], "VOCÊ VOLTA": ["YOU RESPAWN", "VUELVES"], "NA PRÓXIMA ONDA": ["NEXT WAVE", "EN LA PRÓXIMA OLEADA"], "Jogador": ["Player", "Jugador"],
+      "JOGADOR SAIU": ["PLAYER LEFT", "JUGADOR SALIÓ"], "VOCÊ É ZUMBI": ["YOU ARE A ZOMBIE", "ERES ZOMBI"], "VOCÊ VOLTA EM": ["BACK IN", "VUELVES EN"], "Atualização do app": ["App update", "Actualización de la app"], "Instale o app novo": ["Install the new app", "Instala la app nueva"], "Saiu uma versão nova do app, mais segura e assinada.": ["A new, safer, signed version of the app is out.", "Salió una versión nueva de la app, más segura y firmada."], "Saiu uma versão nova do app para Android, mais segura e assinada. Baixe o APK novo, desinstale este app e instale o novo.": ["A new, safer, signed version of the Android app is out. Download the new APK, uninstall this app and install the new one.", "Salió una versión nueva de la app para Android, más segura y firmada. Descarga el APK nuevo, desinstala esta app e instala la nueva."], "Entre na sua conta antes de desinstalar para não perder o progresso.": ["Log in to your account before uninstalling so you don't lose your progress.", "Inicia sesión en tu cuenta antes de desinstalar para no perder tu progreso."], "Saiu uma versão nova do jogo para Windows, assinada digitalmente. Baixe o .zip novo, extraia e abra o Arena Zumbi.exe novo.": ["A new, digitally signed version of the game for Windows is out. Download the new .zip, extract it and open the new Arena Zumbi.exe.", "Salió una versión nueva del juego para Windows, firmada digitalmente. Descarga el .zip nuevo, extráelo y abre el nuevo Arena Zumbi.exe."], "Seu progresso continua: é só substituir a pasta antiga.": ["Your progress stays: just replace the old folder.", "Tu progreso se mantiene: solo reemplaza la carpeta antigua."], "Baixar agora": ["Download now", "Descargar ahora"], "Depois": ["Later", "Después"], "VOCÊ VOLTA": ["YOU RESPAWN", "VUELVES"], "NA PRÓXIMA ONDA": ["NEXT WAVE", "EN LA PRÓXIMA OLEADA"], "Jogador": ["Player", "Jugador"],
       "ARMADURA DESTRUÍDA": ["ARMOR DESTROYED", "ARMADURA DESTRUIDA"], "VIDA CHEIA": ["FULL HEALTH", "VIDA LLENA"], "VOCÊ CAIU - RENASCE NA PRÓXIMA ONDA": ["YOU'RE DOWN - RESPAWN NEXT WAVE", "HAS CAÍDO - REAPARECES EN LA PRÓXIMA OLEADA"], "VOCÊ VOLTOU": ["YOU'RE BACK", "HAS VUELTO"],
       "SEM POÇÕES NESTA PARTIDA": ["NO POTIONS THIS MATCH", "SIN POCIONES EN ESTA PARTIDA"], "TIRO AUTOMÁTICO LIGADO": ["AUTO-FIRE ON", "DISPARO AUTOMÁTICO ACTIVADO"], "TIRO AUTOMÁTICO DESLIGADO": ["AUTO-FIRE OFF", "DISPARO AUTOMÁTICO DESACTIVADO"],
       "VELOCIDADE +40% POR 8 s": ["SPEED +40% FOR 8 s", "VELOCIDAD +40% DURANTE 8 s"], "VIDA RECUPERADA": ["HEALTH RESTORED", "VIDA RECUPERADA"],
@@ -11114,6 +11133,33 @@ const Logic = (function () {
     }
     $("bootPct").textContent = "100%"; $("bootBar").style.width = "100%"; $("bootMsg").textContent = "Pronto!";
     await wait(); finish();
+  })();
+
+  // ---------------- app antigo: pede para instalar o APK / .exe novo ----------------
+  // APK novo expõe AZ.appBuild() (≥ 5, chave nova); .exe novo abre o jogo com ?appv=2. Os antigos não têm isso.
+  (function appUpdate() {
+    const NEW_APK = "https://github.com/timeplayta/arena-zumbi/raw/main/apk/Arena-Zumbi.apk";
+    const NEW_EXE = "https://github.com/timeplayta/arena-zumbi/raw/main/windows/Arena-Zumbi-Windows.zip";
+    let kind = null;
+    try {
+      if (window.AZ && window.AZ.openUrl) { const b = window.AZ.appBuild ? Number(window.AZ.appBuild()) : 0; if (!(b >= 5)) kind = "apk"; }
+      else if (/Electron\//.test(navigator.userAgent)) { const v = Number(new URLSearchParams(location.search).get("appv")) || 0; if (v < 2) kind = "exe"; }
+    } catch (e) {}
+    const box = $("appUpd"); if (!kind || !box) return;
+    if (kind === "apk") {
+      $("auTxt").textContent = "Saiu uma versão nova do app para Android, mais segura e assinada. Baixe o APK novo, desinstale este app e instale o novo.";
+      $("auTip").textContent = "Entre na sua conta antes de desinstalar para não perder o progresso.";
+    } else {
+      $("auTxt").textContent = "Saiu uma versão nova do jogo para Windows, assinada digitalmente. Baixe o .zip novo, extraia e abra o Arena Zumbi.exe novo.";
+      $("auTip").textContent = "Seu progresso continua: é só substituir a pasta antiga.";
+    }
+    const open = (u) => { try { if (window.AZ && window.AZ.openUrl) { window.AZ.openUrl(u); return; } } catch (e) {} try { window.open(u, "_blank", "noopener"); } catch (e) {} };
+    $("auGo").onclick = () => open(kind === "apk" ? NEW_APK : NEW_EXE);
+    $("auLater").onclick = () => { box.hidden = true; };
+    const show = () => { box.hidden = false; };
+    const boot = $("boot");
+    if (boot && !boot.hidden) { const mo = new MutationObserver(() => { if (boot.hidden) { mo.disconnect(); show(); } }); mo.observe(boot, { attributes: true, attributeFilter: ["hidden"] }); setTimeout(show, 47000); }
+    else show();
   })();
 })();
 </script>

@@ -1,5 +1,9 @@
 # Novedades — Arena Zumbi
 
+## Aviso de app nueva (12/11/2026)
+- Quien abra el APK antiguo o el .exe antiguo verá un aviso para descargar e instalar la versión nueva, firmada y más segura.
+- El botón "Descargar ahora" abre directamente la descarga del APK o del .zip de Windows.
+
 ## APK con firma segura (12/11/2026)
 - El APK ahora se firma con una clave nueva y secreta. Nadie puede publicar un APK falso que se instale encima del juego.
 - Si ya tienes el juego instalado, sigue actualizándose solo: no tienes que hacer nada.

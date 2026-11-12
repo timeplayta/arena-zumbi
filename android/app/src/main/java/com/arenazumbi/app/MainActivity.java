@@ -53,6 +53,7 @@ public class MainActivity extends Activity {
         });
         web.addJavascriptInterface(new Object() {                              // o jogo chama AZ.openUrl(...) (ex.: comprar moedas)
             @JavascriptInterface public void openUrl(String u) { if (u != null && u.startsWith("https://")) runOnUiThread(() -> openExternal(u)); }
+            @JavascriptInterface public int appBuild() { try { return getPackageManager().getPackageInfo(getPackageName(), 0).versionCode; } catch (Exception e) { return 5; } }   // o jogo usa para saber se é o APK novo
         }, "AZ");
         web.setBackgroundColor(0xFF07090D);
         splash = new TextView(this);

@@ -51,7 +51,7 @@ async function createWindow() {
     return { action: "deny" };
   });
   await win.loadURL(splash("Procurando atualização..."));
-  win.loadFile(await bestGame(win));
+  win.loadFile(await bestGame(win), { query: { appv: "2" } });          // appv: o jogo sabe que é o .exe novo (assinado)
 }
 
 Menu.setApplicationMenu(null);
