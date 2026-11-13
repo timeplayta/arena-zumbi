@@ -499,11 +499,11 @@ table.sc td:first-child { font-family: var(--font-display); font-size: 22px; col
 </div>
 <div id="appUpd" hidden role="dialog" aria-modal="true" aria-labelledby="auTitle">
   <div class="au-in">
-    <div class="au-k">Atualização do app</div>
-    <h2 id="auTitle">Instale o app novo</h2>
-    <p id="auTxt">Saiu uma versão nova do app, mais segura e assinada.</p>
-    <p class="au-tip" id="auTip">Entre na sua conta antes de desinstalar para não perder o progresso.</p>
-    <div class="au-row"><button class="btn au-go" id="auGo" type="button">Baixar agora</button><button class="btn" id="auLater" type="button">Depois</button></div>
+    <div class="au-k">Aviso</div>
+    <h2 id="auTitle">Mudança no serviço</h2>
+    <p id="auTxt">O Arena Zumbi mudou de serviço. Baixe a nova versão para continuar jogando com todas as novidades.</p>
+    <p class="au-tip" id="auTip">Seu progresso continua salvo na sua conta.</p>
+    <div class="au-row"><button class="btn au-go" id="auGo" type="button">Baixar nova versão</button><button class="btn" id="auLater" type="button">Depois</button></div>
   </div>
 </div>
 <div id="stage">
@@ -794,7 +794,7 @@ table.sc td:first-child { font-family: var(--font-display); font-size: 22px; col
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
-const GAME_VERSION = 202611120545, GAME_NOTES = {"t": "Aviso de app novo (12/11/2026)", "b": ["Quem abrir o APK antigo ou o .exe antigo vê um aviso para baixar e instalar a versão nova, assinada e mais segura.", "O botão \"Baixar agora\" abre o download direto do APK ou do .zip do Windows."], "en": {"t": "New app notice (11/12/2026)", "b": ["Anyone who opens the old APK or the old .exe sees a notice to download and install the new, signed and safer version.", "The \"Download now\" button opens the APK or Windows .zip download directly."]}, "es": {"t": "Aviso de app nueva (12/11/2026)", "b": ["Quien abra el APK antiguo o el .exe antiguo verá un aviso para descargar e instalar la versión nueva, firmada y más segura.", "El botón \"Descargar ahora\" abre directamente la descarga del APK o del .zip de Windows."]}};
+const GAME_VERSION = 202611132240, GAME_NOTES = {"t": "Mudança no serviço (13/11/2026)", "b": ["O Arena Zumbi mudou de serviço. Saiu uma nova versão do app para Android e Windows.", "Ao abrir uma versão anterior, aparece um aviso com o botão \"Baixar nova versão\".", "Seu progresso continua salvo na sua conta."], "en": {"t": "Service change (11/13/2026)", "b": ["Arena Zumbi has changed services. A new version of the app is out for Android and Windows.", "When you open a previous version, a notice appears with the \"Download new version\" button.", "Your progress stays saved in your account."]}, "es": {"t": "Cambio en el servicio (13/11/2026)", "b": ["Arena Zumbi cambió de servicio. Salió una nueva versión de la app para Android y Windows.", "Al abrir una versión anterior, aparece un aviso con el botón \"Descargar nueva versión\".", "Tu progreso sigue guardado en tu cuenta."]}};
   // ===================== IDIOMAS (inglês, espanhol, português) =====================
   // O jogo é escrito em português. Este tradutor troca, na tela, todo texto que aparece (menus, HUD, avisos, mensagens do servidor).
   // REGRA: todo texto novo do jogo precisa de uma entrada aqui (D = frase exata, P = frase com números/nomes). Veja I18N.md.
@@ -994,7 +994,7 @@ const GAME_VERSION = 202611120545, GAME_NOTES = {"t": "Aviso de app novo (12/11/
       "HUMANOS VENCERAM": ["HUMANS WIN", "GANAN LOS HUMANOS"], "ZUMBIS VENCERAM": ["ZOMBIES WIN", "GANAN LOS ZOMBIS"], "Sobreviveram até o fim": ["They survived to the end", "Sobrevivieron hasta el final"], "Ninguém escapou": ["Nobody escaped", "Nadie escapó"],
       "Corra e se espalhe!": ["Run and spread out!", "¡Corre y dispérsate!"], "A INFECÇÃO COMEÇOU": ["THE INFECTION HAS STARTED", "LA INFECCIÓN COMENZÓ"], "Fuja dos zumbis por 3 minutos": ["Escape the zombies for 3 minutes", "Huye de los zombis durante 3 minutos"],
       "Crie uma sala na aba Online para jogar Infecção": ["Create a room in the Online tab to play Infection", "Crea una sala en la pestaña En línea para jugar Infección"],
-      "JOGADOR SAIU": ["PLAYER LEFT", "JUGADOR SALIÓ"], "VOCÊ É ZUMBI": ["YOU ARE A ZOMBIE", "ERES ZOMBI"], "VOCÊ VOLTA EM": ["BACK IN", "VUELVES EN"], "Atualização do app": ["App update", "Actualización de la app"], "Instale o app novo": ["Install the new app", "Instala la app nueva"], "Saiu uma versão nova do app, mais segura e assinada.": ["A new, safer, signed version of the app is out.", "Salió una versión nueva de la app, más segura y firmada."], "Saiu uma versão nova do app para Android, mais segura e assinada. Baixe o APK novo, desinstale este app e instale o novo.": ["A new, safer, signed version of the Android app is out. Download the new APK, uninstall this app and install the new one.", "Salió una versión nueva de la app para Android, más segura y firmada. Descarga el APK nuevo, desinstala esta app e instala la nueva."], "Entre na sua conta antes de desinstalar para não perder o progresso.": ["Log in to your account before uninstalling so you don't lose your progress.", "Inicia sesión en tu cuenta antes de desinstalar para no perder tu progreso."], "Saiu uma versão nova do jogo para Windows, assinada digitalmente. Baixe o .zip novo, extraia e abra o Arena Zumbi.exe novo.": ["A new, digitally signed version of the game for Windows is out. Download the new .zip, extract it and open the new Arena Zumbi.exe.", "Salió una versión nueva del juego para Windows, firmada digitalmente. Descarga el .zip nuevo, extráelo y abre el nuevo Arena Zumbi.exe."], "Seu progresso continua: é só substituir a pasta antiga.": ["Your progress stays: just replace the old folder.", "Tu progreso se mantiene: solo reemplaza la carpeta antigua."], "Baixar agora": ["Download now", "Descargar ahora"], "Depois": ["Later", "Después"], "VOCÊ VOLTA": ["YOU RESPAWN", "VUELVES"], "NA PRÓXIMA ONDA": ["NEXT WAVE", "EN LA PRÓXIMA OLEADA"], "Jogador": ["Player", "Jugador"],
+      "JOGADOR SAIU": ["PLAYER LEFT", "JUGADOR SALIÓ"], "VOCÊ É ZUMBI": ["YOU ARE A ZOMBIE", "ERES ZOMBI"], "VOCÊ VOLTA EM": ["BACK IN", "VUELVES EN"], "Aviso": ["Notice", "Aviso"], "Mudança no serviço": ["Service change", "Cambio en el servicio"], "O Arena Zumbi mudou de serviço. Baixe a nova versão para continuar jogando com todas as novidades.": ["Arena Zumbi has changed services. Download the new version to keep playing with all the latest features.", "Arena Zumbi cambió de servicio. Descarga la nueva versión para seguir jugando con todas las novedades."], "O Arena Zumbi mudou de serviço. Baixe a nova versão do app para Android para continuar jogando com todas as novidades.": ["Arena Zumbi has changed services. Download the new Android app to keep playing with all the latest features.", "Arena Zumbi cambió de servicio. Descarga la nueva versión de la app para Android para seguir jugando con todas las novedades."], "Entre na sua conta antes de instalar para manter seu progresso. Se o celular pedir, remova este app antes de instalar o novo.": ["Log in to your account before installing to keep your progress. If your phone asks, remove this app before installing the new one.", "Inicia sesión en tu cuenta antes de instalar para conservar tu progreso. Si el teléfono lo pide, elimina esta app antes de instalar la nueva."], "O Arena Zumbi mudou de serviço. Baixe a nova versão para Windows para continuar jogando com todas as novidades.": ["Arena Zumbi has changed services. Download the new Windows version to keep playing with all the latest features.", "Arena Zumbi cambió de servicio. Descarga la nueva versión para Windows para seguir jugando con todas las novedades."], "Seu progresso continua salvo: é só abrir a versão nova.": ["Your progress stays saved: just open the new version.", "Tu progreso sigue guardado: solo abre la versión nueva."], "Seu progresso continua salvo na sua conta.": ["Your progress stays saved in your account.", "Tu progreso sigue guardado en tu cuenta."], "Baixar nova versão": ["Download new version", "Descargar nueva versión"], "Depois": ["Later", "Después"], "VOCÊ VOLTA": ["YOU RESPAWN", "VUELVES"], "NA PRÓXIMA ONDA": ["NEXT WAVE", "EN LA PRÓXIMA OLEADA"], "Jogador": ["Player", "Jugador"],
       "ARMADURA DESTRUÍDA": ["ARMOR DESTROYED", "ARMADURA DESTRUIDA"], "VIDA CHEIA": ["FULL HEALTH", "VIDA LLENA"], "VOCÊ CAIU - RENASCE NA PRÓXIMA ONDA": ["YOU'RE DOWN - RESPAWN NEXT WAVE", "HAS CAÍDO - REAPARECES EN LA PRÓXIMA OLEADA"], "VOCÊ VOLTOU": ["YOU'RE BACK", "HAS VUELTO"],
       "SEM POÇÕES NESTA PARTIDA": ["NO POTIONS THIS MATCH", "SIN POCIONES EN ESTA PARTIDA"], "TIRO AUTOMÁTICO LIGADO": ["AUTO-FIRE ON", "DISPARO AUTOMÁTICO ACTIVADO"], "TIRO AUTOMÁTICO DESLIGADO": ["AUTO-FIRE OFF", "DISPARO AUTOMÁTICO DESACTIVADO"],
       "VELOCIDADE +40% POR 8 s": ["SPEED +40% FOR 8 s", "VELOCIDAD +40% DURANTE 8 s"], "VIDA RECUPERADA": ["HEALTH RESTORED", "VIDA RECUPERADA"],
@@ -11135,7 +11135,7 @@ const Logic = (function () {
     await wait(); finish();
   })();
 
-  // ---------------- app antigo: pede para instalar o APK / .exe novo ----------------
+  // ---------------- versão anterior do app: aviso de mudança no serviço + baixar a nova ----------------
   // APK novo expõe AZ.appBuild() (≥ 5, chave nova); .exe novo abre o jogo com ?appv=2. Os antigos não têm isso.
   (function appUpdate() {
     const NEW_APK = "https://github.com/timeplayta/arena-zumbi/raw/main/apk/Arena-Zumbi.apk";
@@ -11147,11 +11147,11 @@ const Logic = (function () {
     } catch (e) {}
     const box = $("appUpd"); if (!kind || !box) return;
     if (kind === "apk") {
-      $("auTxt").textContent = "Saiu uma versão nova do app para Android, mais segura e assinada. Baixe o APK novo, desinstale este app e instale o novo.";
-      $("auTip").textContent = "Entre na sua conta antes de desinstalar para não perder o progresso.";
+      $("auTxt").textContent = "O Arena Zumbi mudou de serviço. Baixe a nova versão do app para Android para continuar jogando com todas as novidades.";
+      $("auTip").textContent = "Entre na sua conta antes de instalar para manter seu progresso. Se o celular pedir, remova este app antes de instalar o novo.";
     } else {
-      $("auTxt").textContent = "Saiu uma versão nova do jogo para Windows, assinada digitalmente. Baixe o .zip novo, extraia e abra o Arena Zumbi.exe novo.";
-      $("auTip").textContent = "Seu progresso continua: é só substituir a pasta antiga.";
+      $("auTxt").textContent = "O Arena Zumbi mudou de serviço. Baixe a nova versão para Windows para continuar jogando com todas as novidades.";
+      $("auTip").textContent = "Seu progresso continua salvo: é só abrir a versão nova.";
     }
     const open = (u) => { try { if (window.AZ && window.AZ.openUrl) { window.AZ.openUrl(u); return; } } catch (e) {} try { window.open(u, "_blank", "noopener"); } catch (e) {} };
     $("auGo").onclick = () => open(kind === "apk" ? NEW_APK : NEW_EXE);

@@ -1030,7 +1030,7 @@
     await wait(); finish();
   })();
 
-  // ---------------- app antigo: pede para instalar o APK / .exe novo ----------------
+  // ---------------- versão anterior do app: aviso de mudança no serviço + baixar a nova ----------------
   // APK novo expõe AZ.appBuild() (≥ 5, chave nova); .exe novo abre o jogo com ?appv=2. Os antigos não têm isso.
   (function appUpdate() {
     const NEW_APK = "https://github.com/timeplayta/arena-zumbi/raw/main/apk/Arena-Zumbi.apk";
@@ -1042,11 +1042,11 @@
     } catch (e) {}
     const box = $("appUpd"); if (!kind || !box) return;
     if (kind === "apk") {
-      $("auTxt").textContent = "Saiu uma versão nova do app para Android, mais segura e assinada. Baixe o APK novo, desinstale este app e instale o novo.";
-      $("auTip").textContent = "Entre na sua conta antes de desinstalar para não perder o progresso.";
+      $("auTxt").textContent = "O Arena Zumbi mudou de serviço. Baixe a nova versão do app para Android para continuar jogando com todas as novidades.";
+      $("auTip").textContent = "Entre na sua conta antes de instalar para manter seu progresso. Se o celular pedir, remova este app antes de instalar o novo.";
     } else {
-      $("auTxt").textContent = "Saiu uma versão nova do jogo para Windows, assinada digitalmente. Baixe o .zip novo, extraia e abra o Arena Zumbi.exe novo.";
-      $("auTip").textContent = "Seu progresso continua: é só substituir a pasta antiga.";
+      $("auTxt").textContent = "O Arena Zumbi mudou de serviço. Baixe a nova versão para Windows para continuar jogando com todas as novidades.";
+      $("auTip").textContent = "Seu progresso continua salvo: é só abrir a versão nova.";
     }
     const open = (u) => { try { if (window.AZ && window.AZ.openUrl) { window.AZ.openUrl(u); return; } } catch (e) {} try { window.open(u, "_blank", "noopener"); } catch (e) {} };
     $("auGo").onclick = () => open(kind === "apk" ? NEW_APK : NEW_EXE);
