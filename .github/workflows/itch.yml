@@ -1,0 +1,38 @@
+# Publica no itch.io (machine-gamesdev/arena-zumbi) sempre que o APK, o exe assinado ou o portátil ficam prontos.
+# Precisa do segredo BUTLER_API_KEY (itch.io > Settings > API keys). Canais: android, windows, windows-portatil.
+name: Publicar no itch
+on:
+  workflow_run:
+    workflows: ["APK Android", "Assinar exe", "Exe portatil"]
+    types: [completed]
+  workflow_dispatch:
+concurrency: { group: itch, cancel-in-progress: false }
+jobs:
+  itch:
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    env:
+      BUTLER_API_KEY: ${{ secrets.BUTLER_API_KEY }}
+      GAME: machine-gamesdev/arena-zumbi
+    steps:
+      - uses: actions/checkout@v4
+        with: { ref: main }
+      - name: Conferir chave do itch
+        id: key
+        run: |
+          if [ -z "$BUTLER_API_KEY" ]; then echo "::warning::Falta o segredo BUTLER_API_KEY: nada publicado no itch"; echo "ok=0" >> $GITHUB_OUTPUT; else echo "ok=1" >> $GITHUB_OUTPUT; fi
+      - name: Instalar butler
+        if: steps.key.outputs.ok == '1'
+        run: |
+          curl -sSL -o butler.zip https://broth.itch.zone/butler/linux-amd64/LATEST/archive/default
+          mkdir -p "$HOME/butler" && unzip -q butler.zip -d "$HOME/butler" && chmod +x "$HOME/butler/butler"
+          echo "$HOME/butler" >> $GITHUB_PATH
+      - name: Enviar APK, Windows e portátil
+        if: steps.key.outputs.ok == '1'
+        run: |
+          V=$(grep -o '"v": *[0-9]*' game/public/version.json | grep -o '[0-9]*$')
+          butler -V
+          butler push apk/Arena-Zumbi.apk "$GAME:android" --userversion "$V"
+          butler push windows/Arena-Zumbi-Windows.zip "$GAME:windows" --userversion "$V"
+          butler push windows/Arena-Zumbi-Portatil.exe "$GAME:windows-portatil" --userversion "$V"
+          butler status "$GAME"
