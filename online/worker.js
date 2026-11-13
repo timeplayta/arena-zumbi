@@ -16,7 +16,9 @@ export class Room {
     const peers = this.peers(), host = peers.find((p) => p.info.host);
     this.state.acceptWebSocket(server);
     const refuse = (m) => { send(server, { t: "error", m }); server.close(1008, m); };
-    if (role === "host" && host) refuse("Essa sala já existe. Escolha outro nome.");
+    const app = q.get("app");
+    if (app !== "web" && app !== "apk" && app !== "exe") refuse("O online só funciona na versão nova do jogo. Baixe em machine-gamesdev.itch.io/arena-zumbi");   // versões anteriores ficam sem online
+    else if (role === "host" && host) refuse("Essa sala já existe. Escolha outro nome.");
     else if (role === "guest" && !host) refuse("Sala não encontrada. Confira o nome.");
     else if (role === "guest" && host.info.pw && host.info.pw !== pw) refuse("Senha incorreta.");
     else if (role === "guest" && peers.length >= (host.info.max || 4)) refuse("Sala cheia (máximo " + (host.info.max || 4) + " jogadores).");

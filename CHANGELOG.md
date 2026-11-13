@@ -1,5 +1,9 @@
 # Novidades — Arena Zumbi
 
+## Online só na versão atual (13/11/2026)
+- Os servidores online (co-op e Infecção) agora funcionam só na versão atual do jogo: site, app novo de Android e app novo de Windows.
+- Versões anteriores do app não conectam mais ao online. Baixe a versão nova em machine-gamesdev.itch.io/arena-zumbi.
+
 ## Mudança no serviço (13/11/2026)
 - O Arena Zumbi mudou de serviço. Saiu uma nova versão do app para Android e Windows.
 - Ao abrir uma versão anterior, aparece um aviso com o botão "Baixar nova versão", que abre a página do jogo no itch.io.

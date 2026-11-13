@@ -223,14 +223,24 @@
       st.players = [{ id: "p1", name: st.name || "Anfitrião" }].concat(lobbyList());
       send({ t: "lobby", players: st.players, started: st.started, diff: st.diff, stamp: st.stamp, gm: st.gm }); renderLobby();
     }
+    // versão do app: "web" (site), "apk"/"exe" (apps atuais) ou "old" (apps de antes da mudança de serviço: sem online)
+    function appShell() {
+      try {
+        if (window.AZ && window.AZ.openUrl) return (window.AZ.appBuild && Number(window.AZ.appBuild()) >= 5) ? "apk" : "old";
+        if (/Electron\//.test(navigator.userAgent)) return (Number(new URLSearchParams(location.search).get("appv")) || 0) >= 2 ? "exe" : "old";
+      } catch (e) {}
+      return "web";
+    }
     async function open(role, label, pass) {
       leave(true);
+      const shell = appShell();
+      if (shell === "old") { setMsg("O online só funciona na versão nova do jogo. Baixe em machine-gamesdev.itch.io/arena-zumbi", "err"); return; }
       const code = roomKey(label);
       if (code.length < 3) { setMsg("O nome da sala precisa de pelo menos 3 letras ou números.", "err"); return; }
       const h = serverHost(), pw = await hashPw(pass);
       st.name = (S.name || "Sobrevivente").slice(0, 14); st.code = code; st.label = String(label).trim().slice(0, 16); st.host = role === "host"; if (st.host) st.gm = st.gmSel; st.status = "connecting"; setMsg("Conectando...");
       const local = /^(localhost|127\.|192\.168\.|10\.)/.test(h);
-      let ws; try { ws = new WebSocket((local ? "ws://" : "wss://") + h + "/ws/" + code + "?role=" + role + (pw ? "&pw=" + pw : "") + (role === "host" ? "&max=" + (st.gmSel === "infect" ? 12 : 4) : "")); } catch (e) { setMsg("Não consegui conectar ao servidor.", "err"); st.status = "off"; return; }
+      let ws; try { ws = new WebSocket((local ? "ws://" : "wss://") + h + "/ws/" + code + "?role=" + role + "&app=" + shell + (pw ? "&pw=" + pw : "") + (role === "host" ? "&max=" + (st.gmSel === "infect" ? 12 : 4) : "")); } catch (e) { setMsg("Não consegui conectar ao servidor.", "err"); st.status = "off"; return; }
       st.ws = ws;
       ws.onopen = () => { pingT = performance.now(); };
       ws.onmessage = (ev) => { if (ws !== st.ws) return; if (ev.data === "pong") return; let m; try { m = JSON.parse(ev.data); } catch (e) { return; } onMsg(m); };

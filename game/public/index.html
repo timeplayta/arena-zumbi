@@ -794,7 +794,7 @@ table.sc td:first-child { font-family: var(--font-display); font-size: 22px; col
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
-const GAME_VERSION = 202611132253, GAME_NOTES = {"t": "Mudança no serviço (13/11/2026)", "b": ["O Arena Zumbi mudou de serviço. Saiu uma nova versão do app para Android e Windows.", "Ao abrir uma versão anterior, aparece um aviso com o botão \"Baixar nova versão\", que abre a página do jogo no itch.io.", "Seu progresso continua salvo na sua conta."], "en": {"t": "Service change (11/13/2026)", "b": ["Arena Zumbi has changed services. A new version of the app is out for Android and Windows.", "When you open a previous version, a notice appears with the \"Download new version\" button, which opens the game's itch.io page.", "Your progress stays saved in your account."]}, "es": {"t": "Cambio en el servicio (13/11/2026)", "b": ["Arena Zumbi cambió de servicio. Salió una nueva versión de la app para Android y Windows.", "Al abrir una versión anterior, aparece un aviso con el botón \"Descargar nueva versión\", que abre la página del juego en itch.io.", "Tu progreso sigue guardado en tu cuenta."]}};
+const GAME_VERSION = 202611132331, GAME_NOTES = {"t": "Online só na versão atual (13/11/2026)", "b": ["Os servidores online (co-op e Infecção) agora funcionam só na versão atual do jogo: site, app novo de Android e app novo de Windows.", "Versões anteriores do app não conectam mais ao online. Baixe a versão nova em machine-gamesdev.itch.io/arena-zumbi."], "en": {"t": "Online on the current version only (11/13/2026)", "b": ["The online servers (co-op and Infection) now only work on the current version of the game: website, new Android app and new Windows app.", "Previous versions of the app no longer connect online. Download the new version at machine-gamesdev.itch.io/arena-zumbi."]}, "es": {"t": "Online solo en la versión actual (13/11/2026)", "b": ["Los servidores online (cooperativo e Infección) ahora solo funcionan en la versión actual del juego: sitio web, app nueva de Android y app nueva de Windows.", "Las versiones anteriores de la app ya no se conectan al online. Descarga la versión nueva en machine-gamesdev.itch.io/arena-zumbi."]}};
   // ===================== IDIOMAS (inglês, espanhol, português) =====================
   // O jogo é escrito em português. Este tradutor troca, na tela, todo texto que aparece (menus, HUD, avisos, mensagens do servidor).
   // REGRA: todo texto novo do jogo precisa de uma entrada aqui (D = frase exata, P = frase com números/nomes). Veja I18N.md.
@@ -970,7 +970,7 @@ const GAME_VERSION = 202611132253, GAME_NOTES = {"t": "Mudança no serviço (13/
       // mensagens do servidor
       "Conta não encontrada. Confira o nome ou toque em Criar conta.": ["Account not found. Check the name or tap Create account.", "Cuenta no encontrada. Revisa el nombre o toca Crear cuenta."],
       "Esse nome já tem conta. Use Entrar ou escolha outro nome.": ["That name already has an account. Use Sign in or pick another name.", "Ese nombre ya tiene cuenta. Usa Entrar o elige otro nombre."],
-      "Senha incorreta.": ["Wrong password.", "Contraseña incorrecta."], "Muitas tentativas. Espere 1 minuto.": ["Too many attempts. Wait 1 minute.", "Demasiados intentos. Espera 1 minuto."],
+      "Senha incorreta.": ["Wrong password.", "Contraseña incorrecta."], "O online só funciona na versão nova do jogo. Baixe em machine-gamesdev.itch.io/arena-zumbi": ["Online only works on the new version of the game. Download it at machine-gamesdev.itch.io/arena-zumbi", "El online solo funciona en la versión nueva del juego. Descárgala en machine-gamesdev.itch.io/arena-zumbi"], "Muitas tentativas. Espere 1 minuto.": ["Too many attempts. Wait 1 minute.", "Demasiados intentos. Espera 1 minuto."],
       "Nome: de 2 a 14 letras ou números.": ["Name: 2 to 14 letters or numbers.", "Nombre: de 2 a 14 letras o números."], "Senha: de 4 a 40 caracteres.": ["Password: 4 to 40 characters.", "Contraseña: de 4 a 40 caracteres."],
       "Sessão expirada. Entre de novo.": ["Session expired. Sign in again.", "Sesión expirada. Entra de nuevo."], "Contas indisponíveis.": ["Accounts unavailable.", "Cuentas no disponibles."], "Dados grandes demais.": ["Data too large.", "Datos demasiado grandes."],
       "Dados inválidos.": ["Invalid data.", "Datos inválidos."], "Pedido inválido.": ["Invalid request.", "Solicitud inválida."], "Não encontrado.": ["Not found.", "No encontrado."],
@@ -9584,14 +9584,24 @@ const Logic = (function () {
       st.players = [{ id: "p1", name: st.name || "Anfitrião" }].concat(lobbyList());
       send({ t: "lobby", players: st.players, started: st.started, diff: st.diff, stamp: st.stamp, gm: st.gm }); renderLobby();
     }
+    // versão do app: "web" (site), "apk"/"exe" (apps atuais) ou "old" (apps de antes da mudança de serviço: sem online)
+    function appShell() {
+      try {
+        if (window.AZ && window.AZ.openUrl) return (window.AZ.appBuild && Number(window.AZ.appBuild()) >= 5) ? "apk" : "old";
+        if (/Electron\//.test(navigator.userAgent)) return (Number(new URLSearchParams(location.search).get("appv")) || 0) >= 2 ? "exe" : "old";
+      } catch (e) {}
+      return "web";
+    }
     async function open(role, label, pass) {
       leave(true);
+      const shell = appShell();
+      if (shell === "old") { setMsg("O online só funciona na versão nova do jogo. Baixe em machine-gamesdev.itch.io/arena-zumbi", "err"); return; }
       const code = roomKey(label);
       if (code.length < 3) { setMsg("O nome da sala precisa de pelo menos 3 letras ou números.", "err"); return; }
       const h = serverHost(), pw = await hashPw(pass);
       st.name = (S.name || "Sobrevivente").slice(0, 14); st.code = code; st.label = String(label).trim().slice(0, 16); st.host = role === "host"; if (st.host) st.gm = st.gmSel; st.status = "connecting"; setMsg("Conectando...");
       const local = /^(localhost|127\.|192\.168\.|10\.)/.test(h);
-      let ws; try { ws = new WebSocket((local ? "ws://" : "wss://") + h + "/ws/" + code + "?role=" + role + (pw ? "&pw=" + pw : "") + (role === "host" ? "&max=" + (st.gmSel === "infect" ? 12 : 4) : "")); } catch (e) { setMsg("Não consegui conectar ao servidor.", "err"); st.status = "off"; return; }
+      let ws; try { ws = new WebSocket((local ? "ws://" : "wss://") + h + "/ws/" + code + "?role=" + role + "&app=" + shell + (pw ? "&pw=" + pw : "") + (role === "host" ? "&max=" + (st.gmSel === "infect" ? 12 : 4) : "")); } catch (e) { setMsg("Não consegui conectar ao servidor.", "err"); st.status = "off"; return; }
       st.ws = ws;
       ws.onopen = () => { pingT = performance.now(); };
       ws.onmessage = (ev) => { if (ws !== st.ws) return; if (ev.data === "pong") return; let m; try { m = JSON.parse(ev.data); } catch (e) { return; } onMsg(m); };
