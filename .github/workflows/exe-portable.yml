@@ -1,12 +1,20 @@
 # Gera "Arena-Zumbi-Portatil.exe": um único arquivo que se extrai sozinho e abre o jogo (não precisa da pasta).
-# Rodar à mão (workflow_dispatch). O jogo se atualiza sozinho ao abrir, então não precisa refazer a cada versão.
+# Roda à mão ou depois que o exe do zip é assinado. O jogo se atualiza sozinho ao abrir. Salva em windows/Arena-Zumbi-Portatil.exe.
 name: Exe portatil
-on: workflow_dispatch
+on:
+  workflow_dispatch:
+  workflow_run:
+    workflows: ["Assinar exe"]
+    types: [completed]
+permissions:
+  contents: write
+concurrency: { group: exe-portatil, cancel-in-progress: true }
 jobs:
   portable:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
+        with: { ref: main }
       - name: Extrair a pasta do jogo
         shell: pwsh
         run: Expand-Archive windows/Arena-Zumbi-Windows.zip -DestinationPath out
@@ -34,6 +42,15 @@ jobs:
           $code = $LASTEXITCODE; Remove-Item $pfx -Force; if ($code -ne 0) { exit $code }
           $s = Get-AuthenticodeSignature build/dist/Arena-Zumbi-Portatil.exe
           Write-Host "Assinatura: $($s.Status) - $($s.SignerCertificate.Subject)"
+      - name: Salvar no repositório
+        shell: pwsh
+        run: |
+          Copy-Item build/dist/Arena-Zumbi-Portatil.exe windows/Arena-Zumbi-Portatil.exe -Force
+          git config user.name "github-actions[bot]"
+          git config user.email "41898283+github-actions[bot]@users.noreply.github.com"
+          git add windows/Arena-Zumbi-Portatil.exe
+          git commit -m "Exe portatil gerado automaticamente"
+          git pull --rebase; git push
       - uses: actions/upload-artifact@v4
         with:
           name: exe-portatil
