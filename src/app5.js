@@ -1033,8 +1033,7 @@
   // ---------------- versão anterior do app: aviso de mudança no serviço + baixar a nova ----------------
   // APK novo expõe AZ.appBuild() (≥ 5, chave nova); .exe novo abre o jogo com ?appv=2. Os antigos não têm isso.
   (function appUpdate() {
-    const NEW_APK = "https://github.com/timeplayta/arena-zumbi/raw/main/apk/Arena-Zumbi.apk";
-    const NEW_EXE = "https://github.com/timeplayta/arena-zumbi/raw/main/windows/Arena-Zumbi-Windows.zip";
+    const NEW_URL = "https://machine-gamesdev.itch.io/arena-zumbi";          // página do jogo no itch.io (downloads de Android e Windows)
     let kind = null;
     try {
       if (window.AZ && window.AZ.openUrl) { const b = window.AZ.appBuild ? Number(window.AZ.appBuild()) : 0; if (!(b >= 5)) kind = "apk"; }
@@ -1049,7 +1048,7 @@
       $("auTip").textContent = "Seu progresso continua salvo: é só abrir a versão nova.";
     }
     const open = (u) => { try { if (window.AZ && window.AZ.openUrl) { window.AZ.openUrl(u); return; } } catch (e) {} try { window.open(u, "_blank", "noopener"); } catch (e) {} };
-    $("auGo").onclick = () => open(kind === "apk" ? NEW_APK : NEW_EXE);
+    $("auGo").onclick = () => open(NEW_URL);
     $("auLater").onclick = () => { box.hidden = true; };
     const show = () => { box.hidden = false; };
     const boot = $("boot");

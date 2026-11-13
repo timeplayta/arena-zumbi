@@ -794,7 +794,7 @@ table.sc td:first-child { font-family: var(--font-display); font-size: 22px; col
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
-const GAME_VERSION = 202611132240, GAME_NOTES = {"t": "Mudança no serviço (13/11/2026)", "b": ["O Arena Zumbi mudou de serviço. Saiu uma nova versão do app para Android e Windows.", "Ao abrir uma versão anterior, aparece um aviso com o botão \"Baixar nova versão\".", "Seu progresso continua salvo na sua conta."], "en": {"t": "Service change (11/13/2026)", "b": ["Arena Zumbi has changed services. A new version of the app is out for Android and Windows.", "When you open a previous version, a notice appears with the \"Download new version\" button.", "Your progress stays saved in your account."]}, "es": {"t": "Cambio en el servicio (13/11/2026)", "b": ["Arena Zumbi cambió de servicio. Salió una nueva versión de la app para Android y Windows.", "Al abrir una versión anterior, aparece un aviso con el botón \"Descargar nueva versión\".", "Tu progreso sigue guardado en tu cuenta."]}};
+const GAME_VERSION = 202611132253, GAME_NOTES = {"t": "Mudança no serviço (13/11/2026)", "b": ["O Arena Zumbi mudou de serviço. Saiu uma nova versão do app para Android e Windows.", "Ao abrir uma versão anterior, aparece um aviso com o botão \"Baixar nova versão\", que abre a página do jogo no itch.io.", "Seu progresso continua salvo na sua conta."], "en": {"t": "Service change (11/13/2026)", "b": ["Arena Zumbi has changed services. A new version of the app is out for Android and Windows.", "When you open a previous version, a notice appears with the \"Download new version\" button, which opens the game's itch.io page.", "Your progress stays saved in your account."]}, "es": {"t": "Cambio en el servicio (13/11/2026)", "b": ["Arena Zumbi cambió de servicio. Salió una nueva versión de la app para Android y Windows.", "Al abrir una versión anterior, aparece un aviso con el botón \"Descargar nueva versión\", que abre la página del juego en itch.io.", "Tu progreso sigue guardado en tu cuenta."]}};
   // ===================== IDIOMAS (inglês, espanhol, português) =====================
   // O jogo é escrito em português. Este tradutor troca, na tela, todo texto que aparece (menus, HUD, avisos, mensagens do servidor).
   // REGRA: todo texto novo do jogo precisa de uma entrada aqui (D = frase exata, P = frase com números/nomes). Veja I18N.md.
@@ -11138,8 +11138,7 @@ const Logic = (function () {
   // ---------------- versão anterior do app: aviso de mudança no serviço + baixar a nova ----------------
   // APK novo expõe AZ.appBuild() (≥ 5, chave nova); .exe novo abre o jogo com ?appv=2. Os antigos não têm isso.
   (function appUpdate() {
-    const NEW_APK = "https://github.com/timeplayta/arena-zumbi/raw/main/apk/Arena-Zumbi.apk";
-    const NEW_EXE = "https://github.com/timeplayta/arena-zumbi/raw/main/windows/Arena-Zumbi-Windows.zip";
+    const NEW_URL = "https://machine-gamesdev.itch.io/arena-zumbi";          // página do jogo no itch.io (downloads de Android e Windows)
     let kind = null;
     try {
       if (window.AZ && window.AZ.openUrl) { const b = window.AZ.appBuild ? Number(window.AZ.appBuild()) : 0; if (!(b >= 5)) kind = "apk"; }
@@ -11154,7 +11153,7 @@ const Logic = (function () {
       $("auTip").textContent = "Seu progresso continua salvo: é só abrir a versão nova.";
     }
     const open = (u) => { try { if (window.AZ && window.AZ.openUrl) { window.AZ.openUrl(u); return; } } catch (e) {} try { window.open(u, "_blank", "noopener"); } catch (e) {} };
-    $("auGo").onclick = () => open(kind === "apk" ? NEW_APK : NEW_EXE);
+    $("auGo").onclick = () => open(NEW_URL);
     $("auLater").onclick = () => { box.hidden = true; };
     const show = () => { box.hidden = false; };
     const boot = $("boot");

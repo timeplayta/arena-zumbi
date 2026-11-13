@@ -2,7 +2,7 @@
 
 ## Service change (11/13/2026)
 - Arena Zumbi has changed services. A new version of the app is out for Android and Windows.
-- When you open a previous version, a notice appears with the "Download new version" button.
+- When you open a previous version, a notice appears with the "Download new version" button, which opens the game's itch.io page.
 - Your progress stays saved in your account.
 
 ## Official trailer (11/11/2026)
