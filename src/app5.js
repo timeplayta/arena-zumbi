@@ -971,30 +971,38 @@
   } catch (e) {}
 
   // ---------------- atualizações ----------------
-  // Novidades: aparece uma vez quando a versão sobe (site, .exe e APK). No site, avisa se publicaram versão nova com a aba aberta.
+  // Novidades: aparece uma vez quando a versão sobe (site, .exe e APK).
+  // Com o jogo aberto, confere se saiu versão nova: avisa para atualizar e marca a versão como antiga (o online fica bloqueado até atualizar).
   const UPD_HOST = "https://arena-zumbi.playes.workers.dev/";
   (function () {
     if (typeof GAME_VERSION === "undefined") return;
     const KEY = "arena-zumbi-ver";
     let seen = 0; try { seen = Number(localStorage.getItem(KEY)) || 0; } catch (e) {}
-    const show = (title, notes, btn, fn) => {
+    const show = (title, notes, btn, fn, hint) => {
       notes = (notes && notes[I18N.get()]) || notes;                       // novidades no idioma do jogador (CHANGELOG.en.md / .es.md)
       const o = $("upd"); if (!o) return;
       $("updTitle").textContent = title;
       $("updBody").innerHTML = "<b>" + String(notes.t || "").replace(/[<>&]/g, "") + "</b>" + (notes.b || []).map((l) => "<div>• " + String(l).replace(/[<>&`*]/g, "") + "</div>").join("");
+      if (hint) { const h = document.createElement("p"); h.className = "upd-hint"; h.textContent = hint; $("updBody").appendChild(h); }
       $("updOk").textContent = btn; $("updOk").onclick = () => { o.hidden = true; if (fn) fn(); };
       o.hidden = false;
     };
     if (seen && GAME_VERSION > seen) setTimeout(() => show("Jogo atualizado!", GAME_NOTES || {}, "OK"), 900);
     try { localStorage.setItem(KEY, String(GAME_VERSION)); } catch (e) {}
-    if (!/^https?:$/.test(location.protocol) || /^(localhost|127\.)/.test(location.hostname)) return;   // apps: atualizam ao abrir
+    if (/^https?:$/.test(location.protocol) && /^(localhost|127\.|192\.168\.|10\.)/.test(location.hostname)) return;   // teste local
+    const web = /^https?:$/.test(location.protocol);                      // site: recarrega; APK/.exe: baixam a versão nova ao abrir
+    let warned = 0;
     const check = () => {
-      if (state !== "menu") return;
       fetch(UPD_HOST + "version.json?t=" + Date.now(), { cache: "no-store" }).then((r) => r.json()).then((j) => {
-        if (j && j.v > GAME_VERSION) show("Nova versão disponível", j.notes || {}, "Atualizar agora", () => location.reload());
+        if (!(j && j.v > GAME_VERSION)) return;
+        window.__azOutdated = true;                                        // online bloqueado até atualizar (o servidor também recusa)
+        if (state !== "menu" || warned === j.v) return;
+        warned = j.v;
+        if (web) show("Nova versão disponível", j.notes || {}, "Atualizar agora", () => location.reload());
+        else show("Nova versão disponível", j.notes || {}, "OK", null, "Feche e abra o jogo para atualizar.");
       }).catch(() => {});
     };
-    setTimeout(check, 4000); setInterval(check, 10 * 60 * 1000);
+    setTimeout(check, 4000); setInterval(check, 5 * 60 * 1000);
   })();
 
   // ---------------- início ----------------

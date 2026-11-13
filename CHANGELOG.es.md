@@ -1,5 +1,9 @@
 # Novedades — Arena Zumbi
 
+## Aviso de versión nueva y online siempre actualizado (13/11/2026)
+- Cuando sale una actualización, quien tenga abierta la versión anterior verá el aviso "Nueva versión disponible". En el sitio, el botón actualiza al instante. En la app, solo cierra y vuelve a abrir el juego.
+- El online (cooperativo e Infección) solo funciona en la versión más reciente del juego, así todos en la sala juegan la misma versión.
+
 ## Online solo en la versión actual (13/11/2026)
 - Los servidores online (cooperativo e Infección) ahora solo funcionan en la versión actual del juego: sitio web, app nueva de Android y app nueva de Windows.
 - Las versiones anteriores de la app ya no se conectan al online. Descarga la versión nueva en machine-gamesdev.itch.io/arena-zumbi.

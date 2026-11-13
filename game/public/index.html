@@ -77,6 +77,7 @@ button { font-family: inherit; color: inherit; }
 .upd-card { max-width: 520px; background: #0d1117; border: 1px solid var(--amber); padding: 20px 24px; box-shadow: 0 10px 40px rgba(0,0,0,0.7); } .upd-body { display: flex; flex-direction: column; gap: 6px; margin: 10px 0 16px; font-size: 15px; color: #cfd6e0; line-height: 1.4; }
 .upd-body b { color: var(--amber); font-family: var(--font-display); font-size: 20px; letter-spacing: 0.06em; }
 #upd { z-index: 1000; }
+#upd .upd-hint { margin: 12px 0 0; color: var(--amber); font-weight: 600; }
 .btn-tog.on { border-color: var(--amber); color: #1a1205; background: var(--amber); }
 .coop-room { display: flex; align-items: baseline; gap: 14px; margin-bottom: 12px; }
 .coop-room span { font-size: 14px; color: var(--muted); letter-spacing: 0.2em; }
@@ -794,7 +795,7 @@ table.sc td:first-child { font-family: var(--font-display); font-size: 22px; col
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
-const GAME_VERSION = 202611132331, GAME_NOTES = {"t": "Online só na versão atual (13/11/2026)", "b": ["Os servidores online (co-op e Infecção) agora funcionam só na versão atual do jogo: site, app novo de Android e app novo de Windows.", "Versões anteriores do app não conectam mais ao online. Baixe a versão nova em machine-gamesdev.itch.io/arena-zumbi."], "en": {"t": "Online on the current version only (11/13/2026)", "b": ["The online servers (co-op and Infection) now only work on the current version of the game: website, new Android app and new Windows app.", "Previous versions of the app no longer connect online. Download the new version at machine-gamesdev.itch.io/arena-zumbi."]}, "es": {"t": "Online solo en la versión actual (13/11/2026)", "b": ["Los servidores online (cooperativo e Infección) ahora solo funcionan en la versión actual del juego: sitio web, app nueva de Android y app nueva de Windows.", "Las versiones anteriores de la app ya no se conectan al online. Descarga la versión nueva en machine-gamesdev.itch.io/arena-zumbi."]}};
+const GAME_VERSION = 202611132355, GAME_NOTES = {"t": "Aviso de versão nova e online sempre atualizado (13/11/2026)", "b": ["Quando sai uma atualização, quem está com o jogo aberto na versão anterior vê o aviso \"Nova versão disponível\". No site, o botão atualiza na hora. No app, é só fechar e abrir o jogo.", "O online (co-op e Infecção) só funciona na versão mais recente do jogo. Assim todo mundo na sala joga na mesma versão."], "en": {"t": "New version notice and always up-to-date online (11/13/2026)", "b": ["When an update comes out, anyone with the previous version open sees the \"New version available\" notice. On the website, the button updates right away. In the app, just close and reopen the game.", "Online (co-op and Infection) only works on the latest version of the game, so everyone in a room plays the same version."]}, "es": {"t": "Aviso de versión nueva y online siempre actualizado (13/11/2026)", "b": ["Cuando sale una actualización, quien tenga abierta la versión anterior verá el aviso \"Nueva versión disponible\". En el sitio, el botón actualiza al instante. En la app, solo cierra y vuelve a abrir el juego.", "El online (cooperativo e Infección) solo funciona en la versión más reciente del juego, así todos en la sala juegan la misma versión."]}};
   // ===================== IDIOMAS (inglês, espanhol, português) =====================
   // O jogo é escrito em português. Este tradutor troca, na tela, todo texto que aparece (menus, HUD, avisos, mensagens do servidor).
   // REGRA: todo texto novo do jogo precisa de uma entrada aqui (D = frase exata, P = frase com números/nomes). Veja I18N.md.
@@ -970,7 +971,7 @@ const GAME_VERSION = 202611132331, GAME_NOTES = {"t": "Online só na versão atu
       // mensagens do servidor
       "Conta não encontrada. Confira o nome ou toque em Criar conta.": ["Account not found. Check the name or tap Create account.", "Cuenta no encontrada. Revisa el nombre o toca Crear cuenta."],
       "Esse nome já tem conta. Use Entrar ou escolha outro nome.": ["That name already has an account. Use Sign in or pick another name.", "Ese nombre ya tiene cuenta. Usa Entrar o elige otro nombre."],
-      "Senha incorreta.": ["Wrong password.", "Contraseña incorrecta."], "O online só funciona na versão nova do jogo. Baixe em machine-gamesdev.itch.io/arena-zumbi": ["Online only works on the new version of the game. Download it at machine-gamesdev.itch.io/arena-zumbi", "El online solo funciona en la versión nueva del juego. Descárgala en machine-gamesdev.itch.io/arena-zumbi"], "Muitas tentativas. Espere 1 minuto.": ["Too many attempts. Wait 1 minute.", "Demasiados intentos. Espera 1 minuto."],
+      "Senha incorreta.": ["Wrong password.", "Contraseña incorrecta."], "Atualize o jogo para jogar online: feche e abra o jogo (no site, recarregue a página).": ["Update the game to play online: close and reopen the game (on the website, reload the page).", "Actualiza el juego para jugar online: cierra y vuelve a abrir el juego (en el sitio, recarga la página)."], "Feche e abra o jogo para atualizar.": ["Close and reopen the game to update.", "Cierra y vuelve a abrir el juego para actualizar."], "O online só funciona na versão nova do jogo. Baixe em machine-gamesdev.itch.io/arena-zumbi": ["Online only works on the new version of the game. Download it at machine-gamesdev.itch.io/arena-zumbi", "El online solo funciona en la versión nueva del juego. Descárgala en machine-gamesdev.itch.io/arena-zumbi"], "Muitas tentativas. Espere 1 minuto.": ["Too many attempts. Wait 1 minute.", "Demasiados intentos. Espera 1 minuto."],
       "Nome: de 2 a 14 letras ou números.": ["Name: 2 to 14 letters or numbers.", "Nombre: de 2 a 14 letras o números."], "Senha: de 4 a 40 caracteres.": ["Password: 4 to 40 characters.", "Contraseña: de 4 a 40 caracteres."],
       "Sessão expirada. Entre de novo.": ["Session expired. Sign in again.", "Sesión expirada. Entra de nuevo."], "Contas indisponíveis.": ["Accounts unavailable.", "Cuentas no disponibles."], "Dados grandes demais.": ["Data too large.", "Datos demasiado grandes."],
       "Dados inválidos.": ["Invalid data.", "Datos inválidos."], "Pedido inválido.": ["Invalid request.", "Solicitud inválida."], "Não encontrado.": ["Not found.", "No encontrado."],
@@ -9596,12 +9597,13 @@ const Logic = (function () {
       leave(true);
       const shell = appShell();
       if (shell === "old") { setMsg("O online só funciona na versão nova do jogo. Baixe em machine-gamesdev.itch.io/arena-zumbi", "err"); return; }
+      if (window.__azOutdated) { setMsg("Atualize o jogo para jogar online: feche e abra o jogo (no site, recarregue a página).", "err"); return; }
       const code = roomKey(label);
       if (code.length < 3) { setMsg("O nome da sala precisa de pelo menos 3 letras ou números.", "err"); return; }
       const h = serverHost(), pw = await hashPw(pass);
       st.name = (S.name || "Sobrevivente").slice(0, 14); st.code = code; st.label = String(label).trim().slice(0, 16); st.host = role === "host"; if (st.host) st.gm = st.gmSel; st.status = "connecting"; setMsg("Conectando...");
       const local = /^(localhost|127\.|192\.168\.|10\.)/.test(h);
-      let ws; try { ws = new WebSocket((local ? "ws://" : "wss://") + h + "/ws/" + code + "?role=" + role + "&app=" + shell + (pw ? "&pw=" + pw : "") + (role === "host" ? "&max=" + (st.gmSel === "infect" ? 12 : 4) : "")); } catch (e) { setMsg("Não consegui conectar ao servidor.", "err"); st.status = "off"; return; }
+      let ws; try { ws = new WebSocket((local ? "ws://" : "wss://") + h + "/ws/" + code + "?role=" + role + "&app=" + shell + "&cv=" + (typeof GAME_VERSION === "undefined" ? 0 : GAME_VERSION) + (pw ? "&pw=" + pw : "") + (role === "host" ? "&max=" + (st.gmSel === "infect" ? 12 : 4) : "")); } catch (e) { setMsg("Não consegui conectar ao servidor.", "err"); st.status = "off"; return; }
       st.ws = ws;
       ws.onopen = () => { pingT = performance.now(); };
       ws.onmessage = (ev) => { if (ws !== st.ws) return; if (ev.data === "pong") return; let m; try { m = JSON.parse(ev.data); } catch (e) { return; } onMsg(m); };
@@ -11086,30 +11088,38 @@ const Logic = (function () {
   } catch (e) {}
 
   // ---------------- atualizações ----------------
-  // Novidades: aparece uma vez quando a versão sobe (site, .exe e APK). No site, avisa se publicaram versão nova com a aba aberta.
+  // Novidades: aparece uma vez quando a versão sobe (site, .exe e APK).
+  // Com o jogo aberto, confere se saiu versão nova: avisa para atualizar e marca a versão como antiga (o online fica bloqueado até atualizar).
   const UPD_HOST = "https://arena-zumbi.playes.workers.dev/";
   (function () {
     if (typeof GAME_VERSION === "undefined") return;
     const KEY = "arena-zumbi-ver";
     let seen = 0; try { seen = Number(localStorage.getItem(KEY)) || 0; } catch (e) {}
-    const show = (title, notes, btn, fn) => {
+    const show = (title, notes, btn, fn, hint) => {
       notes = (notes && notes[I18N.get()]) || notes;                       // novidades no idioma do jogador (CHANGELOG.en.md / .es.md)
       const o = $("upd"); if (!o) return;
       $("updTitle").textContent = title;
       $("updBody").innerHTML = "<b>" + String(notes.t || "").replace(/[<>&]/g, "") + "</b>" + (notes.b || []).map((l) => "<div>• " + String(l).replace(/[<>&`*]/g, "") + "</div>").join("");
+      if (hint) { const h = document.createElement("p"); h.className = "upd-hint"; h.textContent = hint; $("updBody").appendChild(h); }
       $("updOk").textContent = btn; $("updOk").onclick = () => { o.hidden = true; if (fn) fn(); };
       o.hidden = false;
     };
     if (seen && GAME_VERSION > seen) setTimeout(() => show("Jogo atualizado!", GAME_NOTES || {}, "OK"), 900);
     try { localStorage.setItem(KEY, String(GAME_VERSION)); } catch (e) {}
-    if (!/^https?:$/.test(location.protocol) || /^(localhost|127\.)/.test(location.hostname)) return;   // apps: atualizam ao abrir
+    if (/^https?:$/.test(location.protocol) && /^(localhost|127\.|192\.168\.|10\.)/.test(location.hostname)) return;   // teste local
+    const web = /^https?:$/.test(location.protocol);                      // site: recarrega; APK/.exe: baixam a versão nova ao abrir
+    let warned = 0;
     const check = () => {
-      if (state !== "menu") return;
       fetch(UPD_HOST + "version.json?t=" + Date.now(), { cache: "no-store" }).then((r) => r.json()).then((j) => {
-        if (j && j.v > GAME_VERSION) show("Nova versão disponível", j.notes || {}, "Atualizar agora", () => location.reload());
+        if (!(j && j.v > GAME_VERSION)) return;
+        window.__azOutdated = true;                                        // online bloqueado até atualizar (o servidor também recusa)
+        if (state !== "menu" || warned === j.v) return;
+        warned = j.v;
+        if (web) show("Nova versão disponível", j.notes || {}, "Atualizar agora", () => location.reload());
+        else show("Nova versão disponível", j.notes || {}, "OK", null, "Feche e abra o jogo para atualizar.");
       }).catch(() => {});
     };
-    setTimeout(check, 4000); setInterval(check, 10 * 60 * 1000);
+    setTimeout(check, 4000); setInterval(check, 5 * 60 * 1000);
   })();
 
   // ---------------- início ----------------

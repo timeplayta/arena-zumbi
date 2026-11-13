@@ -298,11 +298,29 @@ export class Accounts {
   }
 }
 
+// versão publicada do jogo (game/public/version.json); salas só aceitam o jogo nessa versão ou mais nova
+let curV = 0, curAt = 0;
+async function currentVersion(env, url) {
+  if (!env.ASSETS) return 0;
+  if (Date.now() - curAt < 60000) return curV;
+  try { const r = await env.ASSETS.fetch(new Request(url.origin + "/version.json")); curV = Number((await r.json()).v) || curV; curAt = Date.now(); } catch (e) {}
+  return curV;
+}
+function refuseWs(m) {
+  const [client, server] = Object.values(new WebSocketPair());
+  server.accept(); server.send(JSON.stringify({ t: "error", m })); server.close(1008, "versao antiga");
+  return new Response(null, { status: 101, webSocket: client });
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
     const m = url.pathname.match(/^\/ws\/([A-Za-z0-9]{3,16})$/);
-    if (m) return env.ROOMS.get(env.ROOMS.idFromName(m[1].toUpperCase())).fetch(request);
+    if (m) {
+      const cur = await currentVersion(env, url), cv = Number(url.searchParams.get("cv")) || 0;
+      if (cur && cv < cur && request.headers.get("Upgrade") === "websocket") return refuseWs("Atualize o jogo para jogar online: feche e abra o jogo (no site, recarregue a página).");
+      return env.ROOMS.get(env.ROOMS.idFromName(m[1].toUpperCase())).fetch(request);
+    }
     if (url.pathname.startsWith("/api/")) {                           // contas
       if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: CORS });
       if (!env.ACCOUNTS) return J({ error: "Contas indisponíveis." }, 503);

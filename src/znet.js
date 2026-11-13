@@ -235,12 +235,13 @@
       leave(true);
       const shell = appShell();
       if (shell === "old") { setMsg("O online só funciona na versão nova do jogo. Baixe em machine-gamesdev.itch.io/arena-zumbi", "err"); return; }
+      if (window.__azOutdated) { setMsg("Atualize o jogo para jogar online: feche e abra o jogo (no site, recarregue a página).", "err"); return; }
       const code = roomKey(label);
       if (code.length < 3) { setMsg("O nome da sala precisa de pelo menos 3 letras ou números.", "err"); return; }
       const h = serverHost(), pw = await hashPw(pass);
       st.name = (S.name || "Sobrevivente").slice(0, 14); st.code = code; st.label = String(label).trim().slice(0, 16); st.host = role === "host"; if (st.host) st.gm = st.gmSel; st.status = "connecting"; setMsg("Conectando...");
       const local = /^(localhost|127\.|192\.168\.|10\.)/.test(h);
-      let ws; try { ws = new WebSocket((local ? "ws://" : "wss://") + h + "/ws/" + code + "?role=" + role + "&app=" + shell + (pw ? "&pw=" + pw : "") + (role === "host" ? "&max=" + (st.gmSel === "infect" ? 12 : 4) : "")); } catch (e) { setMsg("Não consegui conectar ao servidor.", "err"); st.status = "off"; return; }
+      let ws; try { ws = new WebSocket((local ? "ws://" : "wss://") + h + "/ws/" + code + "?role=" + role + "&app=" + shell + "&cv=" + (typeof GAME_VERSION === "undefined" ? 0 : GAME_VERSION) + (pw ? "&pw=" + pw : "") + (role === "host" ? "&max=" + (st.gmSel === "infect" ? 12 : 4) : "")); } catch (e) { setMsg("Não consegui conectar ao servidor.", "err"); st.status = "off"; return; }
       st.ws = ws;
       ws.onopen = () => { pingT = performance.now(); };
       ws.onmessage = (ev) => { if (ws !== st.ws) return; if (ev.data === "pong") return; let m; try { m = JSON.parse(ev.data); } catch (e) { return; } onMsg(m); };
