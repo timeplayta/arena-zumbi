@@ -1,11 +1,7 @@
 # Gera "Arena-Zumbi-Portatil.exe": um único arquivo que se extrai sozinho e abre o jogo (não precisa da pasta).
-# Roda à mão ou depois que o exe do zip é assinado. O jogo se atualiza sozinho ao abrir. Salva em windows/Arena-Zumbi-Portatil.exe.
+# Roda à mão (só quando o app do Windows muda: o jogo em si se atualiza sozinho ao abrir). Salva em windows/Arena-Zumbi-Portatil.exe.
 name: Exe portatil
-on:
-  workflow_dispatch:
-  workflow_run:
-    workflows: ["Assinar exe"]
-    types: [completed]
+on: workflow_dispatch
 permissions:
   contents: write
 concurrency: { group: exe-portatil, cancel-in-progress: true }
