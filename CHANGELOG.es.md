@@ -1,5 +1,9 @@
 # Novedades — Arena Zumbi
 
+## Miras de las armas corregidas (14/11/2026)
+- Vespa SMG-9, Fusil AX-4 y Titán M-60: el alza trasera ahora es un anillo abierto. Al apuntar, ves el objetivo y el punto de mira en el centro, sin que el arma tape la pantalla.
+- La mira de la pantalla sigue visible al apuntar con estas armas.
+
 ## Aviso de versión nueva y online siempre actualizado (13/11/2026)
 - Cuando sale una actualización, quien tenga abierta la versión anterior verá el aviso "Nueva versión disponible". En el sitio, el botón actualiza al instante. En la app, solo cierra y vuelve a abrir el juego.
 - El online (cooperativo e Infección) solo funciona en la versión más reciente del juego, así todos en la sala juegan la misma versión.

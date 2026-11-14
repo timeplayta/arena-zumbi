@@ -1,5 +1,9 @@
 # What's new — Arena Zumbi
 
+## Weapon sights fixed (11/14/2026)
+- Vespa SMG-9, AX-4 Rifle and Titan M-60: the rear sight is now an open ring. When aiming, you see the target and the front sight in the center, without the gun blocking the screen.
+- The on-screen crosshair stays visible when aiming with these weapons.
+
 ## New version notice and always up-to-date online (11/13/2026)
 - When an update comes out, anyone with the previous version open sees the "New version available" notice. On the website, the button updates right away. In the app, just close and reopen the game.
 - Online (co-op and Infection) only works on the latest version of the game, so everyone in a room plays the same version.
