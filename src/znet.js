@@ -184,7 +184,7 @@
     const st = { ws: null, id: null, host: false, code: "", status: "off", msg: "", players: [], stamp: "0", gm: "coop", gmSel: "coop", bots: false, local: false, started: false, diff: "normal", starting: false, over: false, name: "" };
     const lobby = {};                       // anfitrião: id -> { name, info, full }
     let acc = 0, sAcc = 0, sentZ = new Set(), sentP = new Set(), pingT = 0, game0 = null;
-    const WORLD = /^(wave|giant|elite|kill|clear|wall|hit|rshot|ally_down|infected|claw|inf_end|zrespawn|boost$|tank_|sam_|wraith_)/;
+    const WORLD = /^(wave|giant|elite|kill|clear|wall|hit|rshot|ally_down|infected|claw|inf_end|zrespawn|boost$|tank_|sam_|wraith_|lum_)/;
     const setMsg = (m, cls) => { st.msg = m; const e = $("coopStatus"); if (e) { e.textContent = m; e.className = "coop-status " + (cls || ""); } };
     const DEFAULT_SERVER = "arena-zumbi.playes.workers.dev";       // servidor online (salas co-op); o jogo pode ficar em outro endereço
     function serverHost() {
@@ -276,6 +276,7 @@
         case "s": if (st.host && game && game.coop) game.setRemote(m.from, m); break;
         case "shot": if (st.host && game && game.coop) game.remoteShot(m.from, m); break;
         case "melee": if (st.host && game && game.coop) game.remoteMelee(m.from); break;
+        case "rev": if (st.host && game && game.coop) game.reviveRemote(m.from, m.x, m.y); break;
         case "claw": if (st.host && game && game.coop) game.claw(m.from, !!m.h); break;
         case "pot": if (st.host && game && game.coop && Array.isArray(m.o) && Array.isArray(m.d)) game.throwPotion(m.from, String(m.k), m.o.slice(0, 3).map(Number), m.d.slice(0, 3).map(Number)); break;
         // --- convidado ---
@@ -330,6 +331,7 @@
     function guestSend(g, dt) {
       if (g.lastShot) { const s = g.lastShot; g.lastShot = null; send({ t: "shot", s: s.s, o: s.o, d: s.d }); }
       for (const e of g.events) if (e[0] === "melee_swing") send({ t: "melee" });
+      if (g.revPending) { send({ t: "rev", x: g.revPending[0], y: g.revPending[1] }); g.revPending = null; }
       acc += dt; if (acc >= 0.05) { acc = 0; send({ t: "s", x: +g.px.toFixed(2), y: +g.py.toFixed(2), z: +(g.gz || 0).toFixed(2), yaw: +g.yaw.toFixed(3), pitch: +g.pitch.toFixed(3), cr: g.crouchT > 0.5 ? 1 : 0, w: g.w().cfg.id }); }
     }
     function hostRelay(g, dt) {

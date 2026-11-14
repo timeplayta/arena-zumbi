@@ -166,6 +166,20 @@ kbd { flex: none; font-family: var(--font-display); font-size: 18px; font-weight
 #boot .boot-bar i { display: block; height: 100%; width: 0; background: var(--amber); transition: width 0.25s; }
 #boot .boot-row { display: flex; justify-content: space-between; gap: 12px; margin-top: 10px; font-size: 15px; color: #cfd6e0; }
 #boot .boot-row b { font-family: var(--font-display); font-size: 20px; letter-spacing: 0.06em; color: var(--amber); font-variant-numeric: tabular-nums; }
+#revive { position: fixed; inset: 0; z-index: 900; display: grid; place-items: center; background: rgba(6, 3, 3, 0.86); padding: 12px; }
+#revive[hidden] { display: none; }
+#revive .rv-in { width: min(560px, 100%); max-height: 100%; display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; color: var(--fg); }
+#revive .rv-k { font-family: var(--font-display); font-size: 16px; letter-spacing: 0.24em; color: var(--amber); text-transform: uppercase; }
+#revive h2 { font-family: var(--font-display); font-size: 38px; letter-spacing: 0.04em; margin: 0; text-transform: uppercase; }
+#revive p { margin: 0; font-size: 15px; color: #cfd6e0; }
+#revMap { width: min(100%, 54vh); aspect-ratio: 1; border: 1px solid var(--line); cursor: crosshair; touch-action: none; }
+#revive .rv-leg { display: flex; gap: 16px; font-size: 13px; color: var(--muted); align-items: center; flex-wrap: wrap; justify-content: center; }
+#revive .rv-leg i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 5px; vertical-align: -1px; }
+#revive .btn { font-size: 18px; min-width: 220px; }
+@media (max-height: 520px) { #revive h2 { font-size: 24px; } #revive .rv-k { display: none; } #revMap { width: min(100%, 56vh); } }
+#stage.cine #hud, #stage.cine #touch { opacity: 0; transition: opacity 0.25s; }
+#stage.cine::before, #stage.cine::after { content: ""; position: absolute; left: 0; right: 0; height: 9%; background: #000; z-index: 40; pointer-events: none; }
+#stage.cine::before { top: 0; } #stage.cine::after { bottom: 0; }
 #appUpd { position: fixed; inset: 0; z-index: 9998; display: grid; place-items: center; background: rgba(4, 6, 9, 0.82); padding: 16px; }
 #appUpd[hidden] { display: none; }
 #appUpd .au-in { width: min(460px, 100%); background: var(--surface-2); border: 1px solid var(--line); border-top: 3px solid var(--amber); padding: 22px 22px 18px; color: var(--fg); text-align: left; }
@@ -498,6 +512,16 @@ table.sc td:first-child { font-family: var(--font-display); font-size: 22px; col
     <div class="boot-row"><span id="bootMsg">Carregando…</span><b id="bootPct" translate="no">0%</b></div>
   </div>
 </div>
+<div id="revive" hidden role="dialog" aria-modal="true" aria-labelledby="revTitle">
+  <div class="rv-in">
+    <div class="rv-k">Segunda chance</div>
+    <h2 id="revTitle">Escolha onde reviver</h2>
+    <p>Clique duas vezes no mapa onde você quer reviver.</p>
+    <canvas id="revMap" width="640" height="640"></canvas>
+    <div class="rv-leg"><span><i style="background:#ff3b30"></i>Zumbis</span><span><i style="background:#fff"></i>Onde você morreu</span><span><i style="background:#4aa3ff"></i>Aliados</span><span><i style="background:#3ddc84"></i>Ponto escolhido</span></div>
+    <button class="btn" id="revQuit" type="button">Sair da partida</button>
+  </div>
+</div>
 <div id="appUpd" hidden role="dialog" aria-modal="true" aria-labelledby="auTitle">
   <div class="au-in">
     <div class="au-k">Aviso</div>
@@ -795,7 +819,7 @@ table.sc td:first-child { font-family: var(--font-display); font-size: 22px; col
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
-const GAME_VERSION = 202611141450, GAME_NOTES = {"t": "Mira das armas corrigida (14/11/2026)", "b": ["Vespa SMG-9, Fuzil AX-4 e Titã M-60: a alça de mira traseira agora é um anel aberto. Ao mirar, você vê o alvo e a massa de mira no centro, sem a arma tapar a tela.", "A mira da tela continua visível ao mirar com essas armas."], "en": {"t": "Weapon sights fixed (11/14/2026)", "b": ["Vespa SMG-9, AX-4 Rifle and Titan M-60: the rear sight is now an open ring. When aiming, you see the target and the front sight in the center, without the gun blocking the screen.", "The on-screen crosshair stays visible when aiming with these weapons."]}, "es": {"t": "Miras de las armas corregidas (14/11/2026)", "b": ["Vespa SMG-9, Fusil AX-4 y Titán M-60: el alza trasera ahora es un anillo abierto. Al apuntar, ves el objetivo y el punto de mira en el centro, sin que el arma tape la pantalla.", "La mira de la pantalla sigue visible al apuntar con estas armas."]}};
+const GAME_VERSION = 202611142022, GAME_NOTES = {"t": "O Lenhador e Segunda Chance com mapa (14/11/2026)", "b": ["Novo chefe: O Lenhador. Zumbi enorme de barba e camisa xadrez, com machado de duas mãos e 7.000 de vida. Aparece em todas as dificuldades do modo de ondas.", "Um golpe de machado mata. Se ele errar o golpe de cima, o machado prende no chão e ele leva de 5 a 10 segundos para arrancar. Se errar o giro, o machado voa longe e ele cai.", "Sem o machado ele corre atrás de você com soco (metade da vida) e chute, e os dois te arremessam.", "Duas finalizações em terceira pessoa quando o Lenhador mata: corte ao meio de cima para baixo e corte lateral.", "Os chefes agora deixam rachaduras e crateras no chão, e o machado rasga os containers.", "Segunda Chance custa 700 moedas: ao morrer, o mapa mostra os zumbis em vermelho e você clica duas vezes onde quer reviver, ou sai da partida."], "en": {"t": "The Lumberjack and Second Chance with a map (11/14/2026)", "b": ["New boss: The Lumberjack. A huge bearded zombie in a plaid shirt with a two-handed axe and 7,000 health. He shows up on every difficulty in wave mode.", "One axe blow kills. If he misses the overhead chop, the axe gets stuck in the ground and he takes 5 to 10 seconds to pull it out. If he misses the spin, the axe flies away and he falls.", "Without the axe he runs after you with a punch (half your health) and a kick, and both throw you back.", "Two third-person finishers when the Lumberjack kills: a top-down split and a side slash.", "Bosses now leave cracks and craters in the ground, and the axe tears through containers.", "Second Chance costs 700 coins: when you die, the map shows zombies in red and you double-click where to revive, or leave the match."]}, "es": {"t": "El Leñador y Segunda Oportunidad con mapa (14/11/2026)", "b": ["Nuevo jefe: El Leñador. Un zombi enorme con barba y camisa a cuadros, con un hacha a dos manos y 7.000 de vida. Aparece en todas las dificultades del modo de oleadas.", "Un golpe de hacha mata. Si falla el golpe desde arriba, el hacha se atasca en el suelo y tarda de 5 a 10 segundos en sacarla. Si falla el giro, el hacha sale volando y él se cae.", "Sin el hacha corre detrás de ti con un puñetazo (la mitad de la vida) y una patada, y los dos te lanzan lejos.", "Dos remates en tercera persona cuando el Leñador mata: corte por la mitad de arriba abajo y corte lateral.", "Los jefes ahora dejan grietas y cráteres en el suelo, y el hacha rasga los contenedores.", "Segunda Oportunidad cuesta 700 monedas: al morir, el mapa muestra los zombis en rojo y haces doble clic donde quieres revivir, o sales de la partida."]}};
   // ===================== IDIOMAS (inglês, espanhol, português) =====================
   // O jogo é escrito em português. Este tradutor troca, na tela, todo texto que aparece (menus, HUD, avisos, mensagens do servidor).
   // REGRA: todo texto novo do jogo precisa de uma entrada aqui (D = frase exata, P = frase com números/nomes). Veja I18N.md.
@@ -879,7 +903,10 @@ const GAME_VERSION = 202611141450, GAME_NOTES = {"t": "Mira das armas corrigida 
       "Bolsa de poções": ["Potion bag", "Bolsa de pociones"], "Modo Infecção: toda partida começa com 2 molotovs e 2 poções de cura. Cada nível dá +1 de cada (até 5).": ["Infection mode: every match starts with 2 molotovs and 2 healing potions. Each level gives +1 of each (up to 5).", "Modo Infección: cada partida empieza con 2 molotovs y 2 pociones de curación. Cada nivel da +1 de cada (hasta 5)."],
       "Colete de kevlar": ["Kevlar vest", "Chaleco de kevlar"], "Começa a próxima partida com +50 de armadura.": ["Start the next match with +50 armor.", "Empieza la próxima partida con +50 de armadura."],
       "Mochila dupla": ["Double backpack", "Mochila doble"], "Dobra a munição de reserva (e o limite) durante a partida.": ["Doubles reserve ammo (and the cap) during the match.", "Duplica la munición de reserva (y el límite) durante la partida."],
-      "Segunda chance": ["Second chance", "Segunda oportunidad"], "Se você morrer, volta com a vida CHEIA, 4 s invencível e joga os zumbis longe. Só gasta se você realmente morrer.": ["If you die, you come back with FULL health, 4 s invincible and knock zombies away. Only used if you actually die.", "Si mueres, vuelves con la vida LLENA, 4 s invencible y lanzas lejos a los zombis. Solo se gasta si realmente mueres."],
+      "Segunda chance": ["Second chance", "Segunda oportunidad"], "Se você morrer, o mapa aparece com os zumbis em vermelho: clique duas vezes onde quer reviver. Volta com a vida CHEIA e 4 s invencível. Só gasta se você reviver.": ["If you die, the map appears with zombies in red: double-click where you want to revive. You come back with FULL health and 4 s invincible. Only used if you revive.", "Si mueres, aparece el mapa con los zombis en rojo: haz doble clic donde quieres revivir. Vuelves con la vida LLENA y 4 s invencible. Solo se gasta si revives."],
+      "Escolha onde reviver": ["Choose where to revive", "Elige dónde revivir"], "Clique duas vezes no mapa onde você quer reviver.": ["Double-click the map where you want to revive.", "Haz doble clic en el mapa donde quieres revivir."],
+      "Onde você morreu": ["Where you died", "Donde moriste"], "Aliados": ["Allies", "Aliados"], "Ponto escolhido": ["Chosen spot", "Punto elegido"], "Sair da partida": ["Leave match", "Salir de la partida"], "Não reviver agora": ["Don't revive now", "No revivir ahora"],
+      "O LENHADOR": ["THE LUMBERJACK", "EL LEÑADOR"], "Um golpe mata · desvie e atire quando o machado prender ou voar longe": ["One blow kills · dodge and shoot when the axe gets stuck or flies away", "Un golpe mata · esquiva y dispara cuando el hacha se atasque o salga volando"],
       "Faca de combate": ["Combat knife", "Cuchillo de combate"], "A de sempre. Rápida e discreta.": ["The usual one. Fast and discreet.", "El de siempre. Rápido y discreto."],
       "Facão": ["Machete", "Machete"], "Mais dano e golpe rápido.": ["More damage and fast swings.", "Más daño y golpe rápido."], "Katana": ["Katana", "Katana"], "Alcance maior, corte veloz e muito afiada.": ["Longer reach, fast cuts and very sharp.", "Mayor alcance, corte veloz y muy afilada."],
       "Machado de bombeiro": ["Fire axe", "Hacha de bombero"], "Lento, mas parte qualquer zumbi comum ao meio.": ["Slow, but splits any common zombie in half.", "Lento, pero parte a cualquier zombi común por la mitad."],
@@ -1407,7 +1434,11 @@ const Logic = (function () {
     tank: { hp: 2400, grow: 170, speed: 0.95, dmg: 1.7, pts: 1500, coins: 40, s: [1.9, 2.0] },
     samurai: { hp: 1300, grow: 110, speed: 2.5, dmg: 1.5, pts: 800, coins: 25, s: [0.97, 1.0] },
     wraith: { hp: 1500, grow: 140, speed: 9.5, dmg: 1, pts: 2000, coins: 60, s: [1.27, 1.29] },
+    lumber: { hp: 7000, grow: 450, speed: 1.55, dmg: 1, pts: 4000, coins: 120, s: [2.1, 2.2], min: 7000 },   // Lenhador: o dobro do zumbi comum, machado de duas mãos
   };
+  // Lenhador: aparece em todas as dificuldades (onda inicial, intervalo)
+  const LUMBER_AT = { easy: [5, 5], normal: [5, 5], hard: [4, 4], nightmare: [4, 4], extremo: [3, 3], apocalipse: [3, 3] };
+  for (const k in LUMBER_AT) { const d = DIFF[k]; d.elite = Object.assign({}, d.elite || {}, { lumber: { from: LUMBER_AT[k][0], every: LUMBER_AT[k][1], grow: 99, cap: 1, max: 1 } }); }
 
   // golpes do Mestre da Katana: preparo, golpe, recuperação (s), alcance e avanço (m), cone de acerto e multiplicador de dano
   const SAM = {
@@ -1718,7 +1749,9 @@ const Logic = (function () {
       const E = ELITE[kind];
       this.kind = kind; this.runner = kind === "runner"; this.giant = kind === "giant";
       this.tank = kind === "tank"; this.samurai = kind === "samurai"; this.wraith = kind === "wraith"; this.elite = !!E;
-      this.brute = kind === "brute" || this.giant || this.tank;
+      this.lumber = kind === "lumber"; this.heavy = this.giant || this.tank || this.lumber;
+      this.brute = kind === "brute" || this.heavy;
+      this.ax = 0; this.ay = 0;           // Lenhador: onde o machado caiu
       this.s = this.giant ? g.uniform(2.05, 2.25) : E ? g.uniform(E.s[0], E.s[1]) : kind === "brute" ? 1.35 : g.uniform(0.95, 1.08);
       this.stepN = 0;
       this.hp = hp; this.maxHp = hp; this.speed = speed; this.dmgMul = dmgMul;
@@ -1877,7 +1910,7 @@ const Logic = (function () {
         const f = this.shotFilter(z, "torso", z.x, z.y, 1.1);
         if (f.dodged) { n++; continue; }
         if (f.blocked) { this.events.push(["block", z.x - dx / d * 0.6, z.y - dy / d * 0.6, 1.2, z.id]); n++; continue; }
-        const kn = z.tank || z.giant ? 0.05 : z.wraith ? 0 : z.brute ? 0.2 : 1;
+        const kn = z.heavy ? 0.05 : z.wraith ? 0 : z.brute ? 0.2 : 1;
         z.kx += (dx / d) * M.knock * kn; z.ky += (dy / d) * M.knock * kn;
         this.damageZombie(z, M.dmg * f.mul, "torso", [z.x, z.y, 1.1], { knock: 0, melee: true });
         z.stagger = Math.max(z.stagger, z.brute ? 0.3 : z.samurai ? 0.2 : 0.8);
@@ -1994,10 +2027,10 @@ const Logic = (function () {
       const sh = this._shooter;
       if (!c.melee) dmg *= this.dmgBoost;
       z.hp -= dmg; z.hitT = 0.12;
-      if (!c.fire) z.stagger = Math.max(z.stagger, (0.18 + (c.knock || 0) * 0.8) * (z.giant || z.tank ? 0.1 : z.samurai ? 0.5 : z.wraith ? 0 : 1));
+      if (!c.fire) z.stagger = Math.max(z.stagger, (0.18 + (c.knock || 0) * 0.8) * (z.heavy ? 0.1 : z.samurai ? 0.5 : z.wraith ? 0 : 1));
       if (zone === "legs" && !z.wraith) z.slowT = 3;
       if (c.knock) {
-        const dx = z.x - this.px, dy = z.y - this.py, d = Math.hypot(dx, dy) || 1, kn = z.giant || z.tank ? 0.02 : z.wraith ? 0 : z.samurai ? 0.4 : z.brute ? 0.2 : 1;
+        const dx = z.x - this.px, dy = z.y - this.py, d = Math.hypot(dx, dy) || 1, kn = z.heavy ? 0.02 : z.wraith ? 0 : z.samurai ? 0.4 : z.brute ? 0.2 : 1;
         z.kx += (dx / d) * c.knock * 14 * kn; z.ky += (dy / d) * c.knock * 14 * kn;
       }
       if (!c.fire) {
@@ -2005,7 +2038,7 @@ const Logic = (function () {
         this.events.push(["hit", p[0], p[1], p[2], head, z.id]);
       }
       if (z.hp <= 0) {
-        z.state = "dead"; z.deadT = 0; z.headGone = head && z.hp < -20 && !z.wraith && !z.tank; z.untouch = false;
+        z.state = "dead"; z.deadT = 0; z.headGone = head && z.hp < -20 && !z.wraith && !z.tank && !z.lumber; z.untouch = false;
         const E = ELITE[z.kind], D = this.diff;
         const pts = Math.round((100 + (head ? 50 : 0) + (z.giant ? 900 : z.brute ? 150 : 0) + (E ? E.pts : 0)) * D.score);
         this.score += pts;
@@ -2018,7 +2051,7 @@ const Logic = (function () {
           }
         }
         else if (z.giant || E) {                                    // gigantes e especiais soltam um tesouro
-          const nh = z.giant ? 2 : z.samurai ? 1 : 2, na = z.giant ? 3 : z.samurai ? 2 : 3;
+          const nh = z.giant ? 2 : z.samurai ? 1 : z.lumber ? 3 : 2, na = z.giant ? 3 : z.samurai ? 2 : z.lumber ? 4 : 3;
           for (let i = 0; i < nh; i++) this.pickups.push(new Pickup("health", z.x, z.y, this.rnd));
           for (let i = 0; i < na; i++) this.pickups.push(new Pickup("ammo", z.x, z.y, this.rnd));
         } else {
@@ -2045,7 +2078,7 @@ const Logic = (function () {
       this.queue = [];
       const EL = this.diff.elite;
       if (EL) {
-        for (const k of ["samurai", "tank", "wraith"]) for (let i = 0, n = this.eliteCount(EL[k], this.wave); i < n; i++) this.queue.push(k);
+        for (const k of ["samurai", "tank", "wraith", "lumber"]) for (let i = 0, n = this.eliteCount(EL[k], this.wave); i < n; i++) this.queue.push(k);
         for (let i = this.queue.length - 1; i > 0; i--) { const j = this.randint(i + 1); [this.queue[i], this.queue[j]] = [this.queue[j], this.queue[i]]; }
       }
       this.toSpawn += this.giantsLeft + this.queue.length; this.giantTotal = this.toSpawn; this.queueTotal = this.toSpawn;
@@ -2062,7 +2095,7 @@ const Logic = (function () {
         if (this.nearAny(x, y, 14) || insideAny(x, y, 0.9)) continue;
         break;
       }
-      const brutes = this.zombies.filter((z) => z.brute && !z.giant && !z.tank && z.state !== "dead").length;
+      const brutes = this.zombies.filter((z) => z.brute && !z.heavy && z.state !== "dead").length;
       const giantsUp = this.zombies.filter((z) => z.giant && z.state !== "dead").length;
       const reserve = this.queue.length + this.giantsLeft, forced = reserve > 0 && this.toSpawn <= reserve;   // vagas guardadas para os especiais
       let kind = "walker";
@@ -2086,14 +2119,15 @@ const Logic = (function () {
     }
     spawnElite(kind, x, y) {
       const E = ELITE[kind], D = this.diff, w = this.wave, hpMul = Math.pow(D.hp, 0.6);   // chefes crescem com a dificuldade, mas bem mais devagar que os zumbis comuns
-      const hp = (E.hp + E.grow * (w - 1)) * hpMul, speed = E.speed * (kind === "wraith" ? 1 : 1 + 0.04 * (D.extreme || 0));
+      const hp = Math.max(E.min || 0, (E.hp + E.grow * (w - 1)) * hpMul), speed = E.speed * (kind === "wraith" ? 1 : 1 + 0.04 * (D.extreme || 0));
       if (kind === "wraith") { const a = this.rnd() * 6.28, tp = this.randomPlayer(); x = clamp(tp.x + Math.cos(a) * 16, -ARENA + 2, ARENA - 2); y = clamp(tp.y + Math.sin(a) * 16, -ARENA + 2, ARENA - 2); }
       const z = new Zombie(x, y, hp, speed, kind, this.randint(3), this, E.dmg);
       this.zombies.push(z);
       if (kind === "wraith") { z.untouch = true; z.vis = 0; z.act = "stalk"; }
       if (kind === "samurai") { z.act = "approach"; z.cd = this.uniform(0.5, 1.5); }
+      if (kind === "lumber") { z.combo = 1; z.cd = 1.5; }
       this.events.push(["elite", kind, z.id]);
-      const T = { tank: ["COLOSSO BLINDADO", "O escudo bloqueia tiros de frente · ataque pelos lados e costas"], samurai: ["MESTRE DA KATANA", "Rápido, esquiva tiros · cuidado com a investida"], wraith: ["O ESPECTRO", "Invisível e imune · só pode ser ferido quando ataca"] }[kind];
+      const T = { tank: ["COLOSSO BLINDADO", "O escudo bloqueia tiros de frente · ataque pelos lados e costas"], samurai: ["MESTRE DA KATANA", "Rápido, esquiva tiros · cuidado com a investida"], wraith: ["O ESPECTRO", "Invisível e imune · só pode ser ferido quando ataca"], lumber: ["O LENHADOR", "Um golpe mata · desvie e atire quando o machado prender ou voar longe"] }[kind];
       this.banner = T[0]; this.bannerSub = T[1]; this.bannerT = 3.6;
       return true;
     }
@@ -2133,14 +2167,32 @@ const Logic = (function () {
       if (!o.soft) this.events.push(["hurt", rel]);
       if (this.hp <= 0) {
         if (this.gm === "infect" && this.team === "h") { this.hp = 1; this.becomeZombie(this.coop.id); return; }
-        if (this.revives > 0) {                                  // "Segunda chance" da loja
-          this.revives -= 1; this.hp = this.maxHp; this.armor = Math.max(this.armor, this.armorMax * 0.5); this.invulnT = 4; this.shake = 1.4;
-          for (const q of this.zombies) if (q.state !== "dead" && !q.wraith) { const dx = q.x - this.px, dy = q.y - this.py, d = Math.hypot(dx, dy) || 1; if (d < 14) { q.kx += (dx / d) * 22; q.ky += (dy / d) * 22; q.stagger = 2.5; } }
-          this.events.push(["revive"]); this.banner = "SEGUNDA CHANCE"; this.bannerSub = "Vida cheia e 4 s invencível!"; this.bannerT = 3;
-          return;
-        }
-        this.hp = 0; this.alive = false; this.events.push(["dead"]);
+        this.hp = 0; this.alive = false;
+        if (this.revives > 0 && this.gm !== "infect") { this.reviveWait = true; this.events.push(["revive_wait"]); return; }   // "Segunda chance": o jogador escolhe no mapa onde voltar
+        this.events.push(["dead"]);
       }
+    }
+    // Segunda chance: volta no ponto escolhido no mapa (vida cheia, 4 s invencível, zumbis por perto arremessados)
+    reviveAt(x, y) {
+      if (!this.reviveWait || this.revives <= 0) return false;
+      const lim = ARENA - 1;
+      [x, y] = pushOut(clamp(x, -lim, lim), clamp(y, -lim, lim), PLAYER_R + 0.15, 0);
+      this.reviveWait = false; this.finBy = null;
+      if (this.coop && this.coop.role === "guest") { this.revPending = [x, y]; return true; }       // quem revive é o anfitrião (znet manda o pedido)
+      this.revives -= 1; this.px = x; this.py = y; this.gz = groundAt(x, y, 0); this.vz = 0; this.kvx = this.kvy = 0;
+      this.alive = true; this.hp = this.maxHp; this.armor = Math.max(this.armor, this.armorMax * 0.5); this.invulnT = 4; this.shake = 1.4; this.over = false;
+      this.blastAway(x, y);
+      this.events.push(["revive"]); this.banner = "SEGUNDA CHANCE"; this.bannerSub = "Vida cheia e 4 s invencível!"; this.bannerT = 3;
+      return true;
+    }
+    blastAway(x, y) { for (const q of this.zombies) if (q.state !== "dead" && !q.wraith && !q.puppet) { const dx = q.x - x, dy = q.y - y, d = Math.hypot(dx, dy) || 1; if (d < 12) { const k = q.heavy ? 0.15 : 1; q.kx += (dx / d) * 22 * k; q.ky += (dy / d) * 22 * k; q.stagger = Math.max(q.stagger, 2.5 * k); } } }
+    declineRevive() { if (!this.reviveWait) return; this.reviveWait = false; this.events.push(["dead"]); }
+    // anfitrião: convidado usou a Segunda chance (uma por partida)
+    reviveRemote(id, x, y) {
+      const o = this.others.find((q) => q.id === id); if (!o || o.alive || o.revUsed || this.gm === "infect") return;
+      const lim = ARENA - 1; [x, y] = pushOut(clamp(+x || 0, -lim, lim), clamp(+y || 0, -lim, lim), PLAYER_R + 0.15, 0);
+      o.revUsed = true; o.alive = true; o.hp = o.maxHp; o.invulnT = 4; o.x = o.tx = x; o.y = o.ty = y; this.over = false;
+      this.blastAway(x, y); this.fx(o.id, ["revived", x, y]);
     }
     push(vx, vy) { if (this._tgt) { this.fx(this._tgt.id, ["push", vx, vy]); return; } this.kvx += vx; this.kvy += vy; }
 
@@ -2257,10 +2309,103 @@ const Logic = (function () {
         if (z.blocked > 0.2 && z.sideT <= 0) { z.side = this.rnd() < 0.5 ? -1 : 1; z.sideT = this.uniform(0.8, 1.6); z.blocked = 0; }
       } else z.blocked = Math.max(0, z.blocked - dt);
       z.phase += dt * (spd * 2.4 + 1);
-      if (z.giant || z.tank) {
+      if (z.heavy) {
         const n = Math.floor(z.phase / Math.PI);
-        if (n !== z.stepN) { z.stepN = n; this.shake = Math.max(this.shake, clamp(1 - dist / 24, 0, 1) * (z.tank ? 0.3 : 0.55)); this.events.push(["stomp", this.hostDist(z.x, z.y), z.tank ? 1 : 0]); }
+        if (n !== z.stepN) { z.stepN = n; this.shake = Math.max(this.shake, clamp(1 - dist / (z.lumber ? 30 : 24), 0, 1) * (z.tank ? 0.3 : z.lumber ? 0.85 : 0.55)); this.events.push(["stomp", this.hostDist(z.x, z.y), z.tank ? 1 : z.lumber ? 2 : 0]); }
       }
+    }
+
+    // ---- Lenhador: machado de duas mãos. Um golpe mata; errar custa caro (machado preso no chão / arremessado) ----
+    //  z.combo = 1 com o machado na mão · z.ax,z.ay = onde o machado caiu · z.dodgeDir = duração do "preso" · z.atk = último golpe
+    updateLumber(z, dt, dist, dx, dy) {
+      const s = z.s, tg = this._tgt, tgtMax = tg ? tg.maxHp : this.maxHp, alive = () => (tg ? tg.alive : this.alive);
+      const fx = -Math.sin(z.yaw), fy = Math.cos(z.yaw);
+      const along = dx * fx + dy * fy, side = Math.abs(dx * -fy + dy * fx);          // jogador no referencial do zumbi
+      const once = (bit) => { if (z.ev & bit) return false; z.ev |= bit; return true; };
+      const go = (act, cd) => { z.act = act; z.seqT = 0; z.ev = 0; if (cd !== undefined) z.cd = cd; };
+      const quake = (k, r) => { this.shake = Math.max(this.shake, clamp(1 - dist / (r || 30), 0.15, 1) * k); };
+      const finish = (type) => { z.atk = type; go("fin"); this.events.push(["lum_fin", z.id, type, tg ? tg.id : (this.coop ? this.coop.id : 0), r2(this.px), r2(this.py)]); if (tg) this.fx(tg.id, ["lum_fin", z.id, type]); else this.finBy = [z.id, type]; };
+      const r2 = (v) => Math.round(v * 100) / 100;
+      z.seqT += dt; const t = z.seqT;
+      switch (z.act) {
+        case "chop": {                                              // 1) machado erguido com as duas mãos e descida brutal
+          z.state = "attack";
+          if (t < 0.75) this.turnToward(z, this.px, this.py, 1.6, dt);
+          if (t >= 0.25 && once(1)) this.events.push(["lum_roar", z.x, z.y, 0]);
+          if (t >= 1.05 && once(2)) {
+            const ix = z.x + fx * 1.12 * s, iy = z.y + fy * 1.12 * s;
+            quake(1.7, 34);
+            if (alive() && along > 0.2 && along < 1.55 * s && side < 0.95) {
+              const was = alive(); this.hurt(tgtMax * 1.3, z);
+              if (was && !alive()) return finish("split");
+              this.push(fx * 9, fy * 9); this.events.push(["lum_hit", this.px, this.py]); go("recover", 2.2); return;
+            }
+            z.dodgeDir = r2(this.uniform(5.5, 9)); z.ax = r2(ix); z.ay = r2(iy);
+            this.events.push(["lum_stuck", r2(ix), r2(iy), r2(z.yaw)]); go("stuck"); return;
+          }
+          return;
+        }
+        case "stuck": {                                             // machado enterrado: três puxões (5 a 10 s vulnerável)
+          z.state = "attack"; const T = z.dodgeDir || 6;
+          for (let i = 0; i < 3; i++) if (t >= T * (0.22 + 0.3 * i) && once(1 << i)) { quake(i === 2 ? 0.9 : 0.35, 22); this.events.push(["lum_pull", z.ax, z.ay, i]); }
+          if (t >= T) go("recover", 1.4);
+          return;
+        }
+        case "spin": {                                              // 2) giro de machado
+          z.state = "attack";
+          if (t < 0.85) { this.turnToward(z, this.px, this.py, 2.2, dt); return; }
+          if (once(1)) this.events.push(["lum_spin", z.x, z.y]);
+          if (t < 1.65) {
+            z.yaw = wrapAngle(z.yaw + (Math.PI * 2 / 0.8) * dt);
+            if (alive() && !z.landed && dist < 1.22 * s + PLAYER_R) {
+              z.landed = true; const was = alive(); this.hurt(tgtMax * 1.3, z); quake(1.2);
+              if (was && !alive()) return finish("slash");
+              const k = dist || 1; this.push((dx / k) * 15, (dy / k) * 15); this.events.push(["lum_hit", this.px, this.py]);
+            }
+            return;
+          }
+          if (z.landed) { go("recover", 2.4); return; }
+          // errou: o machado escapa e ele cai
+          const d = this.uniform(8, 12), lim = ARENA - 1.6;
+          const p = pushOut(clamp(z.x + fx * d, -lim, lim), clamp(z.y + fy * d, -lim, lim), 0.6);
+          z.ax = r2(p[0]); z.ay = r2(p[1]); z.combo = 0;
+          this.events.push(["lum_throw", r2(z.x), r2(z.y), z.ax, z.ay, r2(z.yaw)]); go("down"); return;
+        }
+        case "down": z.state = "attack"; if (t >= 0.45 && once(1)) { quake(1.5, 32); this.events.push(["lum_fall", z.x, z.y]); } if (t >= 3) go("rise"); return;
+        case "rise": z.state = "attack"; if (t >= 3) { z.landed = this.rnd() < 0.5; z.hitDone = false; z.dodgeCd = 2 + this.randint(2); z.orb = 0; go(z.landed ? "walk" : "fetch", 0.4); } return;   // landed: vai de mãos vazias
+        case "fetch": {                                             // volta para buscar o machado
+          const ax = z.ax - z.x, ay = z.ay - z.y, ad = Math.hypot(ax, ay) || 1e-6;
+          z.state = "walk"; this.turnToward(z, z.ax, z.ay, 3, dt);
+          if (ad < 0.9 * s) { go("grab"); return; }
+          this.walkToward(z, dt, ax, ay, ad, z.speed * 1.25);
+          return;
+        }
+        case "grab": z.state = "attack"; if (t >= 0.9) { z.combo = 1; this.events.push(["lum_grab", z.x, z.y]); go("walk", 0.6); } return;
+        case "punch": case "kick": {                                // sem machado: soco (metade da vida) e chute; os dois arremessam
+          z.state = "attack"; const kick = z.act === "kick", at = kick ? 0.5 : 0.42;
+          if (t < at) this.turnToward(z, this.px, this.py, 2.5, dt);
+          if (t >= at && once(1)) {
+            quake(0.6);
+            if (alive() && along > 0 && along < 1.25 * s && side < 1.0) {
+              this.hurt(tgtMax * (kick ? 0.3 : 0.5), z, { pierce: true });
+              this.push(fx * (kick ? 22 : 15), fy * (kick ? 22 : 15)); this.shake = Math.max(this.shake, 1.2); this.events.push(["lum_blow", this.px, this.py, kick ? 1 : 0]);
+            } else this.events.push(["lum_whiff", z.x, z.y]);
+          }
+          if (t >= (kick ? 1.15 : 1.0)) { z.dodgeCd -= 1; go(z.dodgeCd <= 0 ? "fetch" : "walk", 0.9); }
+          return;
+        }
+        case "recover": z.state = "walk"; if (t >= 0.9) go("walk"); return;
+        case "fin": z.state = "attack"; if (t >= 7) go("walk", 1.5); return;      // finalização (a câmera do jogador morto assiste)
+      }
+      // andando atrás do alvo
+      z.state = "walk"; z.cd -= dt;
+      const ang = this.turnToward(z, this.px, this.py, 2.0, dt), armed = z.combo === 1;
+      if (!armed) { z.orb += dt; if (z.orb > 9) { go("fetch"); return; } }                 // cansou de correr atrás: volta para o machado
+      if (z.cd <= 0 && alive() && Math.abs(ang) < 0.5) {
+        if (armed && dist < 1.3 * s) { z.landed = false; z.atk = this.rnd() < 0.5 ? "chop" : "spin"; go(z.atk); return; }
+        if (!armed && dist < 1.05 * s) { z.atk = this.rnd() < 0.55 ? "punch" : "kick"; go(z.atk); return; }
+      }
+      if (dist > (armed ? 1.0 : 0.7) * s) this.walkToward(z, dt, dx, dy, dist, z.speed * (armed ? 1 : 1.75) * (z.slowT > 0 ? 0.85 : 1));
     }
 
     // ---- Colosso Blindado: escudo, investida e batida no chão (sequência de 5 s) ----
@@ -2527,6 +2672,7 @@ const Logic = (function () {
     zombieAI(z, dt, base) {
       const dx = this.px - z.x, dy = this.py - z.y, dist = Math.hypot(dx, dy) || 1e-6;
       if (z.tank) { this.updateTank(z, dt, dist); return; }
+      if (z.lumber) { this.updateLumber(z, dt, dist, dx, dy); return; }
       if (z.samurai) { this.updateSamurai(z, dt, dist, dx, dy); return; }
       if (z.wraith) { this.updateWraith(z, dt, dist); return; }
       const diff = wrapAngle(Math.atan2(-dx, dy) - z.yaw);
@@ -2638,7 +2784,7 @@ const Logic = (function () {
       if (this.gm === "infect") { this.updateInfect(dt); this.updateZombies(dt); this.updatePickups(dt); this.updateBoosts(dt); this.updatePots(dt); }
       else if (this.gm === "explore") { this.updateBoosts(dt); }
       else { this.updateWaves(dt); this.updateZombies(dt); this.updatePickups(dt); this.updateCracks(dt); }
-      if (this.coop && !this.alive && !this.over && !this.others.some((o) => o.alive)) this.over = true;
+      if (this.coop && !this.alive && !this.reviveWait && !this.over && !this.others.some((o) => o.alive)) this.over = true;
     }
 
     // =====================================================================================================
@@ -2733,6 +2879,7 @@ const Logic = (function () {
     }
     teamAlive() { return this.alive || this.others.some((o) => o.alive); }
     respawnDead() {
+      this.reviveWait = false;
       const at = (i) => [-2 + i * 1.6, -4];
       if (!this.alive) { this.alive = true; this.hp = this.maxHp; this.armor = this.armorMax; this.invulnT = 3; this.px = 0; this.py = -4; this.kvx = this.kvy = 0; this.events.push(["respawned"]); }
       this.others.forEach((o, i) => { if (!o.alive) { o.alive = true; o.hp = o.maxHp; o.armor = o.armorMax; o.invulnT = 3; const q = at(i + 1); o.x = q[0]; o.y = q[1]; this.fx(o.id, ["respawn", q[0], q[1]]); } });
@@ -2741,7 +2888,7 @@ const Logic = (function () {
     makeSnapshot(newZ, newP) {
       const r2 = (v) => Math.round(v * 100) / 100;
       const z = [];
-      for (const q of this.zombies) z.push([q.id, r2(q.x), r2(q.y), r2(q.yaw), q.state, Math.round(q.hp), r2(q.hitT), r2(q.deadT), r2(q.phase), r2(q.attackT), q.act, r2(q.actT), r2(q.seqT), r2(q.vis), q.atk, q.combo, q.dodgeDir, q.headGone ? 1 : 0, q.untouch ? 1 : 0, r2(q.shield), r2(q.gz || 0)]);
+      for (const q of this.zombies) z.push([q.id, r2(q.x), r2(q.y), r2(q.yaw), q.state, Math.round(q.hp), r2(q.hitT), r2(q.deadT), r2(q.phase), r2(q.attackT), q.act, r2(q.actT), r2(q.seqT), r2(q.vis), q.atk, q.combo, q.dodgeDir, q.headGone ? 1 : 0, q.untouch ? 1 : 0, r2(q.shield), r2(q.gz || 0), q.ax || 0, q.ay || 0]);
       const p = this.pickups.map((k) => [k.id, r2(k.x), r2(k.y), r2(k.h), k.landed ? 1 : 0, r2(k.pull)]);
       const me = this.coop.id, pl = [[me, r2(this.px), r2(this.py), r2(this.yaw), r2(this.pitch), Math.round(this.hp), this.maxHp, this.alive ? 1 : 0, this.w().cfg.id, this.crouchT > 0.5 ? 1 : 0, this.moving ? 1 : 0, Math.round(this.armor), this.kills, this.headshots, this.bonus, this.team || "h", this.armorMax, r2(this.gz)]];
       for (const o of this.others) pl.push([o.id, r2(o.x), r2(o.y), r2(o.yaw), r2(o.pitch), Math.round(o.hp), o.maxHp, o.alive ? 1 : 0, o.wi, o.cr, o.mv, Math.round(o.armor), o.kills, o.hs, o.bonus, o.team || "h", o.armorMax || 0, r2(o.gz || 0), o.bot ? o.name : ""]);
@@ -3238,7 +3385,7 @@ const Logic = (function () {
         q.tx = a[1]; q.ty = a[2]; q.tyaw = a[3];
         q.state = a[4]; q.hp = a[5]; q.hitT = Math.max(q.hitT, a[6]); q.deadT = a[7];
         const rate = (a[8] - q.psnap) / dsn; q.psnap = a[8]; q.phRate = clamp(rate, 0, 40); q.phase = a[8];
-        q.attackT = a[9]; q.act = a[10]; q.actT = a[11]; q.seqT = a[12]; q.vis = a[13]; q.atk = a[14]; q.combo = a[15]; q.dodgeDir = a[16]; q.headGone = !!a[17]; q.untouch = !!a[18]; q.shield = a[19]; q.gz = a[20] || 0;
+        q.attackT = a[9]; q.act = a[10]; q.actT = a[11]; q.seqT = a[12]; q.vis = a[13]; q.atk = a[14]; q.combo = a[15]; q.dodgeDir = a[16]; q.headGone = !!a[17]; q.untouch = !!a[18]; q.shield = a[19]; q.gz = a[20] || 0; q.ax = a[21] || 0; q.ay = a[22] || 0;
         if (q.state === "dead") { q.x = q.tx; q.y = q.ty; q.yaw = q.tyaw; }
       }
       for (let i = this.zombies.length - 1; i >= 0; i--) { const q = this.zombies[i]; if (!seen.has(q.id)) { this.zombies.splice(i, 1); this.zmap.delete(q.id); } }
@@ -3296,8 +3443,11 @@ const Logic = (function () {
           else { let gain = 0; this.slots.forEach((s, i) => { const b = s.reserve; s.reserve = Math.min(s.cfg.maxRes * (1 + this.perks.ammoPack), s.reserve + Math.round(s.cfg.ammoPick * (i === this.cur ? 1 : 0.5))); if (i === this.cur) gain = s.reserve - b; }); this.events.push(["pickup", "ammo", gain]); }
           break;
         case "clearbonus": for (const s of this.slots) s.reserve = Math.min(s.cfg.maxRes * (1 + this.perks.ammoPack), s.reserve + Math.round(s.cfg.ammoPick * 1.5 * this.diff.ammo)); break;
-        case "down": this.events.push(["dead"]); break;                       // aviso no centro da tela (znet: "Você volta na próxima onda")
-        case "respawn": this.px = ev[1]; this.py = ev[2]; this.kvx = this.kvy = 0; this.invulnT = 3; this.banner = "DE VOLTA!"; this.bannerSub = "Você renasceu"; this.bannerT = 3;
+        case "down": if (this.revives > 0 && this.gm !== "infect") { this.reviveWait = true; this.events.push(["revive_wait"]); } else this.events.push(["dead"]); break;                       // aviso no centro da tela (znet: "Você volta na próxima onda")
+        case "lum_fin": this.finBy = [ev[1], ev[2]]; break;
+        case "revived": this.revives = 0; this.reviveWait = false; this.px = ev[1]; this.py = ev[2]; this.kvx = this.kvy = 0; this.invulnT = 4; this.shake = 1.4;
+          this.events.push(["revive"]); this.banner = "SEGUNDA CHANCE"; this.bannerSub = "Vida cheia e 4 s invencível!"; this.bannerT = 3; break;
+        case "respawn": this.reviveWait = false; this.px = ev[1]; this.py = ev[2]; this.kvx = this.kvy = 0; this.invulnT = 3; this.banner = "DE VOLTA!"; this.bannerSub = "Você renasceu"; this.bannerT = 3;
           for (const s of this.slots) s.reserve = Math.max(s.reserve, Math.round(s.cfg.reserve * this.diff.ammo * 0.5)); break;
       }
     }
@@ -6617,6 +6767,7 @@ const Logic = (function () {
     // ---- especiais dos níveis extremos ----
     blindado: { sex: "m", top: [0x3a4230], camo: true, sleeve: "long", bot: [0x343a2a], shoe: 0x121210, boot: true, hair: ["buzz"], hairColor: ["preto", "castanho"], vest: 0x2a2f22, beard: 0.15, fat: true },
     mestre: { sex: "m", top: [0x2c3550], sleeve: "long", bot: [0x16161e], shoe: "skin", hair: ["balding"], hairColor: ["branco"], beard: 1 },
+    lenhador: { sex: "m", top: [0x8a1c16, 0x7a2018], plaid: true, sleeve: "long", bot: [0x23324e, 0x1e2a44], shoe: 0x2a1c10, boot: true, hair: ["messy", "short", "balding"], hairColor: ["castanho", "ruivo", "preto"], beard: 1, fat: true, belt: true },
     atleta: { sex: "m", top: [0x1a2a6a, 0x6a1a1a, 0x1a1a1a], sleeve: "long", stripes2: true, bot: "same", shoe: 0xe8e8e4, hair: ["short", "buzz", "mohawk", "afro", "curly", "side"] },
     motoqueiro: { sex: "m", top: [0x141414], vestOnly: true, sleeve: "none", bot: [0x23324e], shoe: 0x111111, boot: true, hair: ["bald", "long", "wavy", "mohawk", "balding", "messy"], beard: 0.95, fat: true, hat: [["bandana", 0.3]] },
   };
@@ -6625,7 +6776,7 @@ const Logic = (function () {
     runner: ["corredora", "paciente", "adolescente", "atleta"],
     brute: ["acougueiro", "motoqueiro", "presidiario", "bombeiro"],
     giant: ["acougueiro", "motoqueiro", "presidiario"],
-    tank: ["blindado"], samurai: ["mestre"],
+    tank: ["blindado"], samurai: ["mestre"], lumber: ["lenhador"],
   };
   function zrng(seed) {           // mulberry32: o mesmo zumbi sempre tem a mesma aparência
     let a = seed >>> 0;
@@ -7257,8 +7408,9 @@ const Logic = (function () {
     // braços e pés
     for (let i = 0; i < 2; i++) { const q = r(); P.armCut[i] = q < 0.03 * gm ? 3 : q < 0.065 * gm ? 2 : q < 0.1 * gm ? 1 : 0; if (P.armCut[i]) P.parts++; }
     if (limp) for (let i = 0; i < 2; i++) if (r() < 0.14) { P.footCut[i] = 1; P.parts++; break; }
+    if (kind === "lumber") { P.armCut = [0, 0]; P.lostJaw = false; P.hole = null; }                // o Lenhador precisa dos dois braços (machado)
     // corpo
-    P.belly = r() < 0.16 * gm; P.gut = P.belly && r() < 0.55; P.chest = !P.belly && r() < 0.09 * gm; P.shoulderBite = r() < 0.12 * gm;
+    P.belly = r() < 0.16 * gm; P.gut = P.belly && r() < 0.55; P.chest = !P.belly && r() < 0.09 * gm; if (kind === "lumber") P.belly = P.gut = P.chest = false; P.shoulderBite = r() < 0.12 * gm;
     P.splats = 1 + Math.floor(r() * 3.5 * gm); P.gashes = Math.floor(r() * 2.7 * gm); P.bites = r() < 0.22 * gm ? 1 + Math.floor(r() * 2) : 0;
     P.bullets = r() < 0.18 * gm ? 1 + Math.floor(r() * 3) : 0; P.claws = r() < 0.16; P.rot = r() < 0.22; P.hands = r() < 0.12; P.drips = r() < 0.72;
     P.bloodyHands = r() < 0.38;
@@ -7270,7 +7422,7 @@ const Logic = (function () {
   class ZombieView {
     constructor(z) {
       const r = zrng(z.id * 7919 + 13), G = ZG;
-      const kind = z.tank ? "tank" : z.samurai ? "samurai" : z.giant ? "giant" : z.brute ? "brute" : z.runner ? "runner" : "walker";
+      const kind = z.lumber ? "lumber" : z.tank ? "tank" : z.samurai ? "samurai" : z.giant ? "giant" : z.brute ? "brute" : z.runner ? "runner" : "walker";
       const A = ARCH[pick(r, POOL[kind])];
       const fem = A.sex === "f" || (A.sex === "mf" && r() < 0.45);
       const fat = !!A.fat || (z.brute && r() < 0.6);
@@ -7295,7 +7447,7 @@ const Logic = (function () {
       const handM = P.bloodyHands ? tok(skinC.clone().lerp(bloodC, 0.55)) : skin;
       const dark = M.wound, white = tok(0xd8d2c0);
       const root = (this.root = new THREE.Group()); root.rotation.order = "YXZ";
-      const s = z.s, wide = z.giant ? 1.22 : z.brute ? 1.18 : fat ? 1.08 : z.runner ? 0.92 : 1;
+      const s = z.s, wide = z.lumber ? 1.3 : z.giant ? 1.22 : z.brute ? 1.18 : fat ? 1.08 : z.runner ? 0.92 : 1;
       root.scale.set(s * wide, s * (fem ? 0.96 : 1), s * wide);
       const add = (geo, m, x, y, zz, p, shadow) => { const o = new THREE.Mesh(geo, m); o.position.set(x, y, zz); (p || root).add(o); if (shadow) o.castShadow = true; return o; };
       let bodyMats = {};
@@ -7541,7 +7693,7 @@ const Logic = (function () {
       const scalp = bald ? "none" : style === "buzz" ? "buzz" : style === "balding" ? "sides" : style === "mohawk" ? "mohawk" : style === "afro" ? "none" : "full";
       const recede = style === "balding" ? -0.4 : (A.sex === "m" && r() < 0.15) ? -0.18 : 0;
       let beardKind = null;
-      if (!fem && r() < (A.beard || 0)) beardKind = pick(r, A.beard > 0.7 ? ["full", "full", "short", "goatee"] : ["short", "short", "goatee", "mustache", "full"]);
+      if (!fem && r() < (A.beard || 0)) beardKind = pick(r, z.lumber ? ["full"] : A.beard > 0.7 ? ["full", "full", "short", "goatee"] : ["short", "short", "goatee", "mustache", "full"]);
       const stubble = beardKind ? 0 : (!fem && r() < 0.5 ? 0.35 + r() * 0.5 : 0);
       const face = ZH.paintFace(r, { skin: skinRGB, hairRGB, dead, fem, stubble, scalp, recede, wounds: W, noBrows: r() < 0.06 });
       this.tex = face;
@@ -8604,6 +8756,336 @@ const Logic = (function () {
     }
   }
   WraithView.onThud = null; WraithView.onPull = null;
+  // ======================================================================
+  //  O LENHADOR: zumbi enorme de barba, camisa xadrez e machado de duas mãos.
+  //  A lógica (logic.js: updateLumber) manda z.act / z.seqT / z.combo (1 = machado na mão) / z.ax,z.ay.
+  //  Aqui: modelo do machado, poses (braços por cinemática inversa até o cabo) e o machado solto no mundo
+  //  (preso no chão, voando, caído).
+  // ======================================================================
+  function makeAxe() {
+    const g = new THREE.Group(); g.rotation.order = "YXZ";
+    const wood = new THREE.MeshPhongMaterial({ color: 0x3a2413, specular: 0x1a120a, shininess: 8 });
+    const steel = new THREE.MeshPhongMaterial({ color: 0x7f868e, specular: 0xaab2bc, shininess: 60 });
+    const dark = new THREE.MeshPhongMaterial({ color: 0x2c3036, specular: 0x555a60, shininess: 30 });
+    const gore = new THREE.MeshLambertMaterial({ color: 0x4a0606 });
+    const mats = [wood, steel, dark, gore]; for (const m of mats) m.userData.own = true;
+    const add = (geo, m, x, y, z) => { const o = new THREE.Mesh(geo, m); o.position.set(x, y, z); o.castShadow = true; g.add(o); return o; };
+    // cabo (de -0,45 a 0,8), levemente curvo na ponta
+    add(new THREE.CylinderGeometry(0.02, 0.026, 1.25, 10), wood, 0, 0.175, 0);
+    add(new THREE.CylinderGeometry(0.03, 0.024, 0.07, 10), wood, 0, -0.44, 0);
+    for (let i = 0; i < 4; i++) add(new THREE.CylinderGeometry(0.0275, 0.0275, 0.018, 10), dark, 0, -0.34 + i * 0.075, 0);   // fita do punho
+    // cabeça do machado: olhal + lâmina larga (fio para -Z) + martelo atrás
+    add(new THREE.BoxGeometry(0.06, 0.15, 0.13), dark, 0, 0.72, -0.01);
+    const sh = new THREE.Shape();
+    sh.moveTo(0.05, 0.075); sh.lineTo(0.3, 0.2); sh.quadraticCurveTo(0.385, 0, 0.3, -0.2); sh.lineTo(0.05, -0.075); sh.closePath();
+    const bg = new THREE.ExtrudeGeometry(sh, { depth: 0.012, bevelEnabled: true, bevelThickness: 0.012, bevelSize: 0.014, bevelSegments: 2 });
+    bg.translate(0, 0, -0.006); bg.rotateY(Math.PI / 2);
+    add(bg, steel, 0, 0.72, 0);
+    add(new THREE.BoxGeometry(0.07, 0.09, 0.07), dark, 0, 0.72, 0.085);
+    // sangue seco no fio
+    const sb = new THREE.Shape(); sb.moveTo(0.24, 0.17); sb.lineTo(0.3, 0.2); sb.quadraticCurveTo(0.385, 0, 0.3, -0.2); sb.lineTo(0.22, -0.14); sb.quadraticCurveTo(0.3, 0, 0.24, 0.17);
+    const sg = new THREE.ExtrudeGeometry(sb, { depth: 0.04, bevelEnabled: false }); sg.translate(0, 0, -0.02); sg.rotateY(Math.PI / 2);
+    add(sg, gore, 0, 0.72, 0).castShadow = false;
+    g.userData = { mats, hL: new THREE.Vector3(0, -0.36, 0), hR: new THREE.Vector3(0, -0.1, 0), head: new THREE.Vector3(0, 0.72, -0.3) };
+    return g;
+  }
+
+  class LumberView extends EliteView {
+    constructor(z) {
+      super(z);
+      const R = ZE, hz = ZH.HZ;
+      // barbão (por cima da barba do rosto) e suspensórios
+      const hairM = R.mkPhong({ specular: 0x0a0806, shininess: 3 });
+      this.gm.push(hairM);
+      const b = new R.GB(), BR = 0x3a2516, BR2 = 0x2c1b10;
+      b.add(R.GEO.sph, [0, hz - 0.125, -0.082], [0.25, 0, 0], [0.078, 0.105, 0.05], BR, 0.5);
+      b.add(R.GEO.sph, [0, hz - 0.2, -0.07], [0.3, 0, 0], [0.058, 0.075, 0.04], BR2, 0.5);
+      for (const sx of [-1, 1]) { b.add(R.GEO.sph, [sx * 0.07, hz - 0.075, -0.045], null, [0.035, 0.07, 0.05], BR, 0.5); b.add(R.GEO.sph, [sx * 0.035, hz - 0.045, -0.105], [0, 0, sx * 0.5], [0.04, 0.016, 0.02], BR2, 0.4); }
+      this.head.add(b.mesh(hairM));
+      const ax = (this.ax = makeAxe());
+      this.gm.push(...ax.userData.mats);
+      this.spine.add(ax);
+      this.axMode = "hand"; this.fly = null; this.wasAct = ""; this.t0 = 0;
+      this.shL = this.sL.position.clone(); this.shR = this.sR.position.clone();
+      this._v = new THREE.Vector3(); this._w = new THREE.Vector3(); this._m = new THREE.Matrix4(); this._q = new THREE.Quaternion();
+      this.poleL = new THREE.Vector3(-0.5, -0.6, 0.5); this.poleR = new THREE.Vector3(0.5, -0.6, 0.5);
+    }
+    // machado solto no mundo, cravado com a cabeça em (hx,hy,hz) (coordenadas do three) e o cabo apontando de volta ao longo de -f, subindo "elev"
+    plant(hx, hy, hz, fx, fz, elev, s) {
+      const ax = this.ax, c = Math.cos(elev), sn = Math.sin(elev);
+      const Y = new THREE.Vector3(fx * c, -sn, fz * c), Z = new THREE.Vector3(fx * sn, c, fz * sn), X = new THREE.Vector3().crossVectors(Y, Z);
+      this._m.makeBasis(X, Y, Z);
+      if (ax.parent !== scene) { ax.parent.remove(ax); scene.add(ax); }
+      ax.quaternion.setFromRotationMatrix(this._m); ax.scale.setScalar(s);
+      this._v.copy(ax.userData.head).multiplyScalar(s).applyQuaternion(ax.quaternion);
+      ax.position.set(hx - this._v.x, hy - this._v.y, hz - this._v.z);
+      this.axMode = "world";
+    }
+    toHand() {
+      const ax = this.ax;
+      if (ax.parent !== this.spine) this.spine.attach(ax);                               // mantém a posição no mundo e volta suave para as mãos
+      ax.scale.setScalar(1); this.axMode = "hand";
+      const o = this.sp; o.apx = ax.position.x; o.apy = ax.position.y; o.apz = ax.position.z; o.arx = ax.rotation.x; o.ary = ax.rotation.y; o.arz = ax.rotation.z;
+    }
+    update(z) {
+      const dt = this.dtNow(), R = ZE, sm = R.sm, mix = R.mix, PI = Math.PI, s = z.s;
+      this.hotFlash(z);
+      const ax = this.ax, act = z.act, t = z.seqT, fwx = -Math.sin(z.yaw), fwz = -Math.cos(z.yaw);     // frente no mundo (x, z do three)
+      if (z.state === "dead") {
+        if (this.axMode === "hand") { ax.updateWorldMatrix(true, false); const p = new THREE.Vector3(); ax.localToWorld(p.copy(ax.userData.head)); this.plant(p.x + fwx * 0.6, 0.05, p.z + fwz * 0.6, fwx, fwz, 0.12, s); }
+        this.flyTick(dt, z); super.update(z); return;
+      }
+      const hot = z.hitT > 0;
+      if (hot !== this.hot) { this.hot = hot; for (const m of this.mats) if (m.emissive && !m.userData.glow) m.emissive.setHex(hot ? 0x661100 : (m.userData.base || 0)); }
+      const entered = act !== this.wasAct; if (entered) { this.prevAct = this.wasAct; this.wasAct = act; }
+      const ph = z.phase, sw = Math.sin(ph), cw = Math.cos(ph);
+      // ---------- pose ----------
+      let lean = 0.14, crouch = 0, twist = -sw * 0.1, headX = 0.12, jaw = 0.1 + 0.12 * Math.max(0, Math.sin(ph * 0.5)), legAmp = 0.5, legSw = 1, bob = Math.abs(sw) * 0.05, rate = 10;
+      let lay = 0, roll = 0, kick = 0, shake = 0, yawAdd = 0;
+      let ap = [0.05, 0.16 + Math.abs(sw) * 0.015, -0.2], ar = [-0.35, 0, -0.75];          // machado atravessado no peito (cabeça sobre o ombro direito)
+      let free = null;                                                                    // braços soltos: [ombroE, cotoveloE, ombroD, cotoveloD, abreE, abreD]
+      const armed = z.combo === 1;
+      if (act === "chop" || (act === "fin" && z.atk === "split")) {
+        const fin = act === "fin";
+        legSw = 0; legAmp = 0; twist = 0; bob = 0;
+        if (!fin && t < 0.95) {                                                           // ergue o machado acima da cabeça
+          const u = sm(t / 0.7), hold = Math.sin(t * 26) * 0.01 * u;
+          ap = [0, mix(0.16, 0.86, u), mix(-0.2, 0.06, u) + hold]; ar = [mix(-0.35, 0.75, u), 0, mix(-0.75, 0, u)];
+          lean = mix(0.14, -0.3, u); crouch = 0.15 * u; headX = -0.2 * u; jaw = 0.75 * u; rate = 11; shake = 0.01 * u;
+        } else if (!fin) {                                                                // desce
+          ap = [0, 0.0, -0.42]; ar = [-1.9, 0, 0]; lean = 0.95; crouch = 0.55; headX = 0.4; jaw = 0.85; rate = 34;
+        } else {                                                                          // finalização: machado cravado no meio do corpo; depois arranca e ruge
+          if (t < 2.5) { lean = 0.62; crouch = 0.35; headX = 0.35; jaw = 0.5 + 0.2 * Math.sin(t * 9); rate = 30; shake = t < 0.25 ? 0.03 : 0; }
+          else if (t < 3.1) { const u = sm((t - 2.5) / 0.6); ap = [0.05, mix(0.1, 0.3, u), -0.25]; ar = [mix(-1.6, -0.2, u), 0, mix(0, -0.75, u)]; lean = mix(0.62, 0.0, u); crouch = 0.35 * (1 - u); rate = 12; }
+          else if (t < 5.4) { const u = sm((t - 3.1) / 0.5); ap = [0.02, mix(0.3, 0.92, u), 0.02]; ar = [0.25, 0, -0.25]; lean = -0.28 * u; headX = -0.45 * u; jaw = 0.95 * u; shake = 0.012 * u; rate = 8; }
+        }
+      } else if (act === "stuck") {
+        const T = z.dodgeDir || 6;
+        legSw = 0; legAmp = 0; twist = 0; bob = 0;
+        let pull = 0, last = 0;
+        for (let i = 0; i < 3; i++) { const c = T * (0.22 + 0.3 * i), u = (t - c + 0.35) / 0.9; if (u > 0 && u < 1) { const k = Math.sin(u * PI); if (k > pull) pull = k; if (i === 2) last = sm(u * 1.4); } }
+        lean = 0.9 - 0.45 * pull; crouch = 0.5 + 0.25 * pull; headX = 0.45 - 0.5 * pull; jaw = 0.3 + 0.6 * pull; shake = 0.022 * pull; rate = 14;
+        if (last > 0 && t > T * 0.82) { lean = mix(0.45, -0.42, last); crouch = 0.3 * (1 - last); headX = -0.3 * last; }
+        this.pullK = pull;
+      } else if (act === "spin" || (act === "fin" && z.atk === "slash")) {
+        const fin = act === "fin";
+        legAmp = 0; legSw = 0; bob = 0;
+        if (!fin && t < 0.85) { const u = sm(t / 0.7); ap = [mix(0.05, 0.5, u), mix(0.16, 0.24, u), mix(-0.2, -0.12, u)]; ar = [0, 0, mix(-0.75, -PI / 2, u)]; twist = -0.95 * u; lean = 0.1; crouch = 0.3 * u; jaw = 0.6 * u; headX = 0.2; rate = 12; }
+        else if (!fin) { ap = [0.52, 0.2, -0.3]; ar = [0, 0, -PI / 2]; twist = 0.45; lean = 0.2; crouch = 0.3; jaw = 0.9; headX = 0.1; rate = 24; }
+        else if (t < 3.6) { const u = sm(t / 0.5); ap = [mix(0.52, -0.3, u), mix(0.2, 0.02, u), -0.28]; ar = [-0.3 * u, 0, mix(-PI / 2, -2.5, u)]; twist = mix(0.45, 0.75, u) - 0.3 * sm((t - 1) / 1.5); lean = 0.15; crouch = 0.2 * (1 - u); jaw = 0.25 + 0.1 * Math.sin(t * 5); headX = 0.25; rate = 10; }
+        else if (t < 6) { const u = sm((t - 3.6) / 0.6); ap = [0.02, mix(0.1, 0.92, u), 0.02]; ar = [0.25, 0, -0.25]; lean = -0.28 * u; headX = -0.45 * u; jaw = 0.95 * u; shake = 0.012 * u; rate = 8; }
+      } else if (act === "down") {                                                        // perdeu o machado no giro e caiu de costas
+        const u = sm(t / 0.5); lay = u; legSw = 0; legAmp = 0; twist = 0; bob = 0; jaw = 0.5 + 0.3 * Math.sin(t * 6); headX = -0.2;
+        free = [1.9 + 0.3 * Math.sin(t * 5), 0.5, 2.2 + 0.3 * Math.sin(t * 5 + 1), 0.4, -0.7, 0.7]; kick = 0.25 * Math.sin(t * 4);
+        shake = t > 0.4 && t < 0.7 ? 0.03 : 0;
+      } else if (act === "rise") {                                                        // rola, apoia as mãos e levanta
+        const u = sm(t / 3), a = sm(t / 1.2), b2 = sm((t - 1.2) / 1.8);
+        lay = 1 - b2; roll = 0.5 * a * (1 - b2); legSw = 0; legAmp = 0; twist = 0; bob = 0; crouch = 0.9 * b2 * (1 - sm((t - 2.3) / 0.7)); lean = 0.5 * b2 * (1 - u * u);
+        free = [mix(1.9, 0.5, a), 0.7, mix(2.2, 0.4, a), 0.9, -0.5, 0.5]; jaw = 0.5; headX = 0.2; rate = 7;
+      } else if (act === "grab") {                                                        // abaixa e pega o machado do chão
+        const u = Math.sin(Math.min(1, t / 0.9) * PI); legSw = 0; legAmp = 0; twist = 0; bob = 0; lean = 0.2 + 0.7 * u; crouch = 0.75 * u; headX = 0.4 * u;
+        free = [0.6 + 0.9 * u, 0.3, 0.6 + 0.9 * u, 0.3, -0.05, 0.05];
+      } else if (act === "punch") {
+        const w = sm(t / 0.34), hit = t >= 0.42 ? 1 - sm((t - 0.55) / 0.4) : 0, k = t >= 0.36 ? sm((t - 0.36) / 0.07) : 0;
+        legSw = 0.15; legAmp = 0.2; bob = 0; twist = mix(-0.7 * w, 0.75, k) * (t < 0.42 ? 1 : 0.4 + 0.6 * hit); lean = 0.1 + 0.45 * k * (0.3 + 0.7 * hit); jaw = 0.8; headX = 0.2;
+        free = [0.9, 1.2, mix(mix(0.5, -0.5, w), 1.65, k), mix(mix(0.6, 1.9, w), 0.12, k), -0.15, 0.1]; rate = k > 0 ? 30 : 12;
+      } else if (act === "kick") {
+        const w = sm(t / 0.4), k = t >= 0.42 ? sm((t - 0.42) / 0.08) : 0, back = sm((t - 0.65) / 0.4);
+        legSw = 0; legAmp = 0; bob = 0; twist = 0.15 * k; lean = mix(0.15 * w, -0.35, k) * (1 - back); jaw = 0.8; headX = 0.25;
+        kick = mix(-0.55 * w, 1.5, k) * (1 - back); free = [0.5 - 0.7 * k, 0.6, 0.9, 1.0, -0.4, 0.3]; rate = k > 0 ? 30 : 12;
+      } else if (act === "recover") {
+        const u = 1 - sm(t / 0.9); lean = 0.14 + 0.3 * u; crouch = 0.25 * u; legSw = 0.3; headX = 0.3 * u; jaw = 0.4;
+      } else if (!armed) {                                                                // correndo de mãos vazias (ou voltando para o machado)
+        legAmp = 0.8; lean = 0.32; bob = Math.abs(sw) * 0.07; jaw = 0.55; headX = 0.25;
+        free = [0.5 - sw * 0.9, 1.0, 0.5 + sw * 0.9, 1.0, -0.2, 0.2];
+      }
+      const e = (k, v, r) => this.ease(k, v, dt, r || rate);
+      lean = e("lean", lean); crouch = e("crouch", crouch, Math.max(9, rate * 0.8)); twist = e("twist", twist, Math.max(12, rate)); headX = e("headX", headX, 9); jaw = e("jaw", jaw, 14);
+      lay = e("lay", lay, 9); roll = e("roll", roll, 6); kick = e("kick", kick, Math.max(14, rate)); const lS = e("lS", legSw, 8);
+      // finalização: vira de frente para a vítima
+      if (act === "fin" && this.finYaw !== undefined) { const d = Math.atan2(Math.sin(this.finYaw - z.yaw), Math.cos(this.finYaw - z.yaw)); yawAdd = e("yawAdd", d, 7); } else { this.finYaw = undefined; yawAdd = e("yawAdd", 0, 7); }
+      const jx = shake ? (Math.random() - 0.5) * shake * s : 0, jy = shake ? (Math.random() - 0.5) * shake * s : 0;
+      const root = this.root;
+      put(this.shadow, z.x, z.y, 0.02);
+      put(root, z.x + jx, z.y + jy, (bob - 0.3 * crouch * 0.6) * s * (1 - lay) + lay * 0.2 * s);
+      root.rotation.set(-lean * 0.3 * (1 - lay) + lay * 1.5, z.yaw + yawAdd, roll);
+      this.spine.rotation.set(-lean * 0.7 * (1 - lay), twist, 0);
+      const A = legAmp * (0.4 + 0.6 * lS);
+      this.hL.rotation.x = sw * A * lS + 0.7 * crouch + lay * 0.25; this.hR.rotation.x = -sw * A * lS + 0.7 * crouch + kick + lay * 0.1;
+      this.kL.rotation.x = -(0.1 + Math.max(0, cw) * 0.8 * A * lS + 1.15 * crouch + lay * 0.5); this.kR.rotation.x = -(0.1 + Math.max(0, -cw) * 0.8 * A * lS + 1.15 * crouch + (kick < 0 ? -kick * 1.4 : 0) + lay * 0.2);
+      this.head.rotation.set(headX, Math.sin(ph * 0.4) * 0.07, 0);
+      this.setJaw(jaw);
+      // ---------- machado ----------
+      const wantWorld = (act === "stuck" && t < (z.dodgeDir || 6) * 0.82 + 0.12) || (act === "fin" && z.atk === "split" && t < 2.5) || !armed;
+      if (entered && act === "stuck") { this.plant(z.x + fwx * 1.05 * s, 0.02 * s, -z.y + fwz * 1.05 * s, fwx, fwz, 0.62, s); this.baseQ = ax.quaternion.clone(); this.baseP = ax.position.clone(); }
+      if (entered && act === "fin" && z.atk === "split") { const v = this.victim || [z.x + fwx * 1.05 * s, -z.y + fwz * 1.05 * s]; let dx = v[0] - z.x, dz = v[1] + z.y; const d = Math.hypot(dx, dz) || 1; dx /= d; dz /= d; this.plant(v[0], 0.98, v[1], dx, dz, 0.2, s); }
+      if (entered && act === "down" && this.axMode === "hand") {                          // o machado escapa e voa até (ax, ay)
+        ax.updateWorldMatrix(true, false); const p = new THREE.Vector3(), q = new THREE.Quaternion(); ax.getWorldPosition(p); ax.getWorldQuaternion(q);
+        ax.parent.remove(ax); scene.add(ax); ax.position.copy(p); ax.quaternion.copy(q); ax.scale.setScalar(s); this.axMode = "world";
+        this.fly = { t: 0, T: 0.8, from: p.clone(), to: new THREE.Vector3(z.ax, 0, -z.ay), q0: q.clone() };
+      }
+      if (!armed && !this.fly && this.axMode === "hand") this.plant(z.ax, 0.04 * s, -z.ay, fwx, fwz, 0.5, s);      // (entrou no meio: machado já está no chão)
+      if (this.axMode === "world" && !wantWorld && !this.fly) { root.updateMatrixWorld(true); this.toHand(); }
+      this.flyTick(dt, z);
+      if (this.axMode === "world" && act === "stuck" && this.baseQ) {                      // puxões: o cabo balança, na terceira sai
+        const k = this.pullK || 0; this._q.setFromAxisAngle(this._v.set(-fwz, 0, fwx), -0.16 * k + (k > 0.05 ? (Math.random() - 0.5) * 0.02 : 0));
+        ax.quaternion.copy(this._q).multiply(this.baseQ); ax.position.copy(this.baseP); ax.position.y += 0.05 * s * k;
+      }
+      const U = ax.userData;
+      if (this.axMode === "hand") {
+        ax.position.set(e("apx", ap[0]), e("apy", ap[1]), e("apz", ap[2])); ax.rotation.set(e("arx", ar[0]), e("ary", ar[1]), e("arz", ar[2])); ax.updateMatrix();
+        this._v.copy(U.hL).applyMatrix4(ax.matrix); R.ik(this.sL, this.eL, this._v, this.poleL, 0.29, 0.258);
+        this._w.copy(U.hR).applyMatrix4(ax.matrix); R.ik(this.sR, this.eR, this._w, this.poleR, 0.29, 0.258);
+        this.wL.rotation.set(0.1, 0, 0); this.wR.rotation.set(0.1, 0, 0);
+      } else if (wantWorld && armed) {                                                    // mãos no cabo do machado cravado
+        root.updateMatrixWorld(true); ax.updateMatrixWorld(true);
+        this.spine.worldToLocal(ax.localToWorld(this._v.copy(U.hL))); R.ik(this.sL, this.eL, this._v, this.poleL, 0.29, 0.258);
+        this.spine.worldToLocal(ax.localToWorld(this._w.copy(U.hR))); R.ik(this.sR, this.eR, this._w, this.poleR, 0.29, 0.258);
+      } else {
+        const f = free || [0.2 - sw * 0.3, 0.3, 0.2 + sw * 0.3, 0.3, -0.1, 0.1];
+        this.sL.rotation.set(e("fl", f[0], 14), 0, e("flz", f[4], 10)); this.eL.rotation.set(e("fle", f[1], 14), 0, 0);
+        this.sR.rotation.set(e("fr", f[2], Math.max(14, rate)), 0, e("frz", f[5], 10)); this.eR.rotation.set(e("fre", f[3], Math.max(14, rate)), 0, 0);
+      }
+    }
+    flyTick(dt, z) {
+      const f = this.fly; if (!f) return;
+      const ax = this.ax, s = z.s;
+      f.t += dt; const u = Math.min(1, f.t / f.T);
+      ax.position.lerpVectors(f.from, f.to, u); ax.position.y = f.from.y * (1 - u) + Math.sin(u * Math.PI) * 2.6 + 0.3 * u;
+      ax.rotateX(-dt * 17);
+      if (u >= 1) {
+        let dx = f.to.x - f.from.x, dz = f.to.z - f.from.z; const d = Math.hypot(dx, dz) || 1; dx /= d; dz /= d;
+        this.plant(f.to.x, 0.03 * s, f.to.z, dx, dz, 0.55, s); this.fly = null;
+      }
+    }
+    destroy() {
+      if (this.ax.parent) this.ax.parent.remove(this.ax);
+      this.ax.traverse((o) => { if (o.isMesh) o.geometry.dispose(); });
+      super.destroy();
+    }
+  }
+
+  // ======================================================================
+  //  FINALIZAÇÕES DO LENHADOR: a câmera sai da primeira pessoa e vai para trás do corpo do jogador.
+  //  "split": o machado desce e parte o corpo ao meio (cada metade cai para o seu lado).
+  //  "slash": corte lateral tão rápido que nada parece ter acontecido; 3 s depois o sangue jorra e o tronco cai para trás.
+  // ======================================================================
+  const Gore = (function () {
+    let cur = null, pool = null;
+    const V = THREE.Vector3;
+    function dummy(shirtHex) {
+      const M = (c) => new THREE.MeshLambertMaterial({ color: c });
+      const mShirt = M(shirtHex), mPants = M(0x3a3f47), mBoot = M(0x17181a), mSkin = M(0xd0a07c), mVest = M(0x2d3328), mHelm = M(0x3b4636, 0.6), mPack = M(0x4a4a34);
+      const meat = new THREE.MeshLambertMaterial({ color: 0x7a0a0a, emissive: 0x2a0000 }), bone = M(0xd8d0c0, 0.6), bloodM = new THREE.MeshLambertMaterial({ color: 0x6a0505, emissive: 0x220000 });
+      const root = new THREE.Group(); root.rotation.order = "YXZ";
+      const box = (w, h, d, m, x, y, z, p) => { const o = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); o.position.set(x, y, z); o.castShadow = true; p.add(o); return o; };
+      const cyl = (rt, rb, h, m, x, y, z, p) => { const o = new THREE.Mesh(new THREE.CylinderGeometry(rt, rb, h, 10), m); o.position.set(x, y, z); o.castShadow = true; p.add(o); return o; };
+      const sides = [], ups = [], lows = [], streaks = [];
+      for (const sx of [-1, 1]) {
+        const side = new THREE.Group(); side.position.set(sx * 0.1, 0, 0); root.add(side); sides.push(side);        // pivô no pé
+        const low = new THREE.Group(); side.add(low); lows.push(low);
+        const X = (x) => x - sx * 0.1;                                                                            // de coordenada do corpo para a do lado
+        cyl(0.085, 0.07, 0.8, mPants, X(sx * 0.1), 0.5, 0, low);
+        box(0.15, 0.14, 0.27, mBoot, X(sx * 0.1), 0.07, -0.04, low);
+        box(0.21, 0.14, 0.25, mPants, X(sx * 0.105), 0.93, 0, low);
+        box(0.21, 0.05, 0.26, M(0x1a1a1a), X(sx * 0.105), 0.985, 0, low);
+        box(0.012, 0.16, 0.22, meat, X(sx * 0.004), 0.93, 0, low).castShadow = false;                              // corte vertical (bacia)
+        const lowCap = box(0.19, 0.012, 0.22, meat, X(sx * 0.105), 1.008, 0, low); lowCap.castShadow = false;       // corte horizontal (cintura)
+        cyl(0.02, 0.02, 0.03, bone, X(sx * 0.02), 1.02, 0.04, low);
+        const up = new THREE.Group(); up.position.set(-sx * 0.1, 1.01, 0); side.add(up); ups.push(up);             // pivô na cintura, no eixo do corpo
+        const U = (y) => y - 1.01;
+        box(0.22, 0.4, 0.25, mShirt, sx * 0.11, U(1.21), 0, up);
+        box(0.23, 0.3, 0.29, mVest, sx * 0.115, U(1.2), 0, up);
+        box(0.17, 0.4, 0.14, mPack, sx * 0.085, U(1.2), 0.2, up);
+        box(0.012, 0.4, 0.22, meat, sx * 0.004, U(1.21), 0, up).castShadow = false;                                // corte vertical (tronco)
+        box(0.19, 0.012, 0.22, meat, sx * 0.105, U(1.012), 0, up).castShadow = false;                              // corte horizontal
+        const sh = new THREE.Mesh(new THREE.SphereGeometry(0.078, 12, 8), mShirt); sh.position.set(sx * 0.265, U(1.36), 0); up.add(sh);
+        cyl(0.05, 0.045, 0.3, mShirt, sx * 0.285, U(1.2), 0, up); cyl(0.042, 0.036, 0.28, mSkin, sx * 0.29, U(0.93), -0.03, up);
+        // meia cabeça e meio capacete
+        const hd = new THREE.Mesh(new THREE.SphereGeometry(0.115, 14, 10, sx > 0 ? -Math.PI / 2 : Math.PI / 2, Math.PI), mSkin); hd.position.set(0, U(1.6), 0); hd.scale.set(0.95, 1.12, 1); hd.castShadow = true; up.add(hd);
+        const hm = new THREE.Mesh(new THREE.SphereGeometry(0.146, 14, 10, sx > 0 ? -Math.PI / 2 : Math.PI / 2, Math.PI, 0, Math.PI * 0.55), mHelm); hm.position.set(0, U(1.635), 0); hm.castShadow = true; up.add(hm);
+        const face = new THREE.Mesh(new THREE.CircleGeometry(0.11, 14), meat); face.rotation.y = sx > 0 ? -Math.PI / 2 : Math.PI / 2; face.position.set(sx * 0.003, U(1.6), 0); face.scale.set(1, 1.12, 1); up.add(face);
+        cyl(0.03, 0.032, 0.1, mSkin, sx * 0.028, U(1.45), 0, up);
+        // sangue que escorre pelas pernas (cresce para baixo)
+        for (let i = 0; i < 3; i++) { const st = box(0.03 + Math.random() * 0.03, 1, 0.012, bloodM, X(sx * (0.05 + i * 0.05)), 0.99, i % 2 ? 0.128 : -0.128, low); st.scale.y = 0.001; st.castShadow = false; st.userData.len = 0.35 + Math.random() * 0.55; streaks.push(st); }
+      }
+      // linha fina do corte lateral
+      const line = new THREE.Mesh(new THREE.BoxGeometry(0.47, 0.012, 0.3), bloodM); line.position.set(0, 1.01, 0); line.visible = false; root.add(line);
+      return { root, sides, ups, lows, streaks, line, mats: [mShirt, mPants, mBoot, mSkin, mVest, mHelm, mPack, meat, bone, bloodM] };
+    }
+    const bleed = (x, y, z, n, spd, up, size) => { for (let i = 0; i < n; i++) { const a = Math.random() * 6.283, v = spd * (0.3 + Math.random() * 0.7); pool.emit(x + (Math.random() - 0.5) * 0.2, y, z + (Math.random() - 0.5) * 0.2, Math.cos(a) * v, up * (0.3 + Math.random() * 0.9), Math.sin(a) * v, 0.7 + Math.random() * 0.8, (size || 1) * (0.5 + Math.random())); } };
+    // z: zumbi; type: "split" | "slash"; px,py: posição do jogador; view: LumberView
+    function start(z, type, px, py, view, shirt, hooks) {
+      stop();
+      if (!pool) pool = new Pool(new THREE.BoxGeometry(0.075, 0.075, 0.075), M.blood, 150);
+      let dx = px - z.x, dy = py - z.y; const d0 = Math.hypot(dx, dy) || 1; dx /= d0; dy /= d0;
+      const s = z.s, D = Math.min(Math.max(d0, 0.9 * s), 1.2 * s);
+      let vx = z.x + dx * D, vy = z.y + dy * D;
+      const lim = L.C.ARENA - 0.8; vx = Math.max(-lim, Math.min(lim, vx)); vy = Math.max(-lim, Math.min(lim, vy));
+      const dm = dummy(shirt || 0x4a6a8a);
+      dm.root.position.set(vx, 0, -vy);                                                                    // de frente para o zumbi
+      dm.root.rotation.y = Math.atan2(-(z.x - vx), -((-z.y) - (-vy)));
+      scene.add(dm.root);
+      if (view) { view.victim = [vx, -vy]; view.finYaw = Math.atan2(-(vx - z.x), vy - z.y); }
+      // câmera atrás do jogador: ele no meio da tela, o lenhador logo à frente
+      let cx = vx + dx * 2.9 + -dy * 0.5, cy = vy + dy * 2.9 + dx * 0.5;
+      cx = Math.max(-lim, Math.min(lim, cx)); cy = Math.max(-lim, Math.min(lim, cy));
+      const pp = L.pushOut(cx, cy, 0.5); cx = pp[0]; cy = pp[1];
+      cur = { z, type, t: 0, dm, vx, vy, dx, dy, cam: new V(cx, 1.95, -cy), look: new V(vx - dx * 0.6, 1.45, -(vy - dy * 0.6)), from: null, hooks: hooks || {}, ev: 0, dur: type === "split" ? 6.2 : 7.0, pools: 0 };
+      return cur;
+    }
+    function stop() {
+      if (!cur) return;
+      scene.remove(cur.dm.root); cur.dm.root.traverse((o) => { if (o.isMesh) o.geometry.dispose(); }); for (const m of cur.dm.mats) m.dispose();
+      cur = null;
+    }
+    const once = (bit) => { if (cur.ev & bit) return false; cur.ev |= bit; return true; };
+    const sm = (t) => { t = t < 0 ? 0 : t > 1 ? 1 : t; return t * t * (3 - 2 * t); };
+    function update(dt) {
+      if (pool) pool.update(dt);
+      const c = cur; if (!c) return;
+      c.t += dt; const t = c.t, dm = c.dm, H = c.hooks, wx = c.vx, wz = -c.vy;
+      if (c.type === "split") {
+        if (once(1)) { bleed(wx, 1.5, wz, 46, 3.2, 3.5, 0.95); H.hit && H.hit(c, 1.6); }
+        if (t < 1.3) { const g = sm(t / 0.5) * 0.02; dm.sides[0].position.x = -0.1 - g; dm.sides[1].position.x = 0.1 + g; if (Math.random() < dt * 30) bleed(wx, 0.6 + Math.random() * 1, wz, 2, 1.2, 1, 0.9); }
+        else {
+          const u = Math.min(1, (t - 1.3) / 0.95), k = u * u;
+          dm.sides[0].rotation.z = 1.5 * k; dm.sides[1].rotation.z = -1.5 * k; dm.sides[0].rotation.x = -0.25 * k; dm.sides[1].rotation.x = 0.3 * k;
+          if (u < 1 && Math.random() < dt * 40) bleed(wx, 0.3 + Math.random() * 0.8, wz, 3, 1.6, 0.6, 1);
+          if (u >= 1 && once(2)) { H.thud && H.thud(c, 0.9); bloodPool(c.vx + c.dy * 0.9, c.vy - c.dx * 0.9, true); bloodPool(c.vx - c.dy * 0.9, c.vy + c.dx * 0.9, true); bloodPool(c.vx, c.vy, true); bleed(wx, 0.2, wz, 30, 2.4, 1.6, 1.2); }
+        }
+      } else {
+        if (once(1)) { bleed(wx, 1.05, wz, 8, 2.5, 1, 0.6); H.swish && H.swish(c); }
+        if (t > 0.5 && t < 3) { dm.line.visible = true; dm.line.scale.set(1.002, 0.25 + 0.75 * sm((t - 0.5) / 2.2), 1.01); if (t > 1.6 && Math.random() < dt * 5) bleed(wx, 1.0, wz, 1, 0.3, 0, 0.6); }
+        if (t >= 3) {
+          if (once(2)) { bleed(wx, 1.05, wz, 60, 4.2, 2.2, 1.4); H.hit && H.hit(c, 1.2); dm.line.scale.set(1.01, 1.6, 1.03); }
+          if (t < 5.6 && Math.random() < dt * 70) bleed(wx, 1.02, wz, 3, 2.6, 1.4, 1.1);
+          for (const st of dm.streaks) st.scale.y = Math.max(0.001, st.userData.len * sm((t - 3) / 1.6)), st.position.y = 0.99 - st.scale.y / 2;
+          const u = Math.min(1, Math.max(0, (t - 3.5) / 1.1)), k = u * u;                    // o tronco escorrega e cai para trás
+          for (const up of dm.ups) { up.rotation.x = 1.52 * k; up.position.z = 0.42 * sm(u * 1.3); up.position.y = 1.01 - 0.82 * k; }
+          if (u > 0.05) dm.line.visible = false;
+          if (u >= 1 && once(4)) { H.thud && H.thud(c, 0.8); bloodPool(c.vx + c.dx * 0.9, c.vy + c.dy * 0.9, true); bloodPool(c.vx, c.vy, true); }
+          const v = Math.min(1, Math.max(0, (t - 4.9) / 0.8)), kv = v * v;                   // as pernas desabam
+          for (const lw of dm.lows) lw.rotation.x = -1.45 * kv;
+          if (v >= 1 && once(8)) { H.thud && H.thud(c, 0.5); bloodPool(c.vx - c.dx * 0.6, c.vy - c.dy * 0.6, true); }
+        }
+      }
+      if (t >= c.dur) { const h = H.end; stop(); h && h(); }
+    }
+    // câmera: sai dos olhos do jogador e recua para trás do corpo
+    function camera(cam, dt) {
+      const c = cur; if (!c) return false;
+      if (!c.from) c.from = { p: cam.position.clone(), q: cam.quaternion.clone() };
+      const k = sm(c.t / 0.45);
+      const tq = c._q || (c._q = new THREE.Quaternion()), m = c._m || (c._m = new THREE.Matrix4());
+      const tp = c.cam.clone(); tp.y += Math.sin(c.t * 0.7) * 0.05; tp.x += Math.sin(c.t * 0.45) * 0.12 * c.dy; tp.z += Math.sin(c.t * 0.45) * 0.12 * c.dx;
+      m.lookAt(tp, c.look, cam.up); tq.setFromRotationMatrix(m);
+      cam.position.lerpVectors(c.from.p, tp, k); cam.quaternion.slerpQuaternions(c.from.q, tq, k);
+      const sh = (c.shake || 0); if (sh > 0.001) { cam.position.x += (Math.random() - 0.5) * sh * 0.12; cam.position.y += (Math.random() - 0.5) * sh * 0.12; c.shake = sh * Math.exp(-6 * dt); }
+      return true;
+    }
+    return { start, stop, update, camera, busy: () => !!cur, cur: () => cur };
+  })();
 
   // ======================================================================
   //  SOM (sintetizado na hora, sem arquivos)
@@ -9056,7 +9538,7 @@ const Logic = (function () {
   const CONS = [
     { k: "vest", n: "Colete de kevlar", d: "Começa a próxima partida com +50 de armadura.", p: 120 },
     { k: "ammoPack", n: "Mochila dupla", d: "Dobra a munição de reserva (e o limite) durante a partida.", p: 150 },
-    { k: "revive", n: "Segunda chance", d: "Se você morrer, volta com a vida CHEIA, 4 s invencível e joga os zumbis longe. Só gasta se você realmente morrer.", p: 400 },
+    { k: "revive", n: "Segunda chance", d: "Se você morrer, o mapa aparece com os zumbis em vermelho: clique duas vezes onde quer reviver. Volta com a vida CHEIA e 4 s invencível. Só gasta se você reviver.", p: 700 },
   ];
   const GUN_PRICE = { revolver: 5000, titan: 10000 };
   const MELEE = {
@@ -9548,7 +10030,7 @@ const Logic = (function () {
     const st = { ws: null, id: null, host: false, code: "", status: "off", msg: "", players: [], stamp: "0", gm: "coop", gmSel: "coop", bots: false, local: false, started: false, diff: "normal", starting: false, over: false, name: "" };
     const lobby = {};                       // anfitrião: id -> { name, info, full }
     let acc = 0, sAcc = 0, sentZ = new Set(), sentP = new Set(), pingT = 0, game0 = null;
-    const WORLD = /^(wave|giant|elite|kill|clear|wall|hit|rshot|ally_down|infected|claw|inf_end|zrespawn|boost$|tank_|sam_|wraith_)/;
+    const WORLD = /^(wave|giant|elite|kill|clear|wall|hit|rshot|ally_down|infected|claw|inf_end|zrespawn|boost$|tank_|sam_|wraith_|lum_)/;
     const setMsg = (m, cls) => { st.msg = m; const e = $("coopStatus"); if (e) { e.textContent = m; e.className = "coop-status " + (cls || ""); } };
     const DEFAULT_SERVER = "arena-zumbi.playes.workers.dev";       // servidor online (salas co-op); o jogo pode ficar em outro endereço
     function serverHost() {
@@ -9640,6 +10122,7 @@ const Logic = (function () {
         case "s": if (st.host && game && game.coop) game.setRemote(m.from, m); break;
         case "shot": if (st.host && game && game.coop) game.remoteShot(m.from, m); break;
         case "melee": if (st.host && game && game.coop) game.remoteMelee(m.from); break;
+        case "rev": if (st.host && game && game.coop) game.reviveRemote(m.from, m.x, m.y); break;
         case "claw": if (st.host && game && game.coop) game.claw(m.from, !!m.h); break;
         case "pot": if (st.host && game && game.coop && Array.isArray(m.o) && Array.isArray(m.d)) game.throwPotion(m.from, String(m.k), m.o.slice(0, 3).map(Number), m.d.slice(0, 3).map(Number)); break;
         // --- convidado ---
@@ -9694,6 +10177,7 @@ const Logic = (function () {
     function guestSend(g, dt) {
       if (g.lastShot) { const s = g.lastShot; g.lastShot = null; send({ t: "shot", s: s.s, o: s.o, d: s.d }); }
       for (const e of g.events) if (e[0] === "melee_swing") send({ t: "melee" });
+      if (g.revPending) { send({ t: "rev", x: g.revPending[0], y: g.revPending[1] }); g.revPending = null; }
       acc += dt; if (acc >= 0.05) { acc = 0; send({ t: "s", x: +g.px.toFixed(2), y: +g.py.toFixed(2), z: +(g.gz || 0).toFixed(2), yaw: +g.yaw.toFixed(3), pitch: +g.pitch.toFixed(3), cr: g.crouchT > 0.5 ? 1 : 0, w: g.w().cfg.id }); }
     }
     function hostRelay(g, dt) {
@@ -10189,7 +10673,116 @@ const Logic = (function () {
     }
     for (const [id, v] of crackViews) if (!seen.has(id)) { scene.remove(v.m); v.m.geometry.dispose(); v.mt.dispose(); v.tex.dispose(); crackViews.delete(id); }
   }
+  // ---------------- marcas permanentes no cenário (rachaduras, crateras e cortes feitos pelos chefes) ----------------
+  const Scars = (function () {
+    const list = [], cuts = [], texs = {};
+    function tex(kind, v) {
+      const key = kind + v; if (texs[key]) return texs[key];
+      const cv = document.createElement("canvas"); cv.width = cv.height = 256; const c = cv.getContext("2d");
+      let sd = v * 977 + (kind === "hole" ? 31 : 7); const rnd = () => { sd = (sd * 16807) % 2147483647; return (sd & 0xffff) / 65536; };
+      c.lineCap = "round"; c.lineJoin = "round";
+      const branch = (x, y, a, len, w) => {
+        const pts = [[x, y]]; let px = x, py = y, n = Math.max(3, Math.round(len / 14));
+        for (let i = 0; i < n; i++) { a += (rnd() - 0.5) * 0.9; px += Math.cos(a) * len / n; py += Math.sin(a) * len / n; pts.push([px, py]); if (w > 2.2 && rnd() < 0.45) branch(px, py, a + (rnd() < 0.5 ? -1 : 1) * (0.5 + rnd() * 0.7), len * (0.25 + rnd() * 0.3), w * 0.5); }
+        for (const [col, k] of [["rgba(170,160,140,0.22)", 2.6], ["rgba(20,16,12,0.85)", 1.5], ["rgba(0,0,0,1)", 0.7]]) {
+          for (let i = 1; i < pts.length; i++) { c.strokeStyle = col; c.lineWidth = Math.max(0.6, w * k * (1 - (i - 1) / pts.length * 0.75)); c.beginPath(); c.moveTo(pts[i - 1][0], pts[i - 1][1]); c.lineTo(pts[i][0], pts[i][1]); c.stroke(); }
+        }
+      };
+      if (kind === "crack") { branch(40, 128, 0, 190, 7); branch(40, 128, Math.PI, 26, 4); branch(70, 128, 1.2, 50, 3); branch(70, 128, -1.2, 50, 3); }
+      else {
+        const g = c.createRadialGradient(128, 128, 6, 128, 128, 74); g.addColorStop(0, "rgba(0,0,0,0.96)"); g.addColorStop(0.55, "rgba(12,10,8,0.85)"); g.addColorStop(0.8, "rgba(40,34,28,0.5)"); g.addColorStop(1, "rgba(60,52,44,0)");
+        c.fillStyle = g; c.beginPath(); for (let i = 0; i <= 22; i++) { const a = (i / 22) * 6.2832, r = 58 + rnd() * 18; c[i ? "lineTo" : "moveTo"](128 + Math.cos(a) * r, 128 + Math.sin(a) * r); } c.fill();
+        for (let i = 0; i < 9; i++) { const a = (i / 9) * 6.2832 + rnd() * 0.5; branch(128 + Math.cos(a) * 50, 128 + Math.sin(a) * 50, a, 34 + rnd() * 38, 3.4); }
+        for (let i = 0; i < 26; i++) { const a = rnd() * 6.2832, r = 60 + rnd() * 50; c.fillStyle = "rgba(" + (rnd() < 0.5 ? "25,20,16" : "120,110,95") + "," + (0.35 + rnd() * 0.4) + ")"; c.fillRect(128 + Math.cos(a) * r, 128 + Math.sin(a) * r, 1.5 + rnd() * 4, 1.5 + rnd() * 3); }
+      }
+      return (texs[key] = new THREE.CanvasTexture(cv));
+    }
+    // x,y: posição no jogo · yaw: direção da rachadura · kind: "crack" | "hole" · size em metros
+    function add(x, y, yaw, kind, size) {
+      const mt = new THREE.MeshBasicMaterial({ map: tex(kind, list.length % 3), transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4 });
+      const m = new THREE.Mesh(new THREE.PlaneGeometry(size, size), mt);
+      const fx = -Math.sin(yaw), fy = Math.cos(yaw);
+      m.rotation.set(-Math.PI / 2, 0, Math.atan2(fy, fx)); m.position.set(x + (kind === "crack" ? fx * size * 0.34 : 0), 0.03 + (list.length % 20) * 0.0006, -(y + (kind === "crack" ? fy * size * 0.34 : 0)));
+      m.renderOrder = 2; scene.add(m); list.push(m);
+      if (list.length > 60) { const o = list.shift(); scene.remove(o); o.geometry.dispose(); o.material.dispose(); }
+    }
+    // corte de machado num container perto de (x,y): rasgo escuro com as bordas do metal dobradas
+    function cut(x, y, r, vertical) {
+      let hit = 0;
+      for (const o of L.OBSTACLES) {
+        if (o[5] !== "container") continue;
+        const x0 = o[0] - o[2] / 2, x1 = o[0] + o[2] / 2, y0 = o[1] - o[3] / 2, y1 = o[1] + o[3] / 2;
+        let qx = clamp(x, x0, x1), qy = clamp(y, y0, y1), nx = 0, ny = 0;
+        if (Math.hypot(x - qx, y - qy) > r) continue;
+        if (qx > x0 && qx < x1 && qy > y0 && qy < y1) { const d = [qx - x0, x1 - qx, qy - y0, y1 - qy], i = d.indexOf(Math.min(...d)); if (i === 0) qx = x0; else if (i === 1) qx = x1; else if (i === 2) qy = y0; else qy = y1; }
+        if (qx <= x0 + 1e-6) nx = -1; else if (qx >= x1 - 1e-6) nx = 1; else if (qy <= y0 + 1e-6) ny = -1; else ny = 1;
+        const tx = -ny, ty = nx, half = (nx ? o[3] : o[2]) / 2, len = vertical ? 1.5 : Math.min(2.4, half * 1.6), ctr = nx ? o[1] : o[0];
+        let along = nx ? qy : qx; if (!vertical) along = clamp(along, ctr - half + len / 2 + 0.1, ctr + half - len / 2 - 0.1);
+        const px = nx ? qx : along, py = nx ? along : qy;
+        const g = new THREE.Group(), N = new THREE.Vector3(nx, 0, -ny), T = new THREE.Vector3(tx, 0, -ty);
+        g.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(T, new THREE.Vector3(0, 1, 0), N));
+        g.position.set(px + nx * 0.04, vertical ? o[4] - 0.75 : 1.45 + Math.random() * 0.25, -(py + ny * 0.04));
+        g.rotateZ(vertical ? 1.42 + (Math.random() - 0.5) * 0.2 : (Math.random() - 0.5) * 0.22);
+        const mk = (w, h, d, col, yy, zz, rz) => { const b = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), new THREE.MeshLambertMaterial({ color: col })); b.position.set(0, yy, zz); b.rotation.x = rz || 0; g.add(b); };
+        mk(len, 0.1, 0.05, 0x030303, 0, 0, 0); mk(len * 0.96, 0.05, 0.09, 0x6e737a, 0.07, 0.03, -0.7); mk(len * 0.9, 0.05, 0.08, 0x565b62, -0.07, 0.03, 0.7); mk(len * 0.6, 0.16, 0.03, 0x000000, 0, -0.01, 0);
+        scene.add(g); cuts.push(g); hit++;
+        if (cuts.length > 14) { const q = cuts.shift(); scene.remove(q); q.traverse((m) => { if (m.isMesh) { m.geometry.dispose(); m.material.dispose(); } }); }
+        for (let i = 0, n = Math.round(14 * fxK()); i < n; i++) fxSpark.emit(g.position.x, g.position.y, g.position.z, nx * rand(1, 4) + rand(-1.5, 1.5), rand(0, 3), -ny * rand(1, 4) + rand(-1.5, 1.5), 0.5, 1.4);
+        spatial("clang", px, py, 1, 0.55, 0.3, 50);
+      }
+      return hit;
+    }
+    function clear() {
+      for (const o of list) { scene.remove(o); o.geometry.dispose(); o.material.dispose(); } list.length = 0;
+      for (const q of cuts) { scene.remove(q); q.traverse((m) => { if (m.isMesh) { m.geometry.dispose(); m.material.dispose(); } }); } cuts.length = 0;
+    }
+    return { add, cut, clear };
+  })();
+
+  // ---------------- Segunda chance: mapa para escolher onde reviver ----------------
+  const Rev = (function () {
+    let on = false, sel = null, lastT = 0;
+    const cv = $("revMap"), c = cv.getContext("2d");
+    const span = () => L.C.ARENA * 2.12, toPx = (x, y) => [(x / span() + 0.5) * cv.width, (0.5 - y / span()) * cv.height];
+    function show() {
+      on = true; sel = null; lastT = 0; $("revive").hidden = false; mouseDown = false; adsHeld = false;
+      $("revQuit").textContent = Coop.active() ? "Não reviver agora" : "Sair da partida";
+      try { document.exitPointerLock(); } catch (e) {}
+    }
+    function hide() { on = false; $("revive").hidden = true; }
+    function draw() {
+      const g = game, W = cv.width, A = L.C.ARENA, k = W / span();
+      c.clearRect(0, 0, W, W);
+      c.fillStyle = "#14171c"; c.fillRect(0, 0, W, W);
+      const a = toPx(-A, A); c.fillStyle = "#23272e"; c.fillRect(a[0], a[1], 2 * A * k, 2 * A * k);
+      c.strokeStyle = "#5b6470"; c.lineWidth = 3; c.strokeRect(a[0], a[1], 2 * A * k, 2 * A * k);
+      c.strokeStyle = "rgba(255,255,255,0.05)"; c.lineWidth = 1;
+      for (let i = -A + 4; i < A; i += 4) { let p = toPx(i, A), q = toPx(i, -A); c.beginPath(); c.moveTo(p[0], p[1]); c.lineTo(q[0], q[1]); c.stroke(); p = toPx(-A, i); q = toPx(A, i); c.beginPath(); c.moveTo(p[0], p[1]); c.lineTo(q[0], q[1]); c.stroke(); }
+      for (const o of L.OBSTACLES) { const p = toPx(o[0] - o[2] / 2, o[1] + o[3] / 2); c.fillStyle = o[5] === "container" ? "#6b7480" : o[5] === "lamp" ? "#9a8a4a" : "#4b525b"; c.fillRect(p[0], p[1], Math.max(3, o[2] * k), Math.max(3, o[3] * k)); }
+      const dot = (x, y, r, col, ring) => { const p = toPx(x, y); c.beginPath(); c.arc(p[0], p[1], r, 0, 6.2832); if (ring) { c.strokeStyle = col; c.lineWidth = 3; c.stroke(); } else { c.fillStyle = col; c.fill(); } };
+      for (const z of g.zombies) if (z.state !== "dead" && !(z.wraith && z.vis < 0.3)) { dot(z.x, z.y, z.heavy ? 11 : 6, "#ff3b30"); if (z.heavy) dot(z.x, z.y, 15, "rgba(255,59,48,0.6)", true); }
+      for (const o of g.others) if (o.alive) dot(o.x, o.y, 6, "#4aa3ff");
+      { const p = toPx(g.px, g.py); c.strokeStyle = "#ffffff"; c.lineWidth = 3; c.beginPath(); c.moveTo(p[0] - 7, p[1] - 7); c.lineTo(p[0] + 7, p[1] + 7); c.moveTo(p[0] + 7, p[1] - 7); c.lineTo(p[0] - 7, p[1] + 7); c.stroke(); }
+      if (sel) { const pulse = 12 + 3 * Math.sin(performance.now() / 160); dot(sel[0], sel[1], pulse, "#3ddc84", true); dot(sel[0], sel[1], 4, "#3ddc84"); }
+    }
+    cv.addEventListener("pointerdown", (e) => {
+      if (!on) return; e.preventDefault();
+      const r = cv.getBoundingClientRect(), A = L.C.ARENA - 1;
+      const x = clamp(((e.clientX - r.left) / r.width - 0.5) * span(), -A, A), y = clamp((0.5 - (e.clientY - r.top) / r.height) * span(), -A, A);
+      const now = e.timeStamp || performance.now(), dbl = sel && now - lastT < 600 && Math.hypot(x - sel[0], y - sel[1]) < 2.2;
+      if (dbl) {
+        const at = sel; hide();
+        if (game.reviveAt(at[0], at[1]) && !touchOn()) { try { canvas.requestPointerLock(); } catch (er) {} }
+        return;
+      }
+      const p = L.pushOut(x, y, 0.55); sel = [p[0], p[1]]; lastT = now;
+    });
+    $("revQuit").addEventListener("click", () => { if (!on) return; hide(); game.declineRevive(); });
+    return { show, hide, draw, open: () => on };
+  })();
+
   function clearSpecialFx() {
+    Scars.clear(); Gore.stop(); Rev.hide();
     for (const s of shocks) { scene.remove(s.m); s.m.material.dispose(); }
     shocks.length = 0;
     for (const [, v] of crackViews) { scene.remove(v.m); v.m.geometry.dispose(); v.mt.dispose(); v.tex.dispose(); }
@@ -10212,7 +10805,7 @@ const Logic = (function () {
       if (z.puppet && z.puppet === Coop.st.id) continue;                 // infecção: o próprio zumbi não aparece na câmera
       seen.add(z.id);
       let v = zviews.get(z.id);
-      if (!v) { v = z.tank ? new TankView(z) : z.samurai ? new SamuraiView(z) : z.wraith ? new WraithView(z) : new ZombieView(z); if (z.puppet) redSkin(v); zviews.set(z.id, v); }
+      if (!v) { v = z.lumber ? new LumberView(z) : z.tank ? new TankView(z) : z.samurai ? new SamuraiView(z) : z.wraith ? new WraithView(z) : new ZombieView(z); if (z.puppet) redSkin(v); zviews.set(z.id, v); }
       v.update(z);
       if (z.gz && v.root) { v.root.position.y += z.gz; if (v.shadow) v.shadow.position.y += z.gz; }   // morros e escadas (vila da Infecção)
     }
@@ -10251,9 +10844,11 @@ const Logic = (function () {
   }
   document.addEventListener("pointerlockchange", () => {
     if (document.pointerLockElement === canvas) lockHeld = true;
-    else if (lockHeld) { lockHeld = false; if (state === "run") pause(); }
+    else if (lockHeld) { lockHeld = false; if (state === "run" && !Rev.open() && !Gore.busy()) pause(); }
   });
+  let runId = 0;
   function startGame() {
+    runId++;
     if (Coop.inRoom() && !Coop.st.starting) {
       if (!Coop.isHost()) { Coop.toast("Só o anfitrião inicia a partida."); return; }
       Coop.hostStartBroadcast();
@@ -10747,7 +11342,8 @@ const Logic = (function () {
     if (KnifeVM.update(g, dt)) knife.visible = false;               // faca padrão: modelo M9 com braços
     flickerT -= dt;
     if (flickerT <= 0) { flickerT = rand(0.04, 0.2); lampLights[2].intensity = env.lamp * (Math.random() < 0.25 ? rand(0, 0.5) : 1); }
-    syncZombies(g); syncPickups(g); syncCracks(g); updateShocks(dt); syncAllies(g, dt); syncBoosts(g); PotFX.sync(g, g.time);
+    syncZombies(g); Gore.update(dt); if (Gore.busy()) Gore.camera(camera, dt);
+    syncPickups(g); syncCracks(g); updateShocks(dt); syncAllies(g, dt); syncBoosts(g); PotFX.sync(g, g.time);
     fxBlood.update(dt); fxSpark.update(dt); fxBrass.update(dt); fxShell.update(dt); fxSmoke.update(dt); fxTrace.update(dt); updatePools(dt); updateDropped(dt);
   }
 
@@ -10883,7 +11479,7 @@ const Logic = (function () {
         case "elite": {
           const k = ev[1];
           Snd.play("horn", 0.8, 0.55, 0, 0);
-          if (k === "tank") Snd.play("tankroar", 0.9, 0.9, 0, 0.3); else if (k === "samurai") Snd.play("kiai", 0.8, 0.9, 0, 0.3); else Snd.play("wail", 0.8, 0.8, 0, 0.5);
+          if (k === "lumber") Snd.play("giantroar", 1, 0.8, 0, 0.4); else if (k === "tank") Snd.play("tankroar", 0.9, 0.9, 0, 0.3); else if (k === "samurai") Snd.play("kiai", 0.8, 0.9, 0, 0.3); else Snd.play("wail", 0.8, 0.8, 0, 0.5);
           buzz([60, 40, 120]); break;
         }
         case "block": {
@@ -10894,6 +11490,40 @@ const Logic = (function () {
         case "armor": Snd.play("armor", 0.8, rand(0.9, 1.1), 0, 0.1); if (ev[1]) feedLine("ARMADURA DESTRUÍDA", false, "dim"); break;
         case "revive": Snd.play("revive", 1, 1, 0, 0.4); buzz([80, 40, 80, 40, 160]); feedLine("SEGUNDA CHANCE", true); break;
         case "burn": burnFlash = 0.35; Snd.play("burn", 0.45, rand(0.9, 1.1), 0, 0.05); buzz(25); break;
+        // ---- Lenhador ----
+        case "lum_roar": spatial("giantroar", ev[1], ev[2], 1, 0.75, 0.3, 55); break;
+        case "lum_stuck": {
+          Scars.add(ev[1], ev[2], ev[3], "crack", 4.4); Scars.add(ev[1], ev[2], ev[3], "hole", 1.9);
+          dust(ev[1], ev[2], 12, 2.6, 1.2); shockwave(ev[1], ev[2], 3.2, 0xd8c8a0, 0.5, 0.4);
+          for (let i = 0, n = Math.round(12 * fxK()); i < n; i++) { const a = Math.random() * 6.283; fxSpark.emit(ev[1], 0.1, -ev[2], Math.cos(a) * 3, rand(1, 5), -Math.sin(a) * 3, 0.5, 1.5); }
+          spatial("tank_slam", ev[1], ev[2], 1.3, 0.8, 0.3, 60); buzz([120, 40, 160]);
+          Scars.cut(ev[1], ev[2], 1.5, true); break;
+        }
+        case "lum_pull": spatial("sword_pull", ev[1], ev[2], 1, ev[3] === 2 ? 0.7 : 0.9, 0.3, 45); dust(ev[1], ev[2], ev[3] === 2 ? 8 : 3, 1, 0.8); if (ev[3] === 2) { spatial("clang", ev[1], ev[2], 0.8, 0.5, 0.3, 45); Scars.add(ev[1], ev[2], Math.random() * 6.28, "hole", 1.3); } break;
+        case "lum_spin": spatial("katana_swish", ev[1], ev[2], 1.2, 0.45, 0.2, 50); spatial("roar", ev[1], ev[2], 0.9, 0.7, 0.3, 50); Scars.cut(ev[1], ev[2], 3.4, false); dust(ev[1], ev[2], 6, 2.6, 0.9); break;
+        case "lum_throw": {
+          spatial("katana_swish", ev[1], ev[2], 1, 0.6, 0.2, 50);
+          const run = runId, ax = ev[3], ay = ev[4], yw = ev[5];
+          setTimeout(() => { if (run !== runId || state === "menu") return; Scars.add(ax, ay, yw, "crack", 2.4); Scars.add(ax, ay, yw, "hole", 1.1); dust(ax, ay, 6, 1.2, 0.8); spatial("clang", ax, ay, 1, 0.6, 0.3, 55); Scars.cut(ax, ay, 1.2, true); }, 800);
+          break;
+        }
+        case "lum_fall": Scars.add(ev[1], ev[2], Math.random() * 6.28, "hole", 3.6); dust(ev[1], ev[2], 14, 3, 1.3); shockwave(ev[1], ev[2], 4, 0xd8c8a0, 0.6, 0.4); spatial("tank_slam", ev[1], ev[2], 1.3, 0.7, 0.3, 60); buzz([160, 60, 100]); break;
+        case "lum_hit": Snd.play("katana_hit", 1, 0.6, 0, 0.1); Snd.play("tank_slam", 0.8, 1.2, 0, 0.2); buzz([150, 50, 150]); break;
+        case "lum_blow": Snd.play("tank_slam", 0.9, 1.5, 0, 0.2); Snd.play("katana_hit", 0.6, 0.5, 0, 0.1); buzz([140, 40, 100]); break;
+        case "lum_whiff": spatial("katana_swish", ev[1], ev[2], 0.8, 0.5, 0.1, 35); break;
+        case "lum_grab": spatial("sword_pull", ev[1], ev[2], 0.9, 1.1, 0.2, 40); break;
+        case "lum_fin": {
+          const me = game.coop ? game.coop.id : 0;
+          if (ev[3] !== me) { spatial("katana_hit", ev[4], ev[5], 1, 0.6, 0.2, 50); break; }
+          const z = game.zombies.find((q) => q.id === ev[1]); if (!z) break;
+          Gore.start(z, ev[2], game.px, game.py, zviews.get(z.id), Coop.active() ? Coop.shirtOf(me) : 0x4a6a8a, {
+            hit(c, k) { c.shake = k; Snd.play("katana_hit", 1, 0.55, 0, 0.15); Snd.play("tank_slam", 0.9, 1.3, 0, 0.2); Snd.play("die", 0.9, 0.8, 0, 0.3); buzz([200, 60, 260]); },
+            thud(c, k) { c.shake = k * 0.5; Snd.play("stomp", k, 0.75, 0, 0.1); },
+            swish() { Snd.play("katana_swish", 1.2, 0.5, 0, 0.1); Snd.play("katana_hit", 0.5, 1.4, 0, 0.1); },
+          });
+          break;
+        }
+        case "revive_wait": Snd.play("die", 0.8, 0.9, 0, 0.5); break;
         case "tank_wind": spatial("tankroar", ev[1], ev[2], 1, 0.85, 0.3, 46); break;
         case "tank_charge": spatial("tank_charge", ev[1], ev[2], 1, 1, 0.2, 46); break;
         case "tank_ram": spatial("tank_slam", ev[1], ev[2], 0.9, 1.2, 0.2, 40); dust(ev[1], ev[2], 6, 1.2); buzz([120, 50, 120]); break;
@@ -10901,6 +11531,7 @@ const Logic = (function () {
           shockwave(ev[1], ev[2], 4.6, 0xffb24a, 0.65); shockwave(ev[1], ev[2], 3, 0xffe0a0, 0.45, 0.5);
           dust(ev[1], ev[2], 10, 3.2, 1.1);
           for (let i = 0, n = Math.round(10 * fxK()); i < n; i++) { const a = Math.random() * 6.283; fxSpark.emit(ev[1], 0.1, -ev[2], Math.cos(a) * 3, rand(1, 4), -Math.sin(a) * 3, 0.5, 1.5); }
+          Scars.add(ev[1], ev[2], Math.random() * 6.28, "hole", 3.2);
           spatial("tank_slam", ev[1], ev[2], 1.2, 1, 0.3, 60); buzz([90, 40, 160]); break;
         }
         case "tank_tired": spatial("breath", ev[1], ev[2], 0.9, 0.6, 0.2, 30); break;
@@ -10916,6 +11547,7 @@ const Logic = (function () {
           shockwave(ev[1], ev[2], 5.2, 0x7ff0ff, 0.8); shockwave(ev[1], ev[2], 3.4, 0xffffff, 0.5, 0.5);
           dust(ev[1], ev[2], 12, 3.6, 1.2);
           for (let i = 0, n = Math.round(14 * fxK()); i < n; i++) { const a = Math.random() * 6.283; fxSpark.emit(ev[1], 0.1, -ev[2], Math.cos(a) * 4, rand(1, 5), -Math.sin(a) * 4, 0.6, 1.5); }
+          Scars.add(ev[1], ev[2], Math.random() * 6.28, "hole", 2.6);
           Snd.play("sword_slam", 1, rand(0.95, 1.05), panOf(ev[1], ev[2]) * 0.5, 0.4); buzz([100, 50, 200]); break;
         }
         case "wraith_vanish": spatial("whisper", ev[1], ev[2], 0.7, 1.3, 0.5, 40); break;
@@ -10931,7 +11563,7 @@ const Logic = (function () {
     banner: $("banner"), bigB: $("bannerBig"), subB: $("bannerSub"), msg: $("msg"), hint: $("hint"), hurt: $("fx-hurt"), low: $("fx-low"),
     radar: $("radar"), dir: $("dmgdir"), boss: $("boss"), bossfill: $("bossfill"), bossName: $("bossName"), arbar: $("arbar"), arfill: $("arfill"), coins: $("runCoins"),
   };
-  const BOSS_NAME = { tank: "COLOSSO BLINDADO", wraith: "O ESPECTRO", giant: "GIGANTE" };
+  const BOSS_NAME = { lumber: "O LENHADOR", tank: "COLOSSO BLINDADO", wraith: "O ESPECTRO", giant: "GIGANTE" };
   const rctx = el.radar.getContext("2d");
   function drawRadar() {
     const g = game, Sz = el.radar.width, h = Sz / 2, sc = (h - 8) / RADAR_RANGE;
@@ -10999,12 +11631,12 @@ const Logic = (function () {
     let bz = null, bp = 0;
     for (const z of g.zombies) {
       if (z.state === "dead") continue;
-      const pr = z.wraith ? 3 : z.tank ? 2 : z.giant ? 1 : 0;
+      const pr = z.lumber ? 4 : z.wraith ? 3 : z.tank ? 2 : z.giant ? 1 : 0;
       if (pr && (pr > bp || (pr === bp && z.hp > bz.hp))) { bz = z; bp = pr; }
     }
     if (bz) {
       if (el.boss.hidden) el.boss.hidden = false;
-      const kd = bz.wraith ? "wraith" : bz.tank ? "tank" : "giant";
+      const kd = bz.lumber ? "lumber" : bz.wraith ? "wraith" : bz.tank ? "tank" : "giant";
       if (el.boss.dataset.k !== kd) { el.boss.dataset.k = kd; el.bossName.textContent = BOSS_NAME[kd]; }
       el.bossfill.style.transform = "scaleX(" + clamp(bz.hp / bz.maxHp, 0, 1).toFixed(3) + ")";
     } else if (!el.boss.hidden) el.boss.hidden = true;
@@ -11054,8 +11686,12 @@ const Logic = (function () {
         lastInp.fire = false; lastInp.ads = false; lastInp.reload = false;
       } else potPrevFire = !!lastInp.fire;
       if (game.time > 12 && !$("tzone").hidden) $("tzone").hidden = true;
-      game.update(dt, lastInp); Coop.afterUpdate(game, dt); processEvents(); syncGame(dt); updateHud(dt); updateWeather(dt);
-      if (!game.alive && Coop.ended()) onDeath();
+      const waitRev = game.reviveWait && !Gore.busy();              // Segunda chance: mapa aberto (sozinho, o mundo para)
+      if (waitRev && !Rev.open()) Rev.show(); else if (!waitRev && Rev.open()) Rev.hide();
+      if (waitRev && !Coop.active()) { Rev.draw(); syncGame(0); }
+      else { game.update(dt, lastInp); Coop.afterUpdate(game, dt); processEvents(); syncGame(dt); updateHud(dt); updateWeather(dt); if (Rev.open()) Rev.draw(); }
+      if (Gore.busy() || game.reviveWait) { /* finalização ou escolha no mapa: a tela de morte espera */ }
+      else if (!game.alive && Coop.ended()) onDeath();
       else if (Coop.active() && Coop.ended()) onDeath();
     } else if (state === "pause" && Coop.active()) {
       game.update(dt, {}); Coop.afterUpdate(game, dt); processEvents(); syncGame(dt); updateHud(dt); updateWeather(dt);
@@ -11072,7 +11708,11 @@ const Logic = (function () {
       }
       vmFov.matrixWorldNeedsUpdate = true;
     }
+    let hid = null;                                              // finalização em 3ª pessoa: esconde braços/arma presos à câmera
+    if (Gore.busy()) { hid = []; for (const c of camera.children) if ((!c.isLight || c.isSpotLight) && c.visible) { c.visible = false; hid.push(c); } }
+    $("stage").classList.toggle("cine", !!hid);
     renderer.render(scene, camera);
+    if (hid) for (const c of hid) c.visible = true;
     if (state === "menu" && ui.tab === "arsenal" && pvRenderer) { pvPivot.rotation.y += dt * 0.7; pvRenderer.render(pvScene, pvCam); }
   }
 

@@ -1,5 +1,13 @@
 # Novidades — Arena Zumbi
 
+## O Lenhador e Segunda Chance com mapa (14/11/2026)
+- Novo chefe: O Lenhador. Zumbi enorme de barba e camisa xadrez, com machado de duas mãos e 7.000 de vida. Aparece em todas as dificuldades do modo de ondas.
+- Um golpe de machado mata. Se ele errar o golpe de cima, o machado prende no chão e ele leva de 5 a 10 segundos para arrancar. Se errar o giro, o machado voa longe e ele cai.
+- Sem o machado ele corre atrás de você com soco (metade da vida) e chute, e os dois te arremessam.
+- Duas finalizações em terceira pessoa quando o Lenhador mata: corte ao meio de cima para baixo e corte lateral.
+- Os chefes agora deixam rachaduras e crateras no chão, e o machado rasga os containers.
+- Segunda Chance custa 700 moedas: ao morrer, o mapa mostra os zumbis em vermelho e você clica duas vezes onde quer reviver, ou sai da partida.
+
 ## Mira das armas corrigida (14/11/2026)
 - Vespa SMG-9, Fuzil AX-4 e Titã M-60: a alça de mira traseira agora é um anel aberto. Ao mirar, você vê o alvo e a massa de mira no centro, sem a arma tapar a tela.
 - A mira da tela continua visível ao mirar com essas armas.

@@ -166,6 +166,20 @@ kbd { flex: none; font-family: var(--font-display); font-size: 18px; font-weight
 #boot .boot-bar i { display: block; height: 100%; width: 0; background: var(--amber); transition: width 0.25s; }
 #boot .boot-row { display: flex; justify-content: space-between; gap: 12px; margin-top: 10px; font-size: 15px; color: #cfd6e0; }
 #boot .boot-row b { font-family: var(--font-display); font-size: 20px; letter-spacing: 0.06em; color: var(--amber); font-variant-numeric: tabular-nums; }
+#revive { position: fixed; inset: 0; z-index: 900; display: grid; place-items: center; background: rgba(6, 3, 3, 0.86); padding: 12px; }
+#revive[hidden] { display: none; }
+#revive .rv-in { width: min(560px, 100%); max-height: 100%; display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; color: var(--fg); }
+#revive .rv-k { font-family: var(--font-display); font-size: 16px; letter-spacing: 0.24em; color: var(--amber); text-transform: uppercase; }
+#revive h2 { font-family: var(--font-display); font-size: 38px; letter-spacing: 0.04em; margin: 0; text-transform: uppercase; }
+#revive p { margin: 0; font-size: 15px; color: #cfd6e0; }
+#revMap { width: min(100%, 54vh); aspect-ratio: 1; border: 1px solid var(--line); cursor: crosshair; touch-action: none; }
+#revive .rv-leg { display: flex; gap: 16px; font-size: 13px; color: var(--muted); align-items: center; flex-wrap: wrap; justify-content: center; }
+#revive .rv-leg i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 5px; vertical-align: -1px; }
+#revive .btn { font-size: 18px; min-width: 220px; }
+@media (max-height: 520px) { #revive h2 { font-size: 24px; } #revive .rv-k { display: none; } #revMap { width: min(100%, 56vh); } }
+#stage.cine #hud, #stage.cine #touch { opacity: 0; transition: opacity 0.25s; }
+#stage.cine::before, #stage.cine::after { content: ""; position: absolute; left: 0; right: 0; height: 9%; background: #000; z-index: 40; pointer-events: none; }
+#stage.cine::before { top: 0; } #stage.cine::after { bottom: 0; }
 #appUpd { position: fixed; inset: 0; z-index: 9998; display: grid; place-items: center; background: rgba(4, 6, 9, 0.82); padding: 16px; }
 #appUpd[hidden] { display: none; }
 #appUpd .au-in { width: min(460px, 100%); background: var(--surface-2); border: 1px solid var(--line); border-top: 3px solid var(--amber); padding: 22px 22px 18px; color: var(--fg); text-align: left; }
@@ -496,6 +510,16 @@ table.sc td:first-child { font-family: var(--font-display); font-size: 22px; col
     <h1 translate="no">Arena <span>Zumbi</span></h1>
     <div class="boot-bar"><i id="bootBar"></i></div>
     <div class="boot-row"><span id="bootMsg">Carregando…</span><b id="bootPct" translate="no">0%</b></div>
+  </div>
+</div>
+<div id="revive" hidden role="dialog" aria-modal="true" aria-labelledby="revTitle">
+  <div class="rv-in">
+    <div class="rv-k">Segunda chance</div>
+    <h2 id="revTitle">Escolha onde reviver</h2>
+    <p>Clique duas vezes no mapa onde você quer reviver.</p>
+    <canvas id="revMap" width="640" height="640"></canvas>
+    <div class="rv-leg"><span><i style="background:#ff3b30"></i>Zumbis</span><span><i style="background:#fff"></i>Onde você morreu</span><span><i style="background:#4aa3ff"></i>Aliados</span><span><i style="background:#3ddc84"></i>Ponto escolhido</span></div>
+    <button class="btn" id="revQuit" type="button">Sair da partida</button>
   </div>
 </div>
 <div id="appUpd" hidden role="dialog" aria-modal="true" aria-labelledby="auTitle">

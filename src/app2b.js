@@ -77,6 +77,7 @@
     // ---- especiais dos níveis extremos ----
     blindado: { sex: "m", top: [0x3a4230], camo: true, sleeve: "long", bot: [0x343a2a], shoe: 0x121210, boot: true, hair: ["buzz"], hairColor: ["preto", "castanho"], vest: 0x2a2f22, beard: 0.15, fat: true },
     mestre: { sex: "m", top: [0x2c3550], sleeve: "long", bot: [0x16161e], shoe: "skin", hair: ["balding"], hairColor: ["branco"], beard: 1 },
+    lenhador: { sex: "m", top: [0x8a1c16, 0x7a2018], plaid: true, sleeve: "long", bot: [0x23324e, 0x1e2a44], shoe: 0x2a1c10, boot: true, hair: ["messy", "short", "balding"], hairColor: ["castanho", "ruivo", "preto"], beard: 1, fat: true, belt: true },
     atleta: { sex: "m", top: [0x1a2a6a, 0x6a1a1a, 0x1a1a1a], sleeve: "long", stripes2: true, bot: "same", shoe: 0xe8e8e4, hair: ["short", "buzz", "mohawk", "afro", "curly", "side"] },
     motoqueiro: { sex: "m", top: [0x141414], vestOnly: true, sleeve: "none", bot: [0x23324e], shoe: 0x111111, boot: true, hair: ["bald", "long", "wavy", "mohawk", "balding", "messy"], beard: 0.95, fat: true, hat: [["bandana", 0.3]] },
   };
@@ -85,7 +86,7 @@
     runner: ["corredora", "paciente", "adolescente", "atleta"],
     brute: ["acougueiro", "motoqueiro", "presidiario", "bombeiro"],
     giant: ["acougueiro", "motoqueiro", "presidiario"],
-    tank: ["blindado"], samurai: ["mestre"],
+    tank: ["blindado"], samurai: ["mestre"], lumber: ["lenhador"],
   };
   function zrng(seed) {           // mulberry32: o mesmo zumbi sempre tem a mesma aparência
     let a = seed >>> 0;

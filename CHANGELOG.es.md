@@ -1,5 +1,13 @@
 # Novedades — Arena Zumbi
 
+## El Leñador y Segunda Oportunidad con mapa (14/11/2026)
+- Nuevo jefe: El Leñador. Un zombi enorme con barba y camisa a cuadros, con un hacha a dos manos y 7.000 de vida. Aparece en todas las dificultades del modo de oleadas.
+- Un golpe de hacha mata. Si falla el golpe desde arriba, el hacha se atasca en el suelo y tarda de 5 a 10 segundos en sacarla. Si falla el giro, el hacha sale volando y él se cae.
+- Sin el hacha corre detrás de ti con un puñetazo (la mitad de la vida) y una patada, y los dos te lanzan lejos.
+- Dos remates en tercera persona cuando el Leñador mata: corte por la mitad de arriba abajo y corte lateral.
+- Los jefes ahora dejan grietas y cráteres en el suelo, y el hacha rasga los contenedores.
+- Segunda Oportunidad cuesta 700 monedas: al morir, el mapa muestra los zombis en rojo y haces doble clic donde quieres revivir, o sales de la partida.
+
 ## Miras de las armas corregidas (14/11/2026)
 - Vespa SMG-9, Fusil AX-4 y Titán M-60: el alza trasera ahora es un anillo abierto. Al apuntar, ves el objetivo y el punto de mira en el centro, sin que el arma tape la pantalla.
 - La mira de la pantalla sigue visible al apuntar con estas armas.

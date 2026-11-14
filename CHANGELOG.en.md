@@ -1,5 +1,13 @@
 # What's new — Arena Zumbi
 
+## The Lumberjack and Second Chance with a map (11/14/2026)
+- New boss: The Lumberjack. A huge bearded zombie in a plaid shirt with a two-handed axe and 7,000 health. He shows up on every difficulty in wave mode.
+- One axe blow kills. If he misses the overhead chop, the axe gets stuck in the ground and he takes 5 to 10 seconds to pull it out. If he misses the spin, the axe flies away and he falls.
+- Without the axe he runs after you with a punch (half your health) and a kick, and both throw you back.
+- Two third-person finishers when the Lumberjack kills: a top-down split and a side slash.
+- Bosses now leave cracks and craters in the ground, and the axe tears through containers.
+- Second Chance costs 700 coins: when you die, the map shows zombies in red and you double-click where to revive, or leave the match.
+
 ## Weapon sights fixed (11/14/2026)
 - Vespa SMG-9, AX-4 Rifle and Titan M-60: the rear sight is now an open ring. When aiming, you see the target and the front sight in the center, without the gun blocking the screen.
 - The on-screen crosshair stays visible when aiming with these weapons.

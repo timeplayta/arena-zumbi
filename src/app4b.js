@@ -19,7 +19,7 @@
   const CONS = [
     { k: "vest", n: "Colete de kevlar", d: "Começa a próxima partida com +50 de armadura.", p: 120 },
     { k: "ammoPack", n: "Mochila dupla", d: "Dobra a munição de reserva (e o limite) durante a partida.", p: 150 },
-    { k: "revive", n: "Segunda chance", d: "Se você morrer, volta com a vida CHEIA, 4 s invencível e joga os zumbis longe. Só gasta se você realmente morrer.", p: 400 },
+    { k: "revive", n: "Segunda chance", d: "Se você morrer, o mapa aparece com os zumbis em vermelho: clique duas vezes onde quer reviver. Volta com a vida CHEIA e 4 s invencível. Só gasta se você reviver.", p: 700 },
   ];
   const GUN_PRICE = { revolver: 5000, titan: 10000 };
   const MELEE = {

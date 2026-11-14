@@ -44,8 +44,9 @@
     // braços e pés
     for (let i = 0; i < 2; i++) { const q = r(); P.armCut[i] = q < 0.03 * gm ? 3 : q < 0.065 * gm ? 2 : q < 0.1 * gm ? 1 : 0; if (P.armCut[i]) P.parts++; }
     if (limp) for (let i = 0; i < 2; i++) if (r() < 0.14) { P.footCut[i] = 1; P.parts++; break; }
+    if (kind === "lumber") { P.armCut = [0, 0]; P.lostJaw = false; P.hole = null; }                // o Lenhador precisa dos dois braços (machado)
     // corpo
-    P.belly = r() < 0.16 * gm; P.gut = P.belly && r() < 0.55; P.chest = !P.belly && r() < 0.09 * gm; P.shoulderBite = r() < 0.12 * gm;
+    P.belly = r() < 0.16 * gm; P.gut = P.belly && r() < 0.55; P.chest = !P.belly && r() < 0.09 * gm; if (kind === "lumber") P.belly = P.gut = P.chest = false; P.shoulderBite = r() < 0.12 * gm;
     P.splats = 1 + Math.floor(r() * 3.5 * gm); P.gashes = Math.floor(r() * 2.7 * gm); P.bites = r() < 0.22 * gm ? 1 + Math.floor(r() * 2) : 0;
     P.bullets = r() < 0.18 * gm ? 1 + Math.floor(r() * 3) : 0; P.claws = r() < 0.16; P.rot = r() < 0.22; P.hands = r() < 0.12; P.drips = r() < 0.72;
     P.bloodyHands = r() < 0.38;
@@ -57,7 +58,7 @@
   class ZombieView {
     constructor(z) {
       const r = zrng(z.id * 7919 + 13), G = ZG;
-      const kind = z.tank ? "tank" : z.samurai ? "samurai" : z.giant ? "giant" : z.brute ? "brute" : z.runner ? "runner" : "walker";
+      const kind = z.lumber ? "lumber" : z.tank ? "tank" : z.samurai ? "samurai" : z.giant ? "giant" : z.brute ? "brute" : z.runner ? "runner" : "walker";
       const A = ARCH[pick(r, POOL[kind])];
       const fem = A.sex === "f" || (A.sex === "mf" && r() < 0.45);
       const fat = !!A.fat || (z.brute && r() < 0.6);
@@ -82,7 +83,7 @@
       const handM = P.bloodyHands ? tok(skinC.clone().lerp(bloodC, 0.55)) : skin;
       const dark = M.wound, white = tok(0xd8d2c0);
       const root = (this.root = new THREE.Group()); root.rotation.order = "YXZ";
-      const s = z.s, wide = z.giant ? 1.22 : z.brute ? 1.18 : fat ? 1.08 : z.runner ? 0.92 : 1;
+      const s = z.s, wide = z.lumber ? 1.3 : z.giant ? 1.22 : z.brute ? 1.18 : fat ? 1.08 : z.runner ? 0.92 : 1;
       root.scale.set(s * wide, s * (fem ? 0.96 : 1), s * wide);
       const add = (geo, m, x, y, zz, p, shadow) => { const o = new THREE.Mesh(geo, m); o.position.set(x, y, zz); (p || root).add(o); if (shadow) o.castShadow = true; return o; };
       let bodyMats = {};
@@ -328,7 +329,7 @@
       const scalp = bald ? "none" : style === "buzz" ? "buzz" : style === "balding" ? "sides" : style === "mohawk" ? "mohawk" : style === "afro" ? "none" : "full";
       const recede = style === "balding" ? -0.4 : (A.sex === "m" && r() < 0.15) ? -0.18 : 0;
       let beardKind = null;
-      if (!fem && r() < (A.beard || 0)) beardKind = pick(r, A.beard > 0.7 ? ["full", "full", "short", "goatee"] : ["short", "short", "goatee", "mustache", "full"]);
+      if (!fem && r() < (A.beard || 0)) beardKind = pick(r, z.lumber ? ["full"] : A.beard > 0.7 ? ["full", "full", "short", "goatee"] : ["short", "short", "goatee", "mustache", "full"]);
       const stubble = beardKind ? 0 : (!fem && r() < 0.5 ? 0.35 + r() * 0.5 : 0);
       const face = ZH.paintFace(r, { skin: skinRGB, hairRGB, dead, fem, stubble, scalp, recede, wounds: W, noBrows: r() < 0.06 });
       this.tex = face;

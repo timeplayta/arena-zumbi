@@ -70,7 +70,116 @@
     }
     for (const [id, v] of crackViews) if (!seen.has(id)) { scene.remove(v.m); v.m.geometry.dispose(); v.mt.dispose(); v.tex.dispose(); crackViews.delete(id); }
   }
+  // ---------------- marcas permanentes no cenário (rachaduras, crateras e cortes feitos pelos chefes) ----------------
+  const Scars = (function () {
+    const list = [], cuts = [], texs = {};
+    function tex(kind, v) {
+      const key = kind + v; if (texs[key]) return texs[key];
+      const cv = document.createElement("canvas"); cv.width = cv.height = 256; const c = cv.getContext("2d");
+      let sd = v * 977 + (kind === "hole" ? 31 : 7); const rnd = () => { sd = (sd * 16807) % 2147483647; return (sd & 0xffff) / 65536; };
+      c.lineCap = "round"; c.lineJoin = "round";
+      const branch = (x, y, a, len, w) => {
+        const pts = [[x, y]]; let px = x, py = y, n = Math.max(3, Math.round(len / 14));
+        for (let i = 0; i < n; i++) { a += (rnd() - 0.5) * 0.9; px += Math.cos(a) * len / n; py += Math.sin(a) * len / n; pts.push([px, py]); if (w > 2.2 && rnd() < 0.45) branch(px, py, a + (rnd() < 0.5 ? -1 : 1) * (0.5 + rnd() * 0.7), len * (0.25 + rnd() * 0.3), w * 0.5); }
+        for (const [col, k] of [["rgba(170,160,140,0.22)", 2.6], ["rgba(20,16,12,0.85)", 1.5], ["rgba(0,0,0,1)", 0.7]]) {
+          for (let i = 1; i < pts.length; i++) { c.strokeStyle = col; c.lineWidth = Math.max(0.6, w * k * (1 - (i - 1) / pts.length * 0.75)); c.beginPath(); c.moveTo(pts[i - 1][0], pts[i - 1][1]); c.lineTo(pts[i][0], pts[i][1]); c.stroke(); }
+        }
+      };
+      if (kind === "crack") { branch(40, 128, 0, 190, 7); branch(40, 128, Math.PI, 26, 4); branch(70, 128, 1.2, 50, 3); branch(70, 128, -1.2, 50, 3); }
+      else {
+        const g = c.createRadialGradient(128, 128, 6, 128, 128, 74); g.addColorStop(0, "rgba(0,0,0,0.96)"); g.addColorStop(0.55, "rgba(12,10,8,0.85)"); g.addColorStop(0.8, "rgba(40,34,28,0.5)"); g.addColorStop(1, "rgba(60,52,44,0)");
+        c.fillStyle = g; c.beginPath(); for (let i = 0; i <= 22; i++) { const a = (i / 22) * 6.2832, r = 58 + rnd() * 18; c[i ? "lineTo" : "moveTo"](128 + Math.cos(a) * r, 128 + Math.sin(a) * r); } c.fill();
+        for (let i = 0; i < 9; i++) { const a = (i / 9) * 6.2832 + rnd() * 0.5; branch(128 + Math.cos(a) * 50, 128 + Math.sin(a) * 50, a, 34 + rnd() * 38, 3.4); }
+        for (let i = 0; i < 26; i++) { const a = rnd() * 6.2832, r = 60 + rnd() * 50; c.fillStyle = "rgba(" + (rnd() < 0.5 ? "25,20,16" : "120,110,95") + "," + (0.35 + rnd() * 0.4) + ")"; c.fillRect(128 + Math.cos(a) * r, 128 + Math.sin(a) * r, 1.5 + rnd() * 4, 1.5 + rnd() * 3); }
+      }
+      return (texs[key] = new THREE.CanvasTexture(cv));
+    }
+    // x,y: posição no jogo · yaw: direção da rachadura · kind: "crack" | "hole" · size em metros
+    function add(x, y, yaw, kind, size) {
+      const mt = new THREE.MeshBasicMaterial({ map: tex(kind, list.length % 3), transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4 });
+      const m = new THREE.Mesh(new THREE.PlaneGeometry(size, size), mt);
+      const fx = -Math.sin(yaw), fy = Math.cos(yaw);
+      m.rotation.set(-Math.PI / 2, 0, Math.atan2(fy, fx)); m.position.set(x + (kind === "crack" ? fx * size * 0.34 : 0), 0.03 + (list.length % 20) * 0.0006, -(y + (kind === "crack" ? fy * size * 0.34 : 0)));
+      m.renderOrder = 2; scene.add(m); list.push(m);
+      if (list.length > 60) { const o = list.shift(); scene.remove(o); o.geometry.dispose(); o.material.dispose(); }
+    }
+    // corte de machado num container perto de (x,y): rasgo escuro com as bordas do metal dobradas
+    function cut(x, y, r, vertical) {
+      let hit = 0;
+      for (const o of L.OBSTACLES) {
+        if (o[5] !== "container") continue;
+        const x0 = o[0] - o[2] / 2, x1 = o[0] + o[2] / 2, y0 = o[1] - o[3] / 2, y1 = o[1] + o[3] / 2;
+        let qx = clamp(x, x0, x1), qy = clamp(y, y0, y1), nx = 0, ny = 0;
+        if (Math.hypot(x - qx, y - qy) > r) continue;
+        if (qx > x0 && qx < x1 && qy > y0 && qy < y1) { const d = [qx - x0, x1 - qx, qy - y0, y1 - qy], i = d.indexOf(Math.min(...d)); if (i === 0) qx = x0; else if (i === 1) qx = x1; else if (i === 2) qy = y0; else qy = y1; }
+        if (qx <= x0 + 1e-6) nx = -1; else if (qx >= x1 - 1e-6) nx = 1; else if (qy <= y0 + 1e-6) ny = -1; else ny = 1;
+        const tx = -ny, ty = nx, half = (nx ? o[3] : o[2]) / 2, len = vertical ? 1.5 : Math.min(2.4, half * 1.6), ctr = nx ? o[1] : o[0];
+        let along = nx ? qy : qx; if (!vertical) along = clamp(along, ctr - half + len / 2 + 0.1, ctr + half - len / 2 - 0.1);
+        const px = nx ? qx : along, py = nx ? along : qy;
+        const g = new THREE.Group(), N = new THREE.Vector3(nx, 0, -ny), T = new THREE.Vector3(tx, 0, -ty);
+        g.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(T, new THREE.Vector3(0, 1, 0), N));
+        g.position.set(px + nx * 0.04, vertical ? o[4] - 0.75 : 1.45 + Math.random() * 0.25, -(py + ny * 0.04));
+        g.rotateZ(vertical ? 1.42 + (Math.random() - 0.5) * 0.2 : (Math.random() - 0.5) * 0.22);
+        const mk = (w, h, d, col, yy, zz, rz) => { const b = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), new THREE.MeshLambertMaterial({ color: col })); b.position.set(0, yy, zz); b.rotation.x = rz || 0; g.add(b); };
+        mk(len, 0.1, 0.05, 0x030303, 0, 0, 0); mk(len * 0.96, 0.05, 0.09, 0x6e737a, 0.07, 0.03, -0.7); mk(len * 0.9, 0.05, 0.08, 0x565b62, -0.07, 0.03, 0.7); mk(len * 0.6, 0.16, 0.03, 0x000000, 0, -0.01, 0);
+        scene.add(g); cuts.push(g); hit++;
+        if (cuts.length > 14) { const q = cuts.shift(); scene.remove(q); q.traverse((m) => { if (m.isMesh) { m.geometry.dispose(); m.material.dispose(); } }); }
+        for (let i = 0, n = Math.round(14 * fxK()); i < n; i++) fxSpark.emit(g.position.x, g.position.y, g.position.z, nx * rand(1, 4) + rand(-1.5, 1.5), rand(0, 3), -ny * rand(1, 4) + rand(-1.5, 1.5), 0.5, 1.4);
+        spatial("clang", px, py, 1, 0.55, 0.3, 50);
+      }
+      return hit;
+    }
+    function clear() {
+      for (const o of list) { scene.remove(o); o.geometry.dispose(); o.material.dispose(); } list.length = 0;
+      for (const q of cuts) { scene.remove(q); q.traverse((m) => { if (m.isMesh) { m.geometry.dispose(); m.material.dispose(); } }); } cuts.length = 0;
+    }
+    return { add, cut, clear };
+  })();
+
+  // ---------------- Segunda chance: mapa para escolher onde reviver ----------------
+  const Rev = (function () {
+    let on = false, sel = null, lastT = 0;
+    const cv = $("revMap"), c = cv.getContext("2d");
+    const span = () => L.C.ARENA * 2.12, toPx = (x, y) => [(x / span() + 0.5) * cv.width, (0.5 - y / span()) * cv.height];
+    function show() {
+      on = true; sel = null; lastT = 0; $("revive").hidden = false; mouseDown = false; adsHeld = false;
+      $("revQuit").textContent = Coop.active() ? "Não reviver agora" : "Sair da partida";
+      try { document.exitPointerLock(); } catch (e) {}
+    }
+    function hide() { on = false; $("revive").hidden = true; }
+    function draw() {
+      const g = game, W = cv.width, A = L.C.ARENA, k = W / span();
+      c.clearRect(0, 0, W, W);
+      c.fillStyle = "#14171c"; c.fillRect(0, 0, W, W);
+      const a = toPx(-A, A); c.fillStyle = "#23272e"; c.fillRect(a[0], a[1], 2 * A * k, 2 * A * k);
+      c.strokeStyle = "#5b6470"; c.lineWidth = 3; c.strokeRect(a[0], a[1], 2 * A * k, 2 * A * k);
+      c.strokeStyle = "rgba(255,255,255,0.05)"; c.lineWidth = 1;
+      for (let i = -A + 4; i < A; i += 4) { let p = toPx(i, A), q = toPx(i, -A); c.beginPath(); c.moveTo(p[0], p[1]); c.lineTo(q[0], q[1]); c.stroke(); p = toPx(-A, i); q = toPx(A, i); c.beginPath(); c.moveTo(p[0], p[1]); c.lineTo(q[0], q[1]); c.stroke(); }
+      for (const o of L.OBSTACLES) { const p = toPx(o[0] - o[2] / 2, o[1] + o[3] / 2); c.fillStyle = o[5] === "container" ? "#6b7480" : o[5] === "lamp" ? "#9a8a4a" : "#4b525b"; c.fillRect(p[0], p[1], Math.max(3, o[2] * k), Math.max(3, o[3] * k)); }
+      const dot = (x, y, r, col, ring) => { const p = toPx(x, y); c.beginPath(); c.arc(p[0], p[1], r, 0, 6.2832); if (ring) { c.strokeStyle = col; c.lineWidth = 3; c.stroke(); } else { c.fillStyle = col; c.fill(); } };
+      for (const z of g.zombies) if (z.state !== "dead" && !(z.wraith && z.vis < 0.3)) { dot(z.x, z.y, z.heavy ? 11 : 6, "#ff3b30"); if (z.heavy) dot(z.x, z.y, 15, "rgba(255,59,48,0.6)", true); }
+      for (const o of g.others) if (o.alive) dot(o.x, o.y, 6, "#4aa3ff");
+      { const p = toPx(g.px, g.py); c.strokeStyle = "#ffffff"; c.lineWidth = 3; c.beginPath(); c.moveTo(p[0] - 7, p[1] - 7); c.lineTo(p[0] + 7, p[1] + 7); c.moveTo(p[0] + 7, p[1] - 7); c.lineTo(p[0] - 7, p[1] + 7); c.stroke(); }
+      if (sel) { const pulse = 12 + 3 * Math.sin(performance.now() / 160); dot(sel[0], sel[1], pulse, "#3ddc84", true); dot(sel[0], sel[1], 4, "#3ddc84"); }
+    }
+    cv.addEventListener("pointerdown", (e) => {
+      if (!on) return; e.preventDefault();
+      const r = cv.getBoundingClientRect(), A = L.C.ARENA - 1;
+      const x = clamp(((e.clientX - r.left) / r.width - 0.5) * span(), -A, A), y = clamp((0.5 - (e.clientY - r.top) / r.height) * span(), -A, A);
+      const now = e.timeStamp || performance.now(), dbl = sel && now - lastT < 600 && Math.hypot(x - sel[0], y - sel[1]) < 2.2;
+      if (dbl) {
+        const at = sel; hide();
+        if (game.reviveAt(at[0], at[1]) && !touchOn()) { try { canvas.requestPointerLock(); } catch (er) {} }
+        return;
+      }
+      const p = L.pushOut(x, y, 0.55); sel = [p[0], p[1]]; lastT = now;
+    });
+    $("revQuit").addEventListener("click", () => { if (!on) return; hide(); game.declineRevive(); });
+    return { show, hide, draw, open: () => on };
+  })();
+
   function clearSpecialFx() {
+    Scars.clear(); Gore.stop(); Rev.hide();
     for (const s of shocks) { scene.remove(s.m); s.m.material.dispose(); }
     shocks.length = 0;
     for (const [, v] of crackViews) { scene.remove(v.m); v.m.geometry.dispose(); v.mt.dispose(); v.tex.dispose(); }
@@ -93,7 +202,7 @@
       if (z.puppet && z.puppet === Coop.st.id) continue;                 // infecção: o próprio zumbi não aparece na câmera
       seen.add(z.id);
       let v = zviews.get(z.id);
-      if (!v) { v = z.tank ? new TankView(z) : z.samurai ? new SamuraiView(z) : z.wraith ? new WraithView(z) : new ZombieView(z); if (z.puppet) redSkin(v); zviews.set(z.id, v); }
+      if (!v) { v = z.lumber ? new LumberView(z) : z.tank ? new TankView(z) : z.samurai ? new SamuraiView(z) : z.wraith ? new WraithView(z) : new ZombieView(z); if (z.puppet) redSkin(v); zviews.set(z.id, v); }
       v.update(z);
       if (z.gz && v.root) { v.root.position.y += z.gz; if (v.shadow) v.shadow.position.y += z.gz; }   // morros e escadas (vila da Infecção)
     }
@@ -132,9 +241,11 @@
   }
   document.addEventListener("pointerlockchange", () => {
     if (document.pointerLockElement === canvas) lockHeld = true;
-    else if (lockHeld) { lockHeld = false; if (state === "run") pause(); }
+    else if (lockHeld) { lockHeld = false; if (state === "run" && !Rev.open() && !Gore.busy()) pause(); }
   });
+  let runId = 0;
   function startGame() {
+    runId++;
     if (Coop.inRoom() && !Coop.st.starting) {
       if (!Coop.isHost()) { Coop.toast("Só o anfitrião inicia a partida."); return; }
       Coop.hostStartBroadcast();
@@ -628,7 +739,8 @@
     if (KnifeVM.update(g, dt)) knife.visible = false;               // faca padrão: modelo M9 com braços
     flickerT -= dt;
     if (flickerT <= 0) { flickerT = rand(0.04, 0.2); lampLights[2].intensity = env.lamp * (Math.random() < 0.25 ? rand(0, 0.5) : 1); }
-    syncZombies(g); syncPickups(g); syncCracks(g); updateShocks(dt); syncAllies(g, dt); syncBoosts(g); PotFX.sync(g, g.time);
+    syncZombies(g); Gore.update(dt); if (Gore.busy()) Gore.camera(camera, dt);
+    syncPickups(g); syncCracks(g); updateShocks(dt); syncAllies(g, dt); syncBoosts(g); PotFX.sync(g, g.time);
     fxBlood.update(dt); fxSpark.update(dt); fxBrass.update(dt); fxShell.update(dt); fxSmoke.update(dt); fxTrace.update(dt); updatePools(dt); updateDropped(dt);
   }
 
@@ -764,7 +876,7 @@
         case "elite": {
           const k = ev[1];
           Snd.play("horn", 0.8, 0.55, 0, 0);
-          if (k === "tank") Snd.play("tankroar", 0.9, 0.9, 0, 0.3); else if (k === "samurai") Snd.play("kiai", 0.8, 0.9, 0, 0.3); else Snd.play("wail", 0.8, 0.8, 0, 0.5);
+          if (k === "lumber") Snd.play("giantroar", 1, 0.8, 0, 0.4); else if (k === "tank") Snd.play("tankroar", 0.9, 0.9, 0, 0.3); else if (k === "samurai") Snd.play("kiai", 0.8, 0.9, 0, 0.3); else Snd.play("wail", 0.8, 0.8, 0, 0.5);
           buzz([60, 40, 120]); break;
         }
         case "block": {
@@ -775,6 +887,40 @@
         case "armor": Snd.play("armor", 0.8, rand(0.9, 1.1), 0, 0.1); if (ev[1]) feedLine("ARMADURA DESTRUÍDA", false, "dim"); break;
         case "revive": Snd.play("revive", 1, 1, 0, 0.4); buzz([80, 40, 80, 40, 160]); feedLine("SEGUNDA CHANCE", true); break;
         case "burn": burnFlash = 0.35; Snd.play("burn", 0.45, rand(0.9, 1.1), 0, 0.05); buzz(25); break;
+        // ---- Lenhador ----
+        case "lum_roar": spatial("giantroar", ev[1], ev[2], 1, 0.75, 0.3, 55); break;
+        case "lum_stuck": {
+          Scars.add(ev[1], ev[2], ev[3], "crack", 4.4); Scars.add(ev[1], ev[2], ev[3], "hole", 1.9);
+          dust(ev[1], ev[2], 12, 2.6, 1.2); shockwave(ev[1], ev[2], 3.2, 0xd8c8a0, 0.5, 0.4);
+          for (let i = 0, n = Math.round(12 * fxK()); i < n; i++) { const a = Math.random() * 6.283; fxSpark.emit(ev[1], 0.1, -ev[2], Math.cos(a) * 3, rand(1, 5), -Math.sin(a) * 3, 0.5, 1.5); }
+          spatial("tank_slam", ev[1], ev[2], 1.3, 0.8, 0.3, 60); buzz([120, 40, 160]);
+          Scars.cut(ev[1], ev[2], 1.5, true); break;
+        }
+        case "lum_pull": spatial("sword_pull", ev[1], ev[2], 1, ev[3] === 2 ? 0.7 : 0.9, 0.3, 45); dust(ev[1], ev[2], ev[3] === 2 ? 8 : 3, 1, 0.8); if (ev[3] === 2) { spatial("clang", ev[1], ev[2], 0.8, 0.5, 0.3, 45); Scars.add(ev[1], ev[2], Math.random() * 6.28, "hole", 1.3); } break;
+        case "lum_spin": spatial("katana_swish", ev[1], ev[2], 1.2, 0.45, 0.2, 50); spatial("roar", ev[1], ev[2], 0.9, 0.7, 0.3, 50); Scars.cut(ev[1], ev[2], 3.4, false); dust(ev[1], ev[2], 6, 2.6, 0.9); break;
+        case "lum_throw": {
+          spatial("katana_swish", ev[1], ev[2], 1, 0.6, 0.2, 50);
+          const run = runId, ax = ev[3], ay = ev[4], yw = ev[5];
+          setTimeout(() => { if (run !== runId || state === "menu") return; Scars.add(ax, ay, yw, "crack", 2.4); Scars.add(ax, ay, yw, "hole", 1.1); dust(ax, ay, 6, 1.2, 0.8); spatial("clang", ax, ay, 1, 0.6, 0.3, 55); Scars.cut(ax, ay, 1.2, true); }, 800);
+          break;
+        }
+        case "lum_fall": Scars.add(ev[1], ev[2], Math.random() * 6.28, "hole", 3.6); dust(ev[1], ev[2], 14, 3, 1.3); shockwave(ev[1], ev[2], 4, 0xd8c8a0, 0.6, 0.4); spatial("tank_slam", ev[1], ev[2], 1.3, 0.7, 0.3, 60); buzz([160, 60, 100]); break;
+        case "lum_hit": Snd.play("katana_hit", 1, 0.6, 0, 0.1); Snd.play("tank_slam", 0.8, 1.2, 0, 0.2); buzz([150, 50, 150]); break;
+        case "lum_blow": Snd.play("tank_slam", 0.9, 1.5, 0, 0.2); Snd.play("katana_hit", 0.6, 0.5, 0, 0.1); buzz([140, 40, 100]); break;
+        case "lum_whiff": spatial("katana_swish", ev[1], ev[2], 0.8, 0.5, 0.1, 35); break;
+        case "lum_grab": spatial("sword_pull", ev[1], ev[2], 0.9, 1.1, 0.2, 40); break;
+        case "lum_fin": {
+          const me = game.coop ? game.coop.id : 0;
+          if (ev[3] !== me) { spatial("katana_hit", ev[4], ev[5], 1, 0.6, 0.2, 50); break; }
+          const z = game.zombies.find((q) => q.id === ev[1]); if (!z) break;
+          Gore.start(z, ev[2], game.px, game.py, zviews.get(z.id), Coop.active() ? Coop.shirtOf(me) : 0x4a6a8a, {
+            hit(c, k) { c.shake = k; Snd.play("katana_hit", 1, 0.55, 0, 0.15); Snd.play("tank_slam", 0.9, 1.3, 0, 0.2); Snd.play("die", 0.9, 0.8, 0, 0.3); buzz([200, 60, 260]); },
+            thud(c, k) { c.shake = k * 0.5; Snd.play("stomp", k, 0.75, 0, 0.1); },
+            swish() { Snd.play("katana_swish", 1.2, 0.5, 0, 0.1); Snd.play("katana_hit", 0.5, 1.4, 0, 0.1); },
+          });
+          break;
+        }
+        case "revive_wait": Snd.play("die", 0.8, 0.9, 0, 0.5); break;
         case "tank_wind": spatial("tankroar", ev[1], ev[2], 1, 0.85, 0.3, 46); break;
         case "tank_charge": spatial("tank_charge", ev[1], ev[2], 1, 1, 0.2, 46); break;
         case "tank_ram": spatial("tank_slam", ev[1], ev[2], 0.9, 1.2, 0.2, 40); dust(ev[1], ev[2], 6, 1.2); buzz([120, 50, 120]); break;
@@ -782,6 +928,7 @@
           shockwave(ev[1], ev[2], 4.6, 0xffb24a, 0.65); shockwave(ev[1], ev[2], 3, 0xffe0a0, 0.45, 0.5);
           dust(ev[1], ev[2], 10, 3.2, 1.1);
           for (let i = 0, n = Math.round(10 * fxK()); i < n; i++) { const a = Math.random() * 6.283; fxSpark.emit(ev[1], 0.1, -ev[2], Math.cos(a) * 3, rand(1, 4), -Math.sin(a) * 3, 0.5, 1.5); }
+          Scars.add(ev[1], ev[2], Math.random() * 6.28, "hole", 3.2);
           spatial("tank_slam", ev[1], ev[2], 1.2, 1, 0.3, 60); buzz([90, 40, 160]); break;
         }
         case "tank_tired": spatial("breath", ev[1], ev[2], 0.9, 0.6, 0.2, 30); break;
@@ -797,6 +944,7 @@
           shockwave(ev[1], ev[2], 5.2, 0x7ff0ff, 0.8); shockwave(ev[1], ev[2], 3.4, 0xffffff, 0.5, 0.5);
           dust(ev[1], ev[2], 12, 3.6, 1.2);
           for (let i = 0, n = Math.round(14 * fxK()); i < n; i++) { const a = Math.random() * 6.283; fxSpark.emit(ev[1], 0.1, -ev[2], Math.cos(a) * 4, rand(1, 5), -Math.sin(a) * 4, 0.6, 1.5); }
+          Scars.add(ev[1], ev[2], Math.random() * 6.28, "hole", 2.6);
           Snd.play("sword_slam", 1, rand(0.95, 1.05), panOf(ev[1], ev[2]) * 0.5, 0.4); buzz([100, 50, 200]); break;
         }
         case "wraith_vanish": spatial("whisper", ev[1], ev[2], 0.7, 1.3, 0.5, 40); break;
@@ -812,7 +960,7 @@
     banner: $("banner"), bigB: $("bannerBig"), subB: $("bannerSub"), msg: $("msg"), hint: $("hint"), hurt: $("fx-hurt"), low: $("fx-low"),
     radar: $("radar"), dir: $("dmgdir"), boss: $("boss"), bossfill: $("bossfill"), bossName: $("bossName"), arbar: $("arbar"), arfill: $("arfill"), coins: $("runCoins"),
   };
-  const BOSS_NAME = { tank: "COLOSSO BLINDADO", wraith: "O ESPECTRO", giant: "GIGANTE" };
+  const BOSS_NAME = { lumber: "O LENHADOR", tank: "COLOSSO BLINDADO", wraith: "O ESPECTRO", giant: "GIGANTE" };
   const rctx = el.radar.getContext("2d");
   function drawRadar() {
     const g = game, Sz = el.radar.width, h = Sz / 2, sc = (h - 8) / RADAR_RANGE;
@@ -880,12 +1028,12 @@
     let bz = null, bp = 0;
     for (const z of g.zombies) {
       if (z.state === "dead") continue;
-      const pr = z.wraith ? 3 : z.tank ? 2 : z.giant ? 1 : 0;
+      const pr = z.lumber ? 4 : z.wraith ? 3 : z.tank ? 2 : z.giant ? 1 : 0;
       if (pr && (pr > bp || (pr === bp && z.hp > bz.hp))) { bz = z; bp = pr; }
     }
     if (bz) {
       if (el.boss.hidden) el.boss.hidden = false;
-      const kd = bz.wraith ? "wraith" : bz.tank ? "tank" : "giant";
+      const kd = bz.lumber ? "lumber" : bz.wraith ? "wraith" : bz.tank ? "tank" : "giant";
       if (el.boss.dataset.k !== kd) { el.boss.dataset.k = kd; el.bossName.textContent = BOSS_NAME[kd]; }
       el.bossfill.style.transform = "scaleX(" + clamp(bz.hp / bz.maxHp, 0, 1).toFixed(3) + ")";
     } else if (!el.boss.hidden) el.boss.hidden = true;
@@ -935,8 +1083,12 @@
         lastInp.fire = false; lastInp.ads = false; lastInp.reload = false;
       } else potPrevFire = !!lastInp.fire;
       if (game.time > 12 && !$("tzone").hidden) $("tzone").hidden = true;
-      game.update(dt, lastInp); Coop.afterUpdate(game, dt); processEvents(); syncGame(dt); updateHud(dt); updateWeather(dt);
-      if (!game.alive && Coop.ended()) onDeath();
+      const waitRev = game.reviveWait && !Gore.busy();              // Segunda chance: mapa aberto (sozinho, o mundo para)
+      if (waitRev && !Rev.open()) Rev.show(); else if (!waitRev && Rev.open()) Rev.hide();
+      if (waitRev && !Coop.active()) { Rev.draw(); syncGame(0); }
+      else { game.update(dt, lastInp); Coop.afterUpdate(game, dt); processEvents(); syncGame(dt); updateHud(dt); updateWeather(dt); if (Rev.open()) Rev.draw(); }
+      if (Gore.busy() || game.reviveWait) { /* finalização ou escolha no mapa: a tela de morte espera */ }
+      else if (!game.alive && Coop.ended()) onDeath();
       else if (Coop.active() && Coop.ended()) onDeath();
     } else if (state === "pause" && Coop.active()) {
       game.update(dt, {}); Coop.afterUpdate(game, dt); processEvents(); syncGame(dt); updateHud(dt); updateWeather(dt);
@@ -953,7 +1105,11 @@
       }
       vmFov.matrixWorldNeedsUpdate = true;
     }
+    let hid = null;                                              // finalização em 3ª pessoa: esconde braços/arma presos à câmera
+    if (Gore.busy()) { hid = []; for (const c of camera.children) if ((!c.isLight || c.isSpotLight) && c.visible) { c.visible = false; hid.push(c); } }
+    $("stage").classList.toggle("cine", !!hid);
     renderer.render(scene, camera);
+    if (hid) for (const c of hid) c.visible = true;
     if (state === "menu" && ui.tab === "arsenal" && pvRenderer) { pvPivot.rotation.y += dt * 0.7; pvRenderer.render(pvScene, pvCam); }
   }
 

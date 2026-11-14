@@ -95,7 +95,11 @@ const Logic = (function () {
     tank: { hp: 2400, grow: 170, speed: 0.95, dmg: 1.7, pts: 1500, coins: 40, s: [1.9, 2.0] },
     samurai: { hp: 1300, grow: 110, speed: 2.5, dmg: 1.5, pts: 800, coins: 25, s: [0.97, 1.0] },
     wraith: { hp: 1500, grow: 140, speed: 9.5, dmg: 1, pts: 2000, coins: 60, s: [1.27, 1.29] },
+    lumber: { hp: 7000, grow: 450, speed: 1.55, dmg: 1, pts: 4000, coins: 120, s: [2.1, 2.2], min: 7000 },   // Lenhador: o dobro do zumbi comum, machado de duas mãos
   };
+  // Lenhador: aparece em todas as dificuldades (onda inicial, intervalo)
+  const LUMBER_AT = { easy: [5, 5], normal: [5, 5], hard: [4, 4], nightmare: [4, 4], extremo: [3, 3], apocalipse: [3, 3] };
+  for (const k in LUMBER_AT) { const d = DIFF[k]; d.elite = Object.assign({}, d.elite || {}, { lumber: { from: LUMBER_AT[k][0], every: LUMBER_AT[k][1], grow: 99, cap: 1, max: 1 } }); }
 
   // golpes do Mestre da Katana: preparo, golpe, recuperação (s), alcance e avanço (m), cone de acerto e multiplicador de dano
   const SAM = {
@@ -406,7 +410,9 @@ const Logic = (function () {
       const E = ELITE[kind];
       this.kind = kind; this.runner = kind === "runner"; this.giant = kind === "giant";
       this.tank = kind === "tank"; this.samurai = kind === "samurai"; this.wraith = kind === "wraith"; this.elite = !!E;
-      this.brute = kind === "brute" || this.giant || this.tank;
+      this.lumber = kind === "lumber"; this.heavy = this.giant || this.tank || this.lumber;
+      this.brute = kind === "brute" || this.heavy;
+      this.ax = 0; this.ay = 0;           // Lenhador: onde o machado caiu
       this.s = this.giant ? g.uniform(2.05, 2.25) : E ? g.uniform(E.s[0], E.s[1]) : kind === "brute" ? 1.35 : g.uniform(0.95, 1.08);
       this.stepN = 0;
       this.hp = hp; this.maxHp = hp; this.speed = speed; this.dmgMul = dmgMul;
@@ -565,7 +571,7 @@ const Logic = (function () {
         const f = this.shotFilter(z, "torso", z.x, z.y, 1.1);
         if (f.dodged) { n++; continue; }
         if (f.blocked) { this.events.push(["block", z.x - dx / d * 0.6, z.y - dy / d * 0.6, 1.2, z.id]); n++; continue; }
-        const kn = z.tank || z.giant ? 0.05 : z.wraith ? 0 : z.brute ? 0.2 : 1;
+        const kn = z.heavy ? 0.05 : z.wraith ? 0 : z.brute ? 0.2 : 1;
         z.kx += (dx / d) * M.knock * kn; z.ky += (dy / d) * M.knock * kn;
         this.damageZombie(z, M.dmg * f.mul, "torso", [z.x, z.y, 1.1], { knock: 0, melee: true });
         z.stagger = Math.max(z.stagger, z.brute ? 0.3 : z.samurai ? 0.2 : 0.8);
@@ -682,10 +688,10 @@ const Logic = (function () {
       const sh = this._shooter;
       if (!c.melee) dmg *= this.dmgBoost;
       z.hp -= dmg; z.hitT = 0.12;
-      if (!c.fire) z.stagger = Math.max(z.stagger, (0.18 + (c.knock || 0) * 0.8) * (z.giant || z.tank ? 0.1 : z.samurai ? 0.5 : z.wraith ? 0 : 1));
+      if (!c.fire) z.stagger = Math.max(z.stagger, (0.18 + (c.knock || 0) * 0.8) * (z.heavy ? 0.1 : z.samurai ? 0.5 : z.wraith ? 0 : 1));
       if (zone === "legs" && !z.wraith) z.slowT = 3;
       if (c.knock) {
-        const dx = z.x - this.px, dy = z.y - this.py, d = Math.hypot(dx, dy) || 1, kn = z.giant || z.tank ? 0.02 : z.wraith ? 0 : z.samurai ? 0.4 : z.brute ? 0.2 : 1;
+        const dx = z.x - this.px, dy = z.y - this.py, d = Math.hypot(dx, dy) || 1, kn = z.heavy ? 0.02 : z.wraith ? 0 : z.samurai ? 0.4 : z.brute ? 0.2 : 1;
         z.kx += (dx / d) * c.knock * 14 * kn; z.ky += (dy / d) * c.knock * 14 * kn;
       }
       if (!c.fire) {
@@ -693,7 +699,7 @@ const Logic = (function () {
         this.events.push(["hit", p[0], p[1], p[2], head, z.id]);
       }
       if (z.hp <= 0) {
-        z.state = "dead"; z.deadT = 0; z.headGone = head && z.hp < -20 && !z.wraith && !z.tank; z.untouch = false;
+        z.state = "dead"; z.deadT = 0; z.headGone = head && z.hp < -20 && !z.wraith && !z.tank && !z.lumber; z.untouch = false;
         const E = ELITE[z.kind], D = this.diff;
         const pts = Math.round((100 + (head ? 50 : 0) + (z.giant ? 900 : z.brute ? 150 : 0) + (E ? E.pts : 0)) * D.score);
         this.score += pts;
@@ -706,7 +712,7 @@ const Logic = (function () {
           }
         }
         else if (z.giant || E) {                                    // gigantes e especiais soltam um tesouro
-          const nh = z.giant ? 2 : z.samurai ? 1 : 2, na = z.giant ? 3 : z.samurai ? 2 : 3;
+          const nh = z.giant ? 2 : z.samurai ? 1 : z.lumber ? 3 : 2, na = z.giant ? 3 : z.samurai ? 2 : z.lumber ? 4 : 3;
           for (let i = 0; i < nh; i++) this.pickups.push(new Pickup("health", z.x, z.y, this.rnd));
           for (let i = 0; i < na; i++) this.pickups.push(new Pickup("ammo", z.x, z.y, this.rnd));
         } else {
@@ -733,7 +739,7 @@ const Logic = (function () {
       this.queue = [];
       const EL = this.diff.elite;
       if (EL) {
-        for (const k of ["samurai", "tank", "wraith"]) for (let i = 0, n = this.eliteCount(EL[k], this.wave); i < n; i++) this.queue.push(k);
+        for (const k of ["samurai", "tank", "wraith", "lumber"]) for (let i = 0, n = this.eliteCount(EL[k], this.wave); i < n; i++) this.queue.push(k);
         for (let i = this.queue.length - 1; i > 0; i--) { const j = this.randint(i + 1); [this.queue[i], this.queue[j]] = [this.queue[j], this.queue[i]]; }
       }
       this.toSpawn += this.giantsLeft + this.queue.length; this.giantTotal = this.toSpawn; this.queueTotal = this.toSpawn;
@@ -750,7 +756,7 @@ const Logic = (function () {
         if (this.nearAny(x, y, 14) || insideAny(x, y, 0.9)) continue;
         break;
       }
-      const brutes = this.zombies.filter((z) => z.brute && !z.giant && !z.tank && z.state !== "dead").length;
+      const brutes = this.zombies.filter((z) => z.brute && !z.heavy && z.state !== "dead").length;
       const giantsUp = this.zombies.filter((z) => z.giant && z.state !== "dead").length;
       const reserve = this.queue.length + this.giantsLeft, forced = reserve > 0 && this.toSpawn <= reserve;   // vagas guardadas para os especiais
       let kind = "walker";
@@ -774,14 +780,15 @@ const Logic = (function () {
     }
     spawnElite(kind, x, y) {
       const E = ELITE[kind], D = this.diff, w = this.wave, hpMul = Math.pow(D.hp, 0.6);   // chefes crescem com a dificuldade, mas bem mais devagar que os zumbis comuns
-      const hp = (E.hp + E.grow * (w - 1)) * hpMul, speed = E.speed * (kind === "wraith" ? 1 : 1 + 0.04 * (D.extreme || 0));
+      const hp = Math.max(E.min || 0, (E.hp + E.grow * (w - 1)) * hpMul), speed = E.speed * (kind === "wraith" ? 1 : 1 + 0.04 * (D.extreme || 0));
       if (kind === "wraith") { const a = this.rnd() * 6.28, tp = this.randomPlayer(); x = clamp(tp.x + Math.cos(a) * 16, -ARENA + 2, ARENA - 2); y = clamp(tp.y + Math.sin(a) * 16, -ARENA + 2, ARENA - 2); }
       const z = new Zombie(x, y, hp, speed, kind, this.randint(3), this, E.dmg);
       this.zombies.push(z);
       if (kind === "wraith") { z.untouch = true; z.vis = 0; z.act = "stalk"; }
       if (kind === "samurai") { z.act = "approach"; z.cd = this.uniform(0.5, 1.5); }
+      if (kind === "lumber") { z.combo = 1; z.cd = 1.5; }
       this.events.push(["elite", kind, z.id]);
-      const T = { tank: ["COLOSSO BLINDADO", "O escudo bloqueia tiros de frente · ataque pelos lados e costas"], samurai: ["MESTRE DA KATANA", "Rápido, esquiva tiros · cuidado com a investida"], wraith: ["O ESPECTRO", "Invisível e imune · só pode ser ferido quando ataca"] }[kind];
+      const T = { tank: ["COLOSSO BLINDADO", "O escudo bloqueia tiros de frente · ataque pelos lados e costas"], samurai: ["MESTRE DA KATANA", "Rápido, esquiva tiros · cuidado com a investida"], wraith: ["O ESPECTRO", "Invisível e imune · só pode ser ferido quando ataca"], lumber: ["O LENHADOR", "Um golpe mata · desvie e atire quando o machado prender ou voar longe"] }[kind];
       this.banner = T[0]; this.bannerSub = T[1]; this.bannerT = 3.6;
       return true;
     }
@@ -821,14 +828,32 @@ const Logic = (function () {
       if (!o.soft) this.events.push(["hurt", rel]);
       if (this.hp <= 0) {
         if (this.gm === "infect" && this.team === "h") { this.hp = 1; this.becomeZombie(this.coop.id); return; }
-        if (this.revives > 0) {                                  // "Segunda chance" da loja
-          this.revives -= 1; this.hp = this.maxHp; this.armor = Math.max(this.armor, this.armorMax * 0.5); this.invulnT = 4; this.shake = 1.4;
-          for (const q of this.zombies) if (q.state !== "dead" && !q.wraith) { const dx = q.x - this.px, dy = q.y - this.py, d = Math.hypot(dx, dy) || 1; if (d < 14) { q.kx += (dx / d) * 22; q.ky += (dy / d) * 22; q.stagger = 2.5; } }
-          this.events.push(["revive"]); this.banner = "SEGUNDA CHANCE"; this.bannerSub = "Vida cheia e 4 s invencível!"; this.bannerT = 3;
-          return;
-        }
-        this.hp = 0; this.alive = false; this.events.push(["dead"]);
+        this.hp = 0; this.alive = false;
+        if (this.revives > 0 && this.gm !== "infect") { this.reviveWait = true; this.events.push(["revive_wait"]); return; }   // "Segunda chance": o jogador escolhe no mapa onde voltar
+        this.events.push(["dead"]);
       }
+    }
+    // Segunda chance: volta no ponto escolhido no mapa (vida cheia, 4 s invencível, zumbis por perto arremessados)
+    reviveAt(x, y) {
+      if (!this.reviveWait || this.revives <= 0) return false;
+      const lim = ARENA - 1;
+      [x, y] = pushOut(clamp(x, -lim, lim), clamp(y, -lim, lim), PLAYER_R + 0.15, 0);
+      this.reviveWait = false; this.finBy = null;
+      if (this.coop && this.coop.role === "guest") { this.revPending = [x, y]; return true; }       // quem revive é o anfitrião (znet manda o pedido)
+      this.revives -= 1; this.px = x; this.py = y; this.gz = groundAt(x, y, 0); this.vz = 0; this.kvx = this.kvy = 0;
+      this.alive = true; this.hp = this.maxHp; this.armor = Math.max(this.armor, this.armorMax * 0.5); this.invulnT = 4; this.shake = 1.4; this.over = false;
+      this.blastAway(x, y);
+      this.events.push(["revive"]); this.banner = "SEGUNDA CHANCE"; this.bannerSub = "Vida cheia e 4 s invencível!"; this.bannerT = 3;
+      return true;
+    }
+    blastAway(x, y) { for (const q of this.zombies) if (q.state !== "dead" && !q.wraith && !q.puppet) { const dx = q.x - x, dy = q.y - y, d = Math.hypot(dx, dy) || 1; if (d < 12) { const k = q.heavy ? 0.15 : 1; q.kx += (dx / d) * 22 * k; q.ky += (dy / d) * 22 * k; q.stagger = Math.max(q.stagger, 2.5 * k); } } }
+    declineRevive() { if (!this.reviveWait) return; this.reviveWait = false; this.events.push(["dead"]); }
+    // anfitrião: convidado usou a Segunda chance (uma por partida)
+    reviveRemote(id, x, y) {
+      const o = this.others.find((q) => q.id === id); if (!o || o.alive || o.revUsed || this.gm === "infect") return;
+      const lim = ARENA - 1; [x, y] = pushOut(clamp(+x || 0, -lim, lim), clamp(+y || 0, -lim, lim), PLAYER_R + 0.15, 0);
+      o.revUsed = true; o.alive = true; o.hp = o.maxHp; o.invulnT = 4; o.x = o.tx = x; o.y = o.ty = y; this.over = false;
+      this.blastAway(x, y); this.fx(o.id, ["revived", x, y]);
     }
     push(vx, vy) { if (this._tgt) { this.fx(this._tgt.id, ["push", vx, vy]); return; } this.kvx += vx; this.kvy += vy; }
 
@@ -945,10 +970,103 @@ const Logic = (function () {
         if (z.blocked > 0.2 && z.sideT <= 0) { z.side = this.rnd() < 0.5 ? -1 : 1; z.sideT = this.uniform(0.8, 1.6); z.blocked = 0; }
       } else z.blocked = Math.max(0, z.blocked - dt);
       z.phase += dt * (spd * 2.4 + 1);
-      if (z.giant || z.tank) {
+      if (z.heavy) {
         const n = Math.floor(z.phase / Math.PI);
-        if (n !== z.stepN) { z.stepN = n; this.shake = Math.max(this.shake, clamp(1 - dist / 24, 0, 1) * (z.tank ? 0.3 : 0.55)); this.events.push(["stomp", this.hostDist(z.x, z.y), z.tank ? 1 : 0]); }
+        if (n !== z.stepN) { z.stepN = n; this.shake = Math.max(this.shake, clamp(1 - dist / (z.lumber ? 30 : 24), 0, 1) * (z.tank ? 0.3 : z.lumber ? 0.85 : 0.55)); this.events.push(["stomp", this.hostDist(z.x, z.y), z.tank ? 1 : z.lumber ? 2 : 0]); }
       }
+    }
+
+    // ---- Lenhador: machado de duas mãos. Um golpe mata; errar custa caro (machado preso no chão / arremessado) ----
+    //  z.combo = 1 com o machado na mão · z.ax,z.ay = onde o machado caiu · z.dodgeDir = duração do "preso" · z.atk = último golpe
+    updateLumber(z, dt, dist, dx, dy) {
+      const s = z.s, tg = this._tgt, tgtMax = tg ? tg.maxHp : this.maxHp, alive = () => (tg ? tg.alive : this.alive);
+      const fx = -Math.sin(z.yaw), fy = Math.cos(z.yaw);
+      const along = dx * fx + dy * fy, side = Math.abs(dx * -fy + dy * fx);          // jogador no referencial do zumbi
+      const once = (bit) => { if (z.ev & bit) return false; z.ev |= bit; return true; };
+      const go = (act, cd) => { z.act = act; z.seqT = 0; z.ev = 0; if (cd !== undefined) z.cd = cd; };
+      const quake = (k, r) => { this.shake = Math.max(this.shake, clamp(1 - dist / (r || 30), 0.15, 1) * k); };
+      const finish = (type) => { z.atk = type; go("fin"); this.events.push(["lum_fin", z.id, type, tg ? tg.id : (this.coop ? this.coop.id : 0), r2(this.px), r2(this.py)]); if (tg) this.fx(tg.id, ["lum_fin", z.id, type]); else this.finBy = [z.id, type]; };
+      const r2 = (v) => Math.round(v * 100) / 100;
+      z.seqT += dt; const t = z.seqT;
+      switch (z.act) {
+        case "chop": {                                              // 1) machado erguido com as duas mãos e descida brutal
+          z.state = "attack";
+          if (t < 0.75) this.turnToward(z, this.px, this.py, 1.6, dt);
+          if (t >= 0.25 && once(1)) this.events.push(["lum_roar", z.x, z.y, 0]);
+          if (t >= 1.05 && once(2)) {
+            const ix = z.x + fx * 1.12 * s, iy = z.y + fy * 1.12 * s;
+            quake(1.7, 34);
+            if (alive() && along > 0.2 && along < 1.55 * s && side < 0.95) {
+              const was = alive(); this.hurt(tgtMax * 1.3, z);
+              if (was && !alive()) return finish("split");
+              this.push(fx * 9, fy * 9); this.events.push(["lum_hit", this.px, this.py]); go("recover", 2.2); return;
+            }
+            z.dodgeDir = r2(this.uniform(5.5, 9)); z.ax = r2(ix); z.ay = r2(iy);
+            this.events.push(["lum_stuck", r2(ix), r2(iy), r2(z.yaw)]); go("stuck"); return;
+          }
+          return;
+        }
+        case "stuck": {                                             // machado enterrado: três puxões (5 a 10 s vulnerável)
+          z.state = "attack"; const T = z.dodgeDir || 6;
+          for (let i = 0; i < 3; i++) if (t >= T * (0.22 + 0.3 * i) && once(1 << i)) { quake(i === 2 ? 0.9 : 0.35, 22); this.events.push(["lum_pull", z.ax, z.ay, i]); }
+          if (t >= T) go("recover", 1.4);
+          return;
+        }
+        case "spin": {                                              // 2) giro de machado
+          z.state = "attack";
+          if (t < 0.85) { this.turnToward(z, this.px, this.py, 2.2, dt); return; }
+          if (once(1)) this.events.push(["lum_spin", z.x, z.y]);
+          if (t < 1.65) {
+            z.yaw = wrapAngle(z.yaw + (Math.PI * 2 / 0.8) * dt);
+            if (alive() && !z.landed && dist < 1.22 * s + PLAYER_R) {
+              z.landed = true; const was = alive(); this.hurt(tgtMax * 1.3, z); quake(1.2);
+              if (was && !alive()) return finish("slash");
+              const k = dist || 1; this.push((dx / k) * 15, (dy / k) * 15); this.events.push(["lum_hit", this.px, this.py]);
+            }
+            return;
+          }
+          if (z.landed) { go("recover", 2.4); return; }
+          // errou: o machado escapa e ele cai
+          const d = this.uniform(8, 12), lim = ARENA - 1.6;
+          const p = pushOut(clamp(z.x + fx * d, -lim, lim), clamp(z.y + fy * d, -lim, lim), 0.6);
+          z.ax = r2(p[0]); z.ay = r2(p[1]); z.combo = 0;
+          this.events.push(["lum_throw", r2(z.x), r2(z.y), z.ax, z.ay, r2(z.yaw)]); go("down"); return;
+        }
+        case "down": z.state = "attack"; if (t >= 0.45 && once(1)) { quake(1.5, 32); this.events.push(["lum_fall", z.x, z.y]); } if (t >= 3) go("rise"); return;
+        case "rise": z.state = "attack"; if (t >= 3) { z.landed = this.rnd() < 0.5; z.hitDone = false; z.dodgeCd = 2 + this.randint(2); z.orb = 0; go(z.landed ? "walk" : "fetch", 0.4); } return;   // landed: vai de mãos vazias
+        case "fetch": {                                             // volta para buscar o machado
+          const ax = z.ax - z.x, ay = z.ay - z.y, ad = Math.hypot(ax, ay) || 1e-6;
+          z.state = "walk"; this.turnToward(z, z.ax, z.ay, 3, dt);
+          if (ad < 0.9 * s) { go("grab"); return; }
+          this.walkToward(z, dt, ax, ay, ad, z.speed * 1.25);
+          return;
+        }
+        case "grab": z.state = "attack"; if (t >= 0.9) { z.combo = 1; this.events.push(["lum_grab", z.x, z.y]); go("walk", 0.6); } return;
+        case "punch": case "kick": {                                // sem machado: soco (metade da vida) e chute; os dois arremessam
+          z.state = "attack"; const kick = z.act === "kick", at = kick ? 0.5 : 0.42;
+          if (t < at) this.turnToward(z, this.px, this.py, 2.5, dt);
+          if (t >= at && once(1)) {
+            quake(0.6);
+            if (alive() && along > 0 && along < 1.25 * s && side < 1.0) {
+              this.hurt(tgtMax * (kick ? 0.3 : 0.5), z, { pierce: true });
+              this.push(fx * (kick ? 22 : 15), fy * (kick ? 22 : 15)); this.shake = Math.max(this.shake, 1.2); this.events.push(["lum_blow", this.px, this.py, kick ? 1 : 0]);
+            } else this.events.push(["lum_whiff", z.x, z.y]);
+          }
+          if (t >= (kick ? 1.15 : 1.0)) { z.dodgeCd -= 1; go(z.dodgeCd <= 0 ? "fetch" : "walk", 0.9); }
+          return;
+        }
+        case "recover": z.state = "walk"; if (t >= 0.9) go("walk"); return;
+        case "fin": z.state = "attack"; if (t >= 7) go("walk", 1.5); return;      // finalização (a câmera do jogador morto assiste)
+      }
+      // andando atrás do alvo
+      z.state = "walk"; z.cd -= dt;
+      const ang = this.turnToward(z, this.px, this.py, 2.0, dt), armed = z.combo === 1;
+      if (!armed) { z.orb += dt; if (z.orb > 9) { go("fetch"); return; } }                 // cansou de correr atrás: volta para o machado
+      if (z.cd <= 0 && alive() && Math.abs(ang) < 0.5) {
+        if (armed && dist < 1.3 * s) { z.landed = false; z.atk = this.rnd() < 0.5 ? "chop" : "spin"; go(z.atk); return; }
+        if (!armed && dist < 1.05 * s) { z.atk = this.rnd() < 0.55 ? "punch" : "kick"; go(z.atk); return; }
+      }
+      if (dist > (armed ? 1.0 : 0.7) * s) this.walkToward(z, dt, dx, dy, dist, z.speed * (armed ? 1 : 1.75) * (z.slowT > 0 ? 0.85 : 1));
     }
 
     // ---- Colosso Blindado: escudo, investida e batida no chão (sequência de 5 s) ----
@@ -1215,6 +1333,7 @@ const Logic = (function () {
     zombieAI(z, dt, base) {
       const dx = this.px - z.x, dy = this.py - z.y, dist = Math.hypot(dx, dy) || 1e-6;
       if (z.tank) { this.updateTank(z, dt, dist); return; }
+      if (z.lumber) { this.updateLumber(z, dt, dist, dx, dy); return; }
       if (z.samurai) { this.updateSamurai(z, dt, dist, dx, dy); return; }
       if (z.wraith) { this.updateWraith(z, dt, dist); return; }
       const diff = wrapAngle(Math.atan2(-dx, dy) - z.yaw);
@@ -1326,7 +1445,7 @@ const Logic = (function () {
       if (this.gm === "infect") { this.updateInfect(dt); this.updateZombies(dt); this.updatePickups(dt); this.updateBoosts(dt); this.updatePots(dt); }
       else if (this.gm === "explore") { this.updateBoosts(dt); }
       else { this.updateWaves(dt); this.updateZombies(dt); this.updatePickups(dt); this.updateCracks(dt); }
-      if (this.coop && !this.alive && !this.over && !this.others.some((o) => o.alive)) this.over = true;
+      if (this.coop && !this.alive && !this.reviveWait && !this.over && !this.others.some((o) => o.alive)) this.over = true;
     }
 
     // =====================================================================================================
@@ -1421,6 +1540,7 @@ const Logic = (function () {
     }
     teamAlive() { return this.alive || this.others.some((o) => o.alive); }
     respawnDead() {
+      this.reviveWait = false;
       const at = (i) => [-2 + i * 1.6, -4];
       if (!this.alive) { this.alive = true; this.hp = this.maxHp; this.armor = this.armorMax; this.invulnT = 3; this.px = 0; this.py = -4; this.kvx = this.kvy = 0; this.events.push(["respawned"]); }
       this.others.forEach((o, i) => { if (!o.alive) { o.alive = true; o.hp = o.maxHp; o.armor = o.armorMax; o.invulnT = 3; const q = at(i + 1); o.x = q[0]; o.y = q[1]; this.fx(o.id, ["respawn", q[0], q[1]]); } });
@@ -1429,7 +1549,7 @@ const Logic = (function () {
     makeSnapshot(newZ, newP) {
       const r2 = (v) => Math.round(v * 100) / 100;
       const z = [];
-      for (const q of this.zombies) z.push([q.id, r2(q.x), r2(q.y), r2(q.yaw), q.state, Math.round(q.hp), r2(q.hitT), r2(q.deadT), r2(q.phase), r2(q.attackT), q.act, r2(q.actT), r2(q.seqT), r2(q.vis), q.atk, q.combo, q.dodgeDir, q.headGone ? 1 : 0, q.untouch ? 1 : 0, r2(q.shield), r2(q.gz || 0)]);
+      for (const q of this.zombies) z.push([q.id, r2(q.x), r2(q.y), r2(q.yaw), q.state, Math.round(q.hp), r2(q.hitT), r2(q.deadT), r2(q.phase), r2(q.attackT), q.act, r2(q.actT), r2(q.seqT), r2(q.vis), q.atk, q.combo, q.dodgeDir, q.headGone ? 1 : 0, q.untouch ? 1 : 0, r2(q.shield), r2(q.gz || 0), q.ax || 0, q.ay || 0]);
       const p = this.pickups.map((k) => [k.id, r2(k.x), r2(k.y), r2(k.h), k.landed ? 1 : 0, r2(k.pull)]);
       const me = this.coop.id, pl = [[me, r2(this.px), r2(this.py), r2(this.yaw), r2(this.pitch), Math.round(this.hp), this.maxHp, this.alive ? 1 : 0, this.w().cfg.id, this.crouchT > 0.5 ? 1 : 0, this.moving ? 1 : 0, Math.round(this.armor), this.kills, this.headshots, this.bonus, this.team || "h", this.armorMax, r2(this.gz)]];
       for (const o of this.others) pl.push([o.id, r2(o.x), r2(o.y), r2(o.yaw), r2(o.pitch), Math.round(o.hp), o.maxHp, o.alive ? 1 : 0, o.wi, o.cr, o.mv, Math.round(o.armor), o.kills, o.hs, o.bonus, o.team || "h", o.armorMax || 0, r2(o.gz || 0), o.bot ? o.name : ""]);
@@ -1926,7 +2046,7 @@ const Logic = (function () {
         q.tx = a[1]; q.ty = a[2]; q.tyaw = a[3];
         q.state = a[4]; q.hp = a[5]; q.hitT = Math.max(q.hitT, a[6]); q.deadT = a[7];
         const rate = (a[8] - q.psnap) / dsn; q.psnap = a[8]; q.phRate = clamp(rate, 0, 40); q.phase = a[8];
-        q.attackT = a[9]; q.act = a[10]; q.actT = a[11]; q.seqT = a[12]; q.vis = a[13]; q.atk = a[14]; q.combo = a[15]; q.dodgeDir = a[16]; q.headGone = !!a[17]; q.untouch = !!a[18]; q.shield = a[19]; q.gz = a[20] || 0;
+        q.attackT = a[9]; q.act = a[10]; q.actT = a[11]; q.seqT = a[12]; q.vis = a[13]; q.atk = a[14]; q.combo = a[15]; q.dodgeDir = a[16]; q.headGone = !!a[17]; q.untouch = !!a[18]; q.shield = a[19]; q.gz = a[20] || 0; q.ax = a[21] || 0; q.ay = a[22] || 0;
         if (q.state === "dead") { q.x = q.tx; q.y = q.ty; q.yaw = q.tyaw; }
       }
       for (let i = this.zombies.length - 1; i >= 0; i--) { const q = this.zombies[i]; if (!seen.has(q.id)) { this.zombies.splice(i, 1); this.zmap.delete(q.id); } }
@@ -1984,8 +2104,11 @@ const Logic = (function () {
           else { let gain = 0; this.slots.forEach((s, i) => { const b = s.reserve; s.reserve = Math.min(s.cfg.maxRes * (1 + this.perks.ammoPack), s.reserve + Math.round(s.cfg.ammoPick * (i === this.cur ? 1 : 0.5))); if (i === this.cur) gain = s.reserve - b; }); this.events.push(["pickup", "ammo", gain]); }
           break;
         case "clearbonus": for (const s of this.slots) s.reserve = Math.min(s.cfg.maxRes * (1 + this.perks.ammoPack), s.reserve + Math.round(s.cfg.ammoPick * 1.5 * this.diff.ammo)); break;
-        case "down": this.events.push(["dead"]); break;                       // aviso no centro da tela (znet: "Você volta na próxima onda")
-        case "respawn": this.px = ev[1]; this.py = ev[2]; this.kvx = this.kvy = 0; this.invulnT = 3; this.banner = "DE VOLTA!"; this.bannerSub = "Você renasceu"; this.bannerT = 3;
+        case "down": if (this.revives > 0 && this.gm !== "infect") { this.reviveWait = true; this.events.push(["revive_wait"]); } else this.events.push(["dead"]); break;                       // aviso no centro da tela (znet: "Você volta na próxima onda")
+        case "lum_fin": this.finBy = [ev[1], ev[2]]; break;
+        case "revived": this.revives = 0; this.reviveWait = false; this.px = ev[1]; this.py = ev[2]; this.kvx = this.kvy = 0; this.invulnT = 4; this.shake = 1.4;
+          this.events.push(["revive"]); this.banner = "SEGUNDA CHANCE"; this.bannerSub = "Vida cheia e 4 s invencível!"; this.bannerT = 3; break;
+        case "respawn": this.reviveWait = false; this.px = ev[1]; this.py = ev[2]; this.kvx = this.kvy = 0; this.invulnT = 3; this.banner = "DE VOLTA!"; this.bannerSub = "Você renasceu"; this.bannerT = 3;
           for (const s of this.slots) s.reserve = Math.max(s.reserve, Math.round(s.cfg.reserve * this.diff.ammo * 0.5)); break;
       }
     }
