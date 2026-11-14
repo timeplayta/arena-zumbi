@@ -159,6 +159,8 @@
       cylY(0.0065, 0.008, K.park, 0, v + 0.05, u + 0.004); cylX(0.0065, 0.008, K.park, 0.02, v + 0.03, u + 0.004);
       return v + 0.03;
     };
+    // alça de mira em anel (dioptro) virada para o olho: na mira o olhar passa pelo furo e vê a massa de mira no centro da tela
+    const peep = (u, v, R, t) => { const r = new THREE.Mesh(new THREE.TorusGeometry(R, t, 10, 28), K.park); r.position.set(0, v, -u); g.add(r); return r; };
     // silenciador: corpo com anéis, recua o ponto do clarão
     const silencer = (u, v, r, len) => {
       lathe([[0, 0], [r * 0.7, 0], [r, 0.008], [r, len - 0.006], [r * 0.85, len], [0.004, len], [0, len]], K.park, v, u);
@@ -238,8 +240,8 @@
       const ring = new THREE.Mesh(new THREE.TorusGeometry(0.0125, 0.0028, 8, 20), K.park); ring.position.set(0, 0.086, -0.325); g.add(ring);
       box(0.0022, 0.012, 0.003, K.steel, 0, 0.08, 0.325);
       box(0.026, 0.018, 0.03, K.park, 0, 0.068, -0.07);
-      cylX(0.0135, 0.03, K.park, 0, 0.083, -0.07);
-      box(0.0018, 0.006, 0.0025, K.dark, 0, 0.097, -0.07 + 0.0012);
+      cylX(0.006, 0.03, K.park, 0, 0.076, -0.07);                                                          // tambor (só a parte de baixo)
+      peep(-0.07, 0.086, 0.0115, 0.003); box(0.006, 0.006, 0.01, K.park, 0, 0.0745, -0.07);                 // anel de mira traseiro
       // cano curto com "3 lugs"
       tube(0.0095, 0.335, 0.365, 0.024, K.steel);
       for (let k = 0; k < 3; k++) { const a = (k / 3) * Math.PI * 2; box(0.006, 0.006, 0.012, K.steel, Math.cos(a) * 0.011, 0.024 + Math.sin(a) * 0.011, 0.35); }
@@ -257,7 +259,7 @@
       ext([[-0.1, 0.052], [-0.1, -0.012], [-0.22, -0.05], [-0.355, -0.08], [-0.355, 0.045], [-0.34, 0.052]], 0.04, K.body, { bev: 0.006 });
       ext([[-0.354, 0.046], [-0.354, -0.08], [-0.372, -0.082], [-0.372, 0.048]], 0.044, K.rubber, { bev: 0.004 });
       if (has("grip")) { ext([[0.27, -0.004], [0.27, -0.09], [0.24, -0.095], [0.235, -0.004]], 0.03, K.grip, { bev: 0.006 }); }
-      sightTop = 0.088; muzzle = [0, 0.024, -0.366]; eject = [0.026, 0.036, -0.09];
+      sightTop = 0.086; muzzle = [0, 0.024, -0.366]; eject = [0.026, 0.036, -0.09];
       if (has("optic")) { box(0.03, 0.012, 0.06, K.park, 0, 0.066, 0.02); sightTop = redDot(0.02, 0.072); }
       if (has("sil")) muzzle[2] = -silencer(0.366, 0.024, 0.019, 0.17);
       if (withHands) {
@@ -306,11 +308,11 @@
       ext([[0.048, -0.04], [0.104, -0.04], [0.11, -L * 0.6, 0.136, -L], [0.078, -L - 0.006], [0.055, -L * 0.6, 0.048, -0.04]], 0.022, K.park, { p: mag, bev: 0.0015 });
       ext([[0.074, -L - 0.002], [0.14, -L + 0.004], [0.142, -L - 0.006], [0.074, -L - 0.014]], 0.026, K.park, { p: mag, bev: 0.002 });
       if (has("grip")) ext([[0.27, 0.0], [0.268, -0.085], [0.245, -0.09], [0.238, 0.0]], 0.032, K.grip, { bev: 0.006 });
-      sightTop = 0.094; muzzle = [0, 0.03, -0.518]; eject = [0.03, 0.036, -0.03];
+      sightTop = 0.103; muzzle = [0, 0.03, -0.518]; eject = [0.03, 0.036, -0.03];
       if (has("optic")) sightTop = redDot(0.03, 0.068);
       else {                                              // alça de mira rebatível no trilho
-        ext([[-0.06, 0.068], [-0.03, 0.068], [-0.032, 0.088], [-0.04, 0.104], [-0.05, 0.104], [-0.058, 0.088]], 0.024, K.park,
-          { bev: 0.0015, holes: [[[-0.042, 0.091], [-0.048, 0.091], [-0.048, 0.098], [-0.042, 0.098]]] });
+        ext([[-0.06, 0.068], [-0.03, 0.068], [-0.034, 0.088], [-0.056, 0.088]], 0.024, K.park, { bev: 0.0015 });
+        peep(-0.045, 0.103, 0.0105, 0.0035); box(0.008, 0.008, 0.012, K.park, 0, 0.09, -0.045);
       }
       if (has("sil")) muzzle[2] = -silencer(0.518, 0.03, 0.02, 0.17);
       if (withHands) {
@@ -448,7 +450,7 @@
       for (let k = 0; k < 4; k++) { const a = (k / 4) * Math.PI * 2 + 0.78; box(0.004, 0.004, 0.036, K.park, Math.cos(a) * 0.0145, 0.036 + Math.sin(a) * 0.0145, 0.646); }
       ext([[0.5, 0.05], [0.52, 0.05], [0.52, 0.078], [0.508, 0.092], [0.5, 0.078]], 0.012, K.park, { bev: 0.0012 });   // base da massa de mira
       box(0.002, 0.016, 0.003, K.white, 0, 0.088, 0.512);
-      ext([[-0.06, 0.082], [-0.03, 0.082], [-0.032, 0.1], [-0.04, 0.108], [-0.05, 0.108], [-0.058, 0.1]], 0.02, K.park, { bev: 0.0015, holes: [[[-0.042, 0.094], [-0.048, 0.094], [-0.048, 0.1], [-0.042, 0.1]]] });
+      if (!has("optic")) { ext([[-0.06, 0.07], [-0.03, 0.07], [-0.034, 0.082], [-0.056, 0.082]], 0.02, K.park, { bev: 0.0015 }); peep(-0.045, 0.096, 0.011, 0.0035); }
       ext([[-0.125, 0.064], [-0.41, 0.054], [-0.42, 0.046], [-0.42, -0.1], [-0.36, -0.108], [-0.25, -0.04], [-0.125, -0.016]], 0.05, K.poly, { bev: 0.006 });   // coronha
       ext([[-0.418, 0.048], [-0.418, -0.102], [-0.436, -0.104], [-0.436, 0.05]], 0.052, K.rubber, { bev: 0.004 });
       ext([[-0.04, 0.0], [-0.052, -0.07], [-0.07, -0.122], [-0.102, -0.118], [-0.086, -0.012]], 0.032, K.grip, { bev: 0.004 });          // empunhadura
@@ -463,7 +465,7 @@
         box(0.02, 0.012, 0.03, K.park, 0, 0.0, 0.5);
         for (const sx of [-1, 1]) { const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.0055, 0.0045, 0.19, 8), K.park); leg.position.set(sx * 0.034, -0.09, -0.48); leg.rotation.set(-0.3, 0, sx * 0.32); g.add(leg); }
       }
-      sightTop = 0.1; muzzle = [0, 0.036, -0.674]; eject = [0.03, 0.04, 0.02];
+      sightTop = 0.096; muzzle = [0, 0.036, -0.674]; eject = [0.03, 0.04, 0.02];
       if (has("optic")) sightTop = redDot(0.02, 0.09);
       if (has("sil")) muzzle[2] = -silencer(0.674, 0.036, 0.022, 0.2);
       if (withHands) {
