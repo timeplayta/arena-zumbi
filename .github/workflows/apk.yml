@@ -39,4 +39,5 @@ jobs:
           git config user.email "41898283+github-actions[bot]@users.noreply.github.com"
           git add apk/Arena-Zumbi.apk
           git commit -m "APK gerado automaticamente" || exit 0
-          git pull --rebase && git push
+          for i in 1 2 3 4 5; do git pull --rebase && git push && exit 0; sleep 15; done   # o exe assinado pode ser salvo ao mesmo tempo
+          exit 1
