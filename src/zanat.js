@@ -124,6 +124,9 @@
         [0.29, 0.150, 0.100, -0.005], [0.34, 0.153, 0.095, -0.003], [0.38, 0.148, 0.086, 0], [0.41, 0.128, 0.073, 0.004], [0.438, 0.088, 0.062, 0.008], [0.46, 0.054, 0.054, 0.009]],
       fat: [[-0.04, 0.188, 0.150, 0.004], [0.02, 0.200, 0.160, 0.002], [0.09, 0.210, 0.166, 0], [0.17, 0.212, 0.160, -0.002], [0.25, 0.206, 0.150, -0.004],
         [0.32, 0.206, 0.138, -0.004], [0.37, 0.2, 0.124, 0], [0.405, 0.17, 0.106, 0.004], [0.436, 0.118, 0.086, 0.008], [0.46, 0.074, 0.07, 0.01], [0.478, 0.05, 0.06, 0.01]],
+      // musculoso: cintura fina, peito estufado e costas largas (V)
+      buff: [[-0.04, 0.150, 0.100, 0.004], [0.0, 0.144, 0.096, 0.004], [0.06, 0.142, 0.095, 0.002], [0.14, 0.158, 0.106, -0.002], [0.22, 0.182, 0.12, -0.008],
+        [0.29, 0.204, 0.134, -0.014], [0.345, 0.216, 0.132, -0.012], [0.39, 0.21, 0.116, -0.004], [0.42, 0.182, 0.098, 0.004], [0.446, 0.12, 0.076, 0.008], [0.468, 0.064, 0.064, 0.01]],
     };
     const NECK = [[0.0, 0.074, 0.074, 0], [0.025, 0.056, 0.058, -0.001], [0.06, 0.049, 0.052, -0.002], [0.1, 0.05, 0.052, -0.002], [0.112, 0.05, 0.052, -0.002]];
     const PELVIS = [[-0.11, 0.055, 0.04, 0.004], [-0.09, 0.1, 0.07, 0.004], [-0.05, 0.138, 0.096, 0.005], [0.0, 0.152, 0.106, 0.004], [0.06, 0.145, 0.1, 0.002], [0.098, 0.138, 0.094, 0.002]];
@@ -138,6 +141,11 @@
       let d = 0;
       if (kind === "F") { d += 0.024 * gs(y - 0.262, 0.05) * gs(da - 0.4, 0.19); d -= 0.005 * gs(y - 0.26, 0.05) * gs(df, 0.07); }
       else { d += (kind === "fat" ? 0.016 : 0.011) * gs(y - 0.29, 0.055) * gs(da - 0.5, 0.26); d -= 0.004 * gs(df, 0.07) * sst(0.1, 0.3, y) * sst(0.4, 0.34, y); }
+      if (kind === "buff") {                                                                     // peitorais estufados, tanquinho, trapézio e dorsais
+        d += 0.026 * gs(y - 0.3, 0.048) * gs(da - 0.42, 0.24) - 0.008 * gs(df, 0.05) * gs(y - 0.3, 0.07);
+        d += 0.007 * (gs(y - 0.08, 0.02) + gs(y - 0.135, 0.02) + gs(y - 0.19, 0.02)) * gs(da - 0.16, 0.09) - 0.004 * gs(df, 0.035) * sst(0.04, 0.12, y) * sst(0.26, 0.22, y);
+        d += 0.014 * gs(y - 0.25, 0.08) * gs(Math.abs(Math.abs(wrapA(phi)) - PI / 2) - 0.25, 0.3) + 0.012 * gs(y - 0.43, 0.025) * gs(da - 1.1, 0.4);
+      }
       if (kind === "M") d += 0.0045 * (gs(y - 0.115, 0.022) + gs(y - 0.17, 0.022) + gs(y - 0.225, 0.022)) * gs(da - 0.17, 0.1);
       if (kind === "fat") d += 0.042 * gs(y - 0.05, 0.09) * gs(df, 0.8) + 0.012 * gs(y - 0.13, 0.03) * gs(df, 0.9);
       d += 0.007 * gs(y - 0.30, 0.05) * gs(ba - 0.55, 0.22) - 0.004 * gs(bk, 0.08) * sst(0.05, 0.25, y) * sst(0.40, 0.30, y);
@@ -181,6 +189,7 @@
       torsoM: { secs: TORSO.M, bump: torsoBump("M"), ao: torsoAO, wr: WR.torso, seg: 22, sub: 3, openBot: true, infl: 1.045, add: 0.001 },
       torsoF: { secs: TORSO.F, bump: torsoBump("F"), ao: torsoAO, wr: WR.torso, seg: 22, sub: 3, openBot: true, infl: 1.045, add: 0.001 },
       torsoFat: { secs: TORSO.fat, bump: torsoBump("fat"), ao: torsoAO, wr: WR.torso, seg: 22, sub: 3, openBot: true, infl: 1.04, add: 0.001 },
+      torsoBuff: { secs: TORSO.buff, bump: torsoBump("buff"), ao: torsoAO, wr: WR.torso, seg: 24, sub: 3, openBot: true, infl: 1.04, add: 0.0015 },
       neck: { secs: NECK, bump: neckBump, ao: LIMB_AO.neck, seg: 12, sub: 2, openTop: true, cap: 2 },
       pelvis: { secs: PELVIS, bump: pelvisBump, ao: LIMB_AO.pelvis, wr: WR.pelvis, seg: 18, sub: 2, infl: 1.045, add: 0.001, cap: 2 },
       upper: { secs: UPPER, bump: upperBump, ao: LIMB_AO.upper, wr: WR.upper, seg: 16, sub: 2, cap: 2, infl: 1.06, add: 0.003 },
@@ -474,7 +483,7 @@
     }
 
     // ---------- decalques: perfis para ZB.Decals ----------
-    for (const k of ["torsoM", "torsoF", "torsoFat", "upper", "fore", "thigh", "shin"]) { const S = surf(k); ZB.PROF[k] = { f: S.f, bump: S.bump }; }
+    for (const k of ["torsoM", "torsoF", "torsoFat", "torsoBuff", "upper", "fore", "thigh", "shin"]) { const S = surf(k); ZB.PROF[k] = { f: S.f, bump: S.bump }; }
 
     return { part, ribbon, front, beltGeo, surf, paint, tex, handTpl, footTpl, fromTpl, skirtGeo, gownGeo, coatGeo, hemGeo, apronGeo, tube, prof, vnoise, clamp, lerp, sst, gs, wrapA, dFront, dBack, DEF };
   })();

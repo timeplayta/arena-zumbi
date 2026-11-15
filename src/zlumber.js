@@ -48,6 +48,7 @@
       this.gm.push(...ax.userData.mats);
       this.spine.add(ax);
       this.axMode = "hand"; this.fly = null; this.wasAct = ""; this.t0 = 0;
+      this.head.scale.multiplyScalar(1.12);                                              // cabeça proporcional ao corpo musculoso
       this.shL = this.sL.position.clone(); this.shR = this.sR.position.clone();
       this._v = new THREE.Vector3(); this._w = new THREE.Vector3(); this._m = new THREE.Matrix4(); this._q = new THREE.Quaternion();
       this.poleL = new THREE.Vector3(-0.5, -0.6, 0.5); this.poleR = new THREE.Vector3(0.5, -0.6, 0.5);

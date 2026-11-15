@@ -1,5 +1,10 @@
 # Novidades — Arena Zumbi
 
+## Lenhador musculoso e com sons próprios (14/11/2026)
+- O Lenhador agora é musculoso: peitoral estufado, ombros largos, braços grossos e cintura fina, no lugar do corpo gordo.
+- Corrigido o pisca-pisca na camisa xadrez: a pele não fura mais a roupa (vale também para os outros zumbis de camisa xadrez).
+- Sons novos do Lenhador: rugido, machado cortando o ar, machado batendo no chão, esforço para arrancar o machado, corte e sangue nas finalizações.
+
 ## O Lenhador e Segunda Chance com mapa (14/11/2026)
 - Novo chefe: O Lenhador. Zumbi enorme de barba e camisa xadrez, com machado de duas mãos e 7.000 de vida. Aparece em todas as dificuldades do modo de ondas.
 - Um golpe de machado mata. Se ele errar o golpe de cima, o machado prende no chão e ele leva de 5 a 10 segundos para arrancar. Se errar o giro, o machado voa longe e ele cai.

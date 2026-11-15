@@ -1,5 +1,10 @@
 # Novedades — Arena Zumbi
 
+## Leñador musculoso y con sonidos propios (14/11/2026)
+- El Leñador ahora es musculoso: pecho inflado, hombros anchos, brazos gruesos y cintura estrecha, en lugar del cuerpo gordo.
+- Corregido el parpadeo en la camisa a cuadros: la piel ya no atraviesa la ropa (también en los otros zombis con camisa a cuadros).
+- Sonidos nuevos del Leñador: rugido, hacha cortando el aire, hacha golpeando el suelo, esfuerzo para sacar el hacha, y el corte y la sangre en los remates.
+
 ## El Leñador y Segunda Oportunidad con mapa (14/11/2026)
 - Nuevo jefe: El Leñador. Un zombi enorme con barba y camisa a cuadros, con un hacha a dos manos y 7.000 de vida. Aparece en todas las dificultades del modo de oleadas.
 - Un golpe de hacha mata. Si falla el golpe desde arriba, el hacha se atasca en el suelo y tarda de 5 a 10 segundos en sacarla. Si falla el giro, el hacha sale volando y él se cae.

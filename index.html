@@ -819,7 +819,7 @@ table.sc td:first-child { font-family: var(--font-display); font-size: 22px; col
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
-const GAME_VERSION = 202611142022, GAME_NOTES = {"t": "O Lenhador e Segunda Chance com mapa (14/11/2026)", "b": ["Novo chefe: O Lenhador. Zumbi enorme de barba e camisa xadrez, com machado de duas mãos e 7.000 de vida. Aparece em todas as dificuldades do modo de ondas.", "Um golpe de machado mata. Se ele errar o golpe de cima, o machado prende no chão e ele leva de 5 a 10 segundos para arrancar. Se errar o giro, o machado voa longe e ele cai.", "Sem o machado ele corre atrás de você com soco (metade da vida) e chute, e os dois te arremessam.", "Duas finalizações em terceira pessoa quando o Lenhador mata: corte ao meio de cima para baixo e corte lateral.", "Os chefes agora deixam rachaduras e crateras no chão, e o machado rasga os containers.", "Segunda Chance custa 700 moedas: ao morrer, o mapa mostra os zumbis em vermelho e você clica duas vezes onde quer reviver, ou sai da partida."], "en": {"t": "The Lumberjack and Second Chance with a map (11/14/2026)", "b": ["New boss: The Lumberjack. A huge bearded zombie in a plaid shirt with a two-handed axe and 7,000 health. He shows up on every difficulty in wave mode.", "One axe blow kills. If he misses the overhead chop, the axe gets stuck in the ground and he takes 5 to 10 seconds to pull it out. If he misses the spin, the axe flies away and he falls.", "Without the axe he runs after you with a punch (half your health) and a kick, and both throw you back.", "Two third-person finishers when the Lumberjack kills: a top-down split and a side slash.", "Bosses now leave cracks and craters in the ground, and the axe tears through containers.", "Second Chance costs 700 coins: when you die, the map shows zombies in red and you double-click where to revive, or leave the match."]}, "es": {"t": "El Leñador y Segunda Oportunidad con mapa (14/11/2026)", "b": ["Nuevo jefe: El Leñador. Un zombi enorme con barba y camisa a cuadros, con un hacha a dos manos y 7.000 de vida. Aparece en todas las dificultades del modo de oleadas.", "Un golpe de hacha mata. Si falla el golpe desde arriba, el hacha se atasca en el suelo y tarda de 5 a 10 segundos en sacarla. Si falla el giro, el hacha sale volando y él se cae.", "Sin el hacha corre detrás de ti con un puñetazo (la mitad de la vida) y una patada, y los dos te lanzan lejos.", "Dos remates en tercera persona cuando el Leñador mata: corte por la mitad de arriba abajo y corte lateral.", "Los jefes ahora dejan grietas y cráteres en el suelo, y el hacha rasga los contenedores.", "Segunda Oportunidad cuesta 700 monedas: al morir, el mapa muestra los zombis en rojo y haces doble clic donde quieres revivir, o sales de la partida."]}};
+const GAME_VERSION = 202611150153, GAME_NOTES = {"t": "Lenhador musculoso e com sons próprios (14/11/2026)", "b": ["O Lenhador agora é musculoso: peitoral estufado, ombros largos, braços grossos e cintura fina, no lugar do corpo gordo.", "Corrigido o pisca-pisca na camisa xadrez: a pele não fura mais a roupa (vale também para os outros zumbis de camisa xadrez).", "Sons novos do Lenhador: rugido, machado cortando o ar, machado batendo no chão, esforço para arrancar o machado, corte e sangue nas finalizações."], "en": {"t": "Muscular Lumberjack with his own sounds (11/14/2026)", "b": ["The Lumberjack is now muscular: puffed-out chest, broad shoulders, thick arms and a narrow waist instead of a fat body.", "Fixed the flickering on the plaid shirt: skin no longer pokes through the clothes (also for the other plaid-shirt zombies).", "New Lumberjack sounds: roar, axe cutting the air, axe hitting the ground, strain to pull the axe out, and the cut and blood in the finishers."]}, "es": {"t": "Leñador musculoso y con sonidos propios (14/11/2026)", "b": ["El Leñador ahora es musculoso: pecho inflado, hombros anchos, brazos gruesos y cintura estrecha, en lugar del cuerpo gordo.", "Corregido el parpadeo en la camisa a cuadros: la piel ya no atraviesa la ropa (también en los otros zombis con camisa a cuadros).", "Sonidos nuevos del Leñador: rugido, hacha cortando el aire, hacha golpeando el suelo, esfuerzo para sacar el hacha, y el corte y la sangre en los remates."]}};
   // ===================== IDIOMAS (inglês, espanhol, português) =====================
   // O jogo é escrito em português. Este tradutor troca, na tela, todo texto que aparece (menus, HUD, avisos, mensagens do servidor).
   // REGRA: todo texto novo do jogo precisa de uma entrada aqui (D = frase exata, P = frase com números/nomes). Veja I18N.md.
@@ -6334,6 +6334,9 @@ const Logic = (function () {
         [0.29, 0.150, 0.100, -0.005], [0.34, 0.153, 0.095, -0.003], [0.38, 0.148, 0.086, 0], [0.41, 0.128, 0.073, 0.004], [0.438, 0.088, 0.062, 0.008], [0.46, 0.054, 0.054, 0.009]],
       fat: [[-0.04, 0.188, 0.150, 0.004], [0.02, 0.200, 0.160, 0.002], [0.09, 0.210, 0.166, 0], [0.17, 0.212, 0.160, -0.002], [0.25, 0.206, 0.150, -0.004],
         [0.32, 0.206, 0.138, -0.004], [0.37, 0.2, 0.124, 0], [0.405, 0.17, 0.106, 0.004], [0.436, 0.118, 0.086, 0.008], [0.46, 0.074, 0.07, 0.01], [0.478, 0.05, 0.06, 0.01]],
+      // musculoso: cintura fina, peito estufado e costas largas (V)
+      buff: [[-0.04, 0.150, 0.100, 0.004], [0.0, 0.144, 0.096, 0.004], [0.06, 0.142, 0.095, 0.002], [0.14, 0.158, 0.106, -0.002], [0.22, 0.182, 0.12, -0.008],
+        [0.29, 0.204, 0.134, -0.014], [0.345, 0.216, 0.132, -0.012], [0.39, 0.21, 0.116, -0.004], [0.42, 0.182, 0.098, 0.004], [0.446, 0.12, 0.076, 0.008], [0.468, 0.064, 0.064, 0.01]],
     };
     const NECK = [[0.0, 0.074, 0.074, 0], [0.025, 0.056, 0.058, -0.001], [0.06, 0.049, 0.052, -0.002], [0.1, 0.05, 0.052, -0.002], [0.112, 0.05, 0.052, -0.002]];
     const PELVIS = [[-0.11, 0.055, 0.04, 0.004], [-0.09, 0.1, 0.07, 0.004], [-0.05, 0.138, 0.096, 0.005], [0.0, 0.152, 0.106, 0.004], [0.06, 0.145, 0.1, 0.002], [0.098, 0.138, 0.094, 0.002]];
@@ -6348,6 +6351,11 @@ const Logic = (function () {
       let d = 0;
       if (kind === "F") { d += 0.024 * gs(y - 0.262, 0.05) * gs(da - 0.4, 0.19); d -= 0.005 * gs(y - 0.26, 0.05) * gs(df, 0.07); }
       else { d += (kind === "fat" ? 0.016 : 0.011) * gs(y - 0.29, 0.055) * gs(da - 0.5, 0.26); d -= 0.004 * gs(df, 0.07) * sst(0.1, 0.3, y) * sst(0.4, 0.34, y); }
+      if (kind === "buff") {                                                                     // peitorais estufados, tanquinho, trapézio e dorsais
+        d += 0.026 * gs(y - 0.3, 0.048) * gs(da - 0.42, 0.24) - 0.008 * gs(df, 0.05) * gs(y - 0.3, 0.07);
+        d += 0.007 * (gs(y - 0.08, 0.02) + gs(y - 0.135, 0.02) + gs(y - 0.19, 0.02)) * gs(da - 0.16, 0.09) - 0.004 * gs(df, 0.035) * sst(0.04, 0.12, y) * sst(0.26, 0.22, y);
+        d += 0.014 * gs(y - 0.25, 0.08) * gs(Math.abs(Math.abs(wrapA(phi)) - PI / 2) - 0.25, 0.3) + 0.012 * gs(y - 0.43, 0.025) * gs(da - 1.1, 0.4);
+      }
       if (kind === "M") d += 0.0045 * (gs(y - 0.115, 0.022) + gs(y - 0.17, 0.022) + gs(y - 0.225, 0.022)) * gs(da - 0.17, 0.1);
       if (kind === "fat") d += 0.042 * gs(y - 0.05, 0.09) * gs(df, 0.8) + 0.012 * gs(y - 0.13, 0.03) * gs(df, 0.9);
       d += 0.007 * gs(y - 0.30, 0.05) * gs(ba - 0.55, 0.22) - 0.004 * gs(bk, 0.08) * sst(0.05, 0.25, y) * sst(0.40, 0.30, y);
@@ -6391,6 +6399,7 @@ const Logic = (function () {
       torsoM: { secs: TORSO.M, bump: torsoBump("M"), ao: torsoAO, wr: WR.torso, seg: 22, sub: 3, openBot: true, infl: 1.045, add: 0.001 },
       torsoF: { secs: TORSO.F, bump: torsoBump("F"), ao: torsoAO, wr: WR.torso, seg: 22, sub: 3, openBot: true, infl: 1.045, add: 0.001 },
       torsoFat: { secs: TORSO.fat, bump: torsoBump("fat"), ao: torsoAO, wr: WR.torso, seg: 22, sub: 3, openBot: true, infl: 1.04, add: 0.001 },
+      torsoBuff: { secs: TORSO.buff, bump: torsoBump("buff"), ao: torsoAO, wr: WR.torso, seg: 24, sub: 3, openBot: true, infl: 1.04, add: 0.0015 },
       neck: { secs: NECK, bump: neckBump, ao: LIMB_AO.neck, seg: 12, sub: 2, openTop: true, cap: 2 },
       pelvis: { secs: PELVIS, bump: pelvisBump, ao: LIMB_AO.pelvis, wr: WR.pelvis, seg: 18, sub: 2, infl: 1.045, add: 0.001, cap: 2 },
       upper: { secs: UPPER, bump: upperBump, ao: LIMB_AO.upper, wr: WR.upper, seg: 16, sub: 2, cap: 2, infl: 1.06, add: 0.003 },
@@ -6684,7 +6693,7 @@ const Logic = (function () {
     }
 
     // ---------- decalques: perfis para ZB.Decals ----------
-    for (const k of ["torsoM", "torsoF", "torsoFat", "upper", "fore", "thigh", "shin"]) { const S = surf(k); ZB.PROF[k] = { f: S.f, bump: S.bump }; }
+    for (const k of ["torsoM", "torsoF", "torsoFat", "torsoBuff", "upper", "fore", "thigh", "shin"]) { const S = surf(k); ZB.PROF[k] = { f: S.f, bump: S.bump }; }
 
     return { part, ribbon, front, beltGeo, surf, paint, tex, handTpl, footTpl, fromTpl, skirtGeo, gownGeo, coatGeo, hemGeo, apronGeo, tube, prof, vnoise, clamp, lerp, sst, gs, wrapA, dFront, dBack, DEF };
   })();
@@ -6767,7 +6776,7 @@ const Logic = (function () {
     // ---- especiais dos níveis extremos ----
     blindado: { sex: "m", top: [0x3a4230], camo: true, sleeve: "long", bot: [0x343a2a], shoe: 0x121210, boot: true, hair: ["buzz"], hairColor: ["preto", "castanho"], vest: 0x2a2f22, beard: 0.15, fat: true },
     mestre: { sex: "m", top: [0x2c3550], sleeve: "long", bot: [0x16161e], shoe: "skin", hair: ["balding"], hairColor: ["branco"], beard: 1 },
-    lenhador: { sex: "m", top: [0x8a1c16, 0x7a2018], plaid: true, sleeve: "long", bot: [0x23324e, 0x1e2a44], shoe: 0x2a1c10, boot: true, hair: ["messy", "short", "balding"], hairColor: ["castanho", "ruivo", "preto"], beard: 1, fat: true, belt: true },
+    lenhador: { sex: "m", top: [0x8a1c16, 0x7a2018], plaid: true, buff: true, sleeve: "long", bot: [0x23324e, 0x1e2a44], shoe: 0x2a1c10, boot: true, hair: ["messy", "short", "balding"], hairColor: ["castanho", "ruivo", "preto"], beard: 1, belt: true },
     atleta: { sex: "m", top: [0x1a2a6a, 0x6a1a1a, 0x1a1a1a], sleeve: "long", stripes2: true, bot: "same", shoe: 0xe8e8e4, hair: ["short", "buzz", "mohawk", "afro", "curly", "side"] },
     motoqueiro: { sex: "m", top: [0x141414], vestOnly: true, sleeve: "none", bot: [0x23324e], shoe: 0x111111, boot: true, hair: ["bald", "long", "wavy", "mohawk", "balding", "messy"], beard: 0.95, fat: true, hat: [["bandana", 0.3]] },
   };
@@ -7425,7 +7434,7 @@ const Logic = (function () {
       const kind = z.lumber ? "lumber" : z.tank ? "tank" : z.samurai ? "samurai" : z.giant ? "giant" : z.brute ? "brute" : z.runner ? "runner" : "walker";
       const A = ARCH[pick(r, POOL[kind])];
       const fem = A.sex === "f" || (A.sex === "mf" && r() < 0.45);
-      const fat = !!A.fat || (z.brute && r() < 0.6);
+      const buff = !!A.buff, fat = !buff && (!!A.fat || (z.brute && r() < 0.6));
       this.mats = []; this.hot = false;
       const lam = (hex, extra) => { const m = new THREE.MeshLambertMaterial(Object.assign({ color: hex }, extra || {})); m.userData.own = true; this.mats.push(m); return m; };
       const tok = (hex, extra) => { const m = new THREE.MeshLambertMaterial(Object.assign({ color: hex }, extra || {})); m.userData.own = true; return m; };   // só cor; some depois da fusão
@@ -7447,7 +7456,7 @@ const Logic = (function () {
       const handM = P.bloodyHands ? tok(skinC.clone().lerp(bloodC, 0.55)) : skin;
       const dark = M.wound, white = tok(0xd8d2c0);
       const root = (this.root = new THREE.Group()); root.rotation.order = "YXZ";
-      const s = z.s, wide = z.lumber ? 1.3 : z.giant ? 1.22 : z.brute ? 1.18 : fat ? 1.08 : z.runner ? 0.92 : 1;
+      const s = z.s, wide = z.lumber ? 1.12 : z.giant ? 1.22 : z.brute ? 1.18 : fat ? 1.08 : z.runner ? 0.92 : 1;
       root.scale.set(s * wide, s * (fem ? 0.96 : 1), s * wide);
       const add = (geo, m, x, y, zz, p, shadow) => { const o = new THREE.Mesh(geo, m); o.position.set(x, y, zz); (p || root).add(o); if (shadow) o.castShadow = true; return o; };
       let bodyMats = {};
@@ -7494,7 +7503,7 @@ const Logic = (function () {
       const hipX = fem ? 0.088 : fat ? 0.108 : 0.095;
       body(ZA.part("pelvis", { cloth: legCloth }), legCloth ? botRGB : skinRGB, legCloth ? clothO(1) : skinO(1), legCloth ? "cloth" : "skin", 0, 0.92, 0, root, true, [fem ? 1.06 : fat ? 1.22 : 1, 1, fat ? 1.25 : 1]);
       // ----- pernas -----
-      const legW = fem ? 0.92 : fat ? 1.12 : 1;
+      const legW = buff ? 1.14 : fem ? 0.92 : fat ? 1.12 : 1;
       const footKind = A.shoe === "skin" ? "bare" : A.boot ? "boot" : "shoe";
       const shoeRGB = A.shoe === "skin" ? skinRGB : rgbOf(shoe.color).map((v) => v * (0.62 + r() * 0.2));
       const leg = (sx, idx) => {
@@ -7528,7 +7537,7 @@ const Logic = (function () {
       const lL = leg(-1, 0), lR = leg(1, 1);
       // ----- tronco -----
       const spine = (this.spine = new THREE.Group()); spine.position.y = 0.98; root.add(spine); bones.push(spine);
-      const profName = fat ? "torsoFat" : fem ? "torsoF" : "torsoM";
+      const profName = buff ? "torsoBuff" : fat ? "torsoFat" : fem ? "torsoF" : "torsoM";
       const tOpt = { cloth: true };
       if (A.belt && !fat) {
         body(ZA.beltGeo(false), [0.07, 0.05, 0.04], { mode: "cloth", seed: zsd + 9, dirt: 0.3 }, "plain", 0, -0.01, 0, spine);
@@ -7551,7 +7560,7 @@ const Logic = (function () {
         };
         const tC = A.vestOnly ? [0.07, 0.065, 0.06] : topRGB;
         const plaidNeck = A.plaid && neckLine !== "none";
-        if (plaidNeck) body(ZA.part(profName), skinRGB, skinO(10), "skin", 0, 0, 0, spine, true);
+        if (plaidNeck) body(ZA.part(profName, { y1: 0.39 }), skinRGB, skinO(10), "skin", 0, 0, 0, spine, true);
         body(ZA.part(profName, plaidNeck ? { cloth: true, y0: 0.44 } : tOpt), tC, clothO(10, { fn: plaidNeck ? camoFn : fT, hemY: 0.05, hemAmt: 0.25, dirt: A.vestOnly ? 0.2 : undefined }), A.vestOnly ? "cloth" : clothKind, 0, 0, 0, spine, true, null, plaidNeck ? THREE.DoubleSide : undefined);
         var decK = 1.046;
       }
@@ -7611,14 +7620,14 @@ const Logic = (function () {
         }
       }
       // ----- pescoço e cabeça -----
-      { const ns = fat ? 1.25 : fem ? 0.85 : 1; body(ZA.part("neck"), skinRGB, skinO(20), "skin", 0, 0.43, 0.008, spine, false, [ns, 1, ns]); }
+      { const ns = buff ? 1.32 : fat ? 1.25 : fem ? 0.85 : 1; body(ZA.part("neck"), skinRGB, skinO(20), "skin", 0, 0.43, 0.008, spine, false, [ns, 1, ns]); }
       add(G.stump, dark, 0, 0.545, 0.008, spine);                         // aparece se a cabeça explodir
       const head = (this.head = new THREE.Group()); head.position.set(0, 0.515, -0.008); spine.add(head); bones.push(head);
       try { this.buildHead(r, { head, fem, skinC, hairC, hairName, A, P, W, hatName, z, tok, lam, vary, white, add, kind, top }); }
       catch (e) { console.error("cabeça:", e); const sk = add(G.skull, skinM, 0, 0.12, 0, head); }
       if (A.hoodie && hatName !== "hood") add(G.hoodDown, top, 0, 0.44, 0.085, spine);
       // ----- braços -----
-      const shX = fem ? 0.178 : fat ? 0.245 : 0.2, armW = fem ? 0.86 : fat || z.brute ? 1.3 : z.runner ? 0.88 : 1;
+      const shX = buff ? 0.24 : fem ? 0.178 : fat ? 0.245 : 0.2, armW = buff ? 1.48 : fem ? 0.86 : fat || z.brute ? 1.3 : z.runner ? 0.88 : 1;
       const longS = A.sleeve === "long", shortS = A.sleeve === "short" && !A.vestOnly;
       const handRGB = P.bloodyHands ? skinRGB.map((v, i) => v + ([0.35, 0.04, 0.05][i] - v) * 0.5) : skinRGB;
       const claw = r() < 0.55;
@@ -8806,6 +8815,7 @@ const Logic = (function () {
       this.gm.push(...ax.userData.mats);
       this.spine.add(ax);
       this.axMode = "hand"; this.fly = null; this.wasAct = ""; this.t0 = 0;
+      this.head.scale.multiplyScalar(1.12);                                              // cabeça proporcional ao corpo musculoso
       this.shL = this.sL.position.clone(); this.shR = this.sR.position.clone();
       this._v = new THREE.Vector3(); this._w = new THREE.Vector3(); this._m = new THREE.Matrix4(); this._q = new THREE.Quaternion();
       this.poleL = new THREE.Vector3(-0.5, -0.6, 0.5); this.poleR = new THREE.Vector3(0.5, -0.6, 0.5);
@@ -9094,7 +9104,7 @@ const Logic = (function () {
   const Snd = (function () {
     let actx = null, master = null, conv = null, amb = null, volume = 0.8, ambCfg = null, ambOn = false;
     const mix = { sfx: 1, voice: 1, amb: 0.7 };
-    const VOICE = { groan0: 1, groan1: 1, groan2: 1, scream: 1, roar: 1, giantroar: 1, die: 1, tankroar: 1, tankgrunt: 1, kiai: 1, whisper: 1, wail: 1 }, AMB = { thunder: 1, wind: 1, rain: 1 };
+    const VOICE = { groan0: 1, groan1: 1, groan2: 1, scream: 1, roar: 1, giantroar: 1, die: 1, tankroar: 1, tankgrunt: 1, lum_roar: 1, lum_grunt: 1, kiai: 1, whisper: 1, wail: 1 }, AMB = { thunder: 1, wind: 1, rain: 1 };
     const catOf = (n) => (VOICE[n] ? "voice" : AMB[n] ? "amb" : "sfx");
     const bufs = {};
     const E = Math.exp, PI2 = Math.PI * 2, rnd = () => Math.random() * 2 - 1;
@@ -9176,6 +9186,13 @@ const Logic = (function () {
       r.katana_swish = (function () { let a = 0, b = 0; return mk(0.32, (t) => { const n = rnd(); a += 0.55 * (n - a); b += 0.12 * (n - b); return (a - b) * Math.pow(Math.sin(Math.PI * Math.min(1, t / 0.3)), 1.2) * 1.6; }); })();
       r.katana_hit = (function () { let lp = 0; return mk(0.35, (t) => { lp += 0.3 * (rnd() - lp); return lp * E(-t * 22) * 1.6 + Math.sin(PI2 * 140 * t) * E(-t * 20) * 0.9 + Math.sin(PI2 * 2200 * t) * E(-t * 26) * 0.3; }); })();
       r.kiai = groan(150, 0.5, 0.5, 6); r.dodge = (function () { let lp = 0; return mk(0.35, (t) => { lp += 0.2 * (rnd() - lp); return lp * Math.pow(Math.sin(Math.PI * Math.min(1, t / 0.33)), 1.5) * 1.3; }); })();
+      // ---- Lenhador ----
+      r.lum_roar = groan(26, 2.4, 0.42, 2.6); r.lum_grunt = groan(44, 0.75, 0.38, 3.2);
+      r.axe_whoosh = (function () { let a = 0, b = 0; return mk(0.6, (t) => { const n = rnd(); a += 0.22 * (n - a); b += 0.03 * (n - b); return (a - b) * Math.pow(Math.sin(Math.PI * Math.min(1, t / 0.55)), 2.2) * 3 + Math.sin(PI2 * (90 + 60 * t) * t) * Math.pow(Math.sin(Math.PI * Math.min(1, t / 0.55)), 3) * 0.25; }); })();
+      r.axe_ground = (function () { let lp = 0, cr = 0; return mk(1.8, (t) => { lp += 0.04 * (rnd() - lp); cr = rnd() < 0.02 * E(-t * 2) ? 1 : cr * 0.6; return Math.sin(PI2 * (44 - 20 * t) * t) * E(-t * 3) * 2.8 + lp * E(-t * 4) * 5 + Math.sin(PI2 * 620 * t) * E(-t * 40) * 0.6 + cr * (rnd() - 0.5) * 1.4 * E(-t * 1.5); }); })();
+      r.axe_flesh = (function () { let lp = 0, w = 0; return mk(0.9, (t) => { lp += 0.35 * (rnd() - lp); w += 0.08 * (rnd() - w); return lp * E(-t * 14) * 1.8 + Math.sin(PI2 * 75 * t) * E(-t * 12) * 1.3 + w * E(-t * 3) * 2.2 * (0.6 + 0.4 * Math.sin(PI2 * 23 * t)); }); })();
+      r.gore_gush = (function () { let a = 0, b = 0; return mk(2.4, (t) => { const n = rnd(); a += 0.3 * (n - a); b += 0.02 * (n - b); const pulse = 0.55 + 0.45 * Math.sin(PI2 * 1.8 * t); return (a - b) * 1.6 * pulse * Math.min(1, t / 0.08) * E(-t * 0.9) + (rnd() < 0.015 ? (rnd() - 0.5) * 1.2 : 0); }); })();
+      r.axe_strain = (function () { let lp = 0; return mk(1.0, (t) => { lp += 0.08 * (rnd() - lp); return (lp * 3 + Math.sin(PI2 * (110 + 40 * Math.sin(PI2 * 9 * t)) * t) * 0.2) * Math.pow(Math.sin(Math.PI * t), 1.5) + Math.sin(PI2 * 380 * t) * (rnd() < 0.3 ? 0.15 : 0) * Math.sin(Math.PI * t); }); })();
       // ---- Espectro ----
       r.whisper = (function () { let a = 0, b = 0; return mk(2.0, (t) => { const n = rnd(); a += 0.35 * (n - a); b += 0.05 * (n - b); const am = 0.5 + 0.5 * Math.sin(PI2 * 5.5 * t + Math.sin(PI2 * 1.3 * t) * 2); return ((a - b) * 1.2 + Math.sin(PI2 * 520 * t) * 0.08 + Math.sin(PI2 * 527 * t) * 0.08) * am * Math.sin(Math.PI * t / 2.0); }); })();
       r.wail = groan(380, 2.0, 0.4, 6.5);
@@ -11479,7 +11496,7 @@ const Logic = (function () {
         case "elite": {
           const k = ev[1];
           Snd.play("horn", 0.8, 0.55, 0, 0);
-          if (k === "lumber") Snd.play("giantroar", 1, 0.8, 0, 0.4); else if (k === "tank") Snd.play("tankroar", 0.9, 0.9, 0, 0.3); else if (k === "samurai") Snd.play("kiai", 0.8, 0.9, 0, 0.3); else Snd.play("wail", 0.8, 0.8, 0, 0.5);
+          if (k === "lumber") Snd.play("lum_roar", 1.1, 1, 0, 0.4); else if (k === "tank") Snd.play("tankroar", 0.9, 0.9, 0, 0.3); else if (k === "samurai") Snd.play("kiai", 0.8, 0.9, 0, 0.3); else Snd.play("wail", 0.8, 0.8, 0, 0.5);
           buzz([60, 40, 120]); break;
         }
         case "block": {
@@ -11491,24 +11508,24 @@ const Logic = (function () {
         case "revive": Snd.play("revive", 1, 1, 0, 0.4); buzz([80, 40, 80, 40, 160]); feedLine("SEGUNDA CHANCE", true); break;
         case "burn": burnFlash = 0.35; Snd.play("burn", 0.45, rand(0.9, 1.1), 0, 0.05); buzz(25); break;
         // ---- Lenhador ----
-        case "lum_roar": spatial("giantroar", ev[1], ev[2], 1, 0.75, 0.3, 55); break;
+        case "lum_roar": spatial("lum_roar", ev[1], ev[2], 1.1, 1, 0.3, 60); spatial("axe_whoosh", ev[1], ev[2], 0.7, 0.8, 0.1, 40); break;
         case "lum_stuck": {
           Scars.add(ev[1], ev[2], ev[3], "crack", 4.4); Scars.add(ev[1], ev[2], ev[3], "hole", 1.9);
           dust(ev[1], ev[2], 12, 2.6, 1.2); shockwave(ev[1], ev[2], 3.2, 0xd8c8a0, 0.5, 0.4);
           for (let i = 0, n = Math.round(12 * fxK()); i < n; i++) { const a = Math.random() * 6.283; fxSpark.emit(ev[1], 0.1, -ev[2], Math.cos(a) * 3, rand(1, 5), -Math.sin(a) * 3, 0.5, 1.5); }
-          spatial("tank_slam", ev[1], ev[2], 1.3, 0.8, 0.3, 60); buzz([120, 40, 160]);
+          spatial("axe_ground", ev[1], ev[2], 1.4, 1, 0.3, 65); buzz([120, 40, 160]);
           Scars.cut(ev[1], ev[2], 1.5, true); break;
         }
-        case "lum_pull": spatial("sword_pull", ev[1], ev[2], 1, ev[3] === 2 ? 0.7 : 0.9, 0.3, 45); dust(ev[1], ev[2], ev[3] === 2 ? 8 : 3, 1, 0.8); if (ev[3] === 2) { spatial("clang", ev[1], ev[2], 0.8, 0.5, 0.3, 45); Scars.add(ev[1], ev[2], Math.random() * 6.28, "hole", 1.3); } break;
-        case "lum_spin": spatial("katana_swish", ev[1], ev[2], 1.2, 0.45, 0.2, 50); spatial("roar", ev[1], ev[2], 0.9, 0.7, 0.3, 50); Scars.cut(ev[1], ev[2], 3.4, false); dust(ev[1], ev[2], 6, 2.6, 0.9); break;
+        case "lum_pull": spatial("axe_strain", ev[1], ev[2], 1, ev[3] === 2 ? 0.8 : 1, 0.2, 40); spatial("lum_grunt", ev[1], ev[2], 1, ev[3] === 2 ? 0.85 : 1, 0.2, 45); spatial("sword_pull", ev[1], ev[2], 0.7, ev[3] === 2 ? 0.7 : 0.9, 0.3, 45); dust(ev[1], ev[2], ev[3] === 2 ? 8 : 3, 1, 0.8); if (ev[3] === 2) { spatial("clang", ev[1], ev[2], 0.8, 0.5, 0.3, 45); Scars.add(ev[1], ev[2], Math.random() * 6.28, "hole", 1.3); } break;
+        case "lum_spin": spatial("axe_whoosh", ev[1], ev[2], 1.3, 0.85, 0.2, 55); spatial("lum_grunt", ev[1], ev[2], 1, 0.9, 0.2, 50); Scars.cut(ev[1], ev[2], 3.4, false); dust(ev[1], ev[2], 6, 2.6, 0.9); break;
         case "lum_throw": {
           spatial("katana_swish", ev[1], ev[2], 1, 0.6, 0.2, 50);
           const run = runId, ax = ev[3], ay = ev[4], yw = ev[5];
-          setTimeout(() => { if (run !== runId || state === "menu") return; Scars.add(ax, ay, yw, "crack", 2.4); Scars.add(ax, ay, yw, "hole", 1.1); dust(ax, ay, 6, 1.2, 0.8); spatial("clang", ax, ay, 1, 0.6, 0.3, 55); Scars.cut(ax, ay, 1.2, true); }, 800);
+          setTimeout(() => { if (run !== runId || state === "menu") return; Scars.add(ax, ay, yw, "crack", 2.4); Scars.add(ax, ay, yw, "hole", 1.1); dust(ax, ay, 6, 1.2, 0.8); spatial("axe_ground", ax, ay, 1, 1.2, 0.3, 55); Scars.cut(ax, ay, 1.2, true); }, 800);
           break;
         }
         case "lum_fall": Scars.add(ev[1], ev[2], Math.random() * 6.28, "hole", 3.6); dust(ev[1], ev[2], 14, 3, 1.3); shockwave(ev[1], ev[2], 4, 0xd8c8a0, 0.6, 0.4); spatial("tank_slam", ev[1], ev[2], 1.3, 0.7, 0.3, 60); buzz([160, 60, 100]); break;
-        case "lum_hit": Snd.play("katana_hit", 1, 0.6, 0, 0.1); Snd.play("tank_slam", 0.8, 1.2, 0, 0.2); buzz([150, 50, 150]); break;
+        case "lum_hit": Snd.play("axe_flesh", 1.2, 1, 0, 0.1); Snd.play("tank_slam", 0.7, 1.2, 0, 0.2); buzz([150, 50, 150]); break;
         case "lum_blow": Snd.play("tank_slam", 0.9, 1.5, 0, 0.2); Snd.play("katana_hit", 0.6, 0.5, 0, 0.1); buzz([140, 40, 100]); break;
         case "lum_whiff": spatial("katana_swish", ev[1], ev[2], 0.8, 0.5, 0.1, 35); break;
         case "lum_grab": spatial("sword_pull", ev[1], ev[2], 0.9, 1.1, 0.2, 40); break;
@@ -11517,9 +11534,9 @@ const Logic = (function () {
           if (ev[3] !== me) { spatial("katana_hit", ev[4], ev[5], 1, 0.6, 0.2, 50); break; }
           const z = game.zombies.find((q) => q.id === ev[1]); if (!z) break;
           Gore.start(z, ev[2], game.px, game.py, zviews.get(z.id), Coop.active() ? Coop.shirtOf(me) : 0x4a6a8a, {
-            hit(c, k) { c.shake = k; Snd.play("katana_hit", 1, 0.55, 0, 0.15); Snd.play("tank_slam", 0.9, 1.3, 0, 0.2); Snd.play("die", 0.9, 0.8, 0, 0.3); buzz([200, 60, 260]); },
+            hit(c, k) { c.shake = k; Snd.play("axe_flesh", 1.3, 0.9, 0, 0.15); Snd.play("gore_gush", 1.1, 1, 0, 0.2); Snd.play("tank_slam", 0.7, 1.3, 0, 0.2); Snd.play("die", 0.9, 0.8, 0, 0.3); buzz([200, 60, 260]); },
             thud(c, k) { c.shake = k * 0.5; Snd.play("stomp", k, 0.75, 0, 0.1); },
-            swish() { Snd.play("katana_swish", 1.2, 0.5, 0, 0.1); Snd.play("katana_hit", 0.5, 1.4, 0, 0.1); },
+            swish() { Snd.play("axe_whoosh", 1.3, 1.2, 0, 0.1); Snd.play("axe_flesh", 0.5, 1.5, 0, 0.1); },
           });
           break;
         }

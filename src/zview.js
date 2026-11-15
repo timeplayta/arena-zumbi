@@ -61,7 +61,7 @@
       const kind = z.lumber ? "lumber" : z.tank ? "tank" : z.samurai ? "samurai" : z.giant ? "giant" : z.brute ? "brute" : z.runner ? "runner" : "walker";
       const A = ARCH[pick(r, POOL[kind])];
       const fem = A.sex === "f" || (A.sex === "mf" && r() < 0.45);
-      const fat = !!A.fat || (z.brute && r() < 0.6);
+      const buff = !!A.buff, fat = !buff && (!!A.fat || (z.brute && r() < 0.6));
       this.mats = []; this.hot = false;
       const lam = (hex, extra) => { const m = new THREE.MeshLambertMaterial(Object.assign({ color: hex }, extra || {})); m.userData.own = true; this.mats.push(m); return m; };
       const tok = (hex, extra) => { const m = new THREE.MeshLambertMaterial(Object.assign({ color: hex }, extra || {})); m.userData.own = true; return m; };   // só cor; some depois da fusão
@@ -83,7 +83,7 @@
       const handM = P.bloodyHands ? tok(skinC.clone().lerp(bloodC, 0.55)) : skin;
       const dark = M.wound, white = tok(0xd8d2c0);
       const root = (this.root = new THREE.Group()); root.rotation.order = "YXZ";
-      const s = z.s, wide = z.lumber ? 1.3 : z.giant ? 1.22 : z.brute ? 1.18 : fat ? 1.08 : z.runner ? 0.92 : 1;
+      const s = z.s, wide = z.lumber ? 1.12 : z.giant ? 1.22 : z.brute ? 1.18 : fat ? 1.08 : z.runner ? 0.92 : 1;
       root.scale.set(s * wide, s * (fem ? 0.96 : 1), s * wide);
       const add = (geo, m, x, y, zz, p, shadow) => { const o = new THREE.Mesh(geo, m); o.position.set(x, y, zz); (p || root).add(o); if (shadow) o.castShadow = true; return o; };
       let bodyMats = {};
@@ -130,7 +130,7 @@
       const hipX = fem ? 0.088 : fat ? 0.108 : 0.095;
       body(ZA.part("pelvis", { cloth: legCloth }), legCloth ? botRGB : skinRGB, legCloth ? clothO(1) : skinO(1), legCloth ? "cloth" : "skin", 0, 0.92, 0, root, true, [fem ? 1.06 : fat ? 1.22 : 1, 1, fat ? 1.25 : 1]);
       // ----- pernas -----
-      const legW = fem ? 0.92 : fat ? 1.12 : 1;
+      const legW = buff ? 1.14 : fem ? 0.92 : fat ? 1.12 : 1;
       const footKind = A.shoe === "skin" ? "bare" : A.boot ? "boot" : "shoe";
       const shoeRGB = A.shoe === "skin" ? skinRGB : rgbOf(shoe.color).map((v) => v * (0.62 + r() * 0.2));
       const leg = (sx, idx) => {
@@ -164,7 +164,7 @@
       const lL = leg(-1, 0), lR = leg(1, 1);
       // ----- tronco -----
       const spine = (this.spine = new THREE.Group()); spine.position.y = 0.98; root.add(spine); bones.push(spine);
-      const profName = fat ? "torsoFat" : fem ? "torsoF" : "torsoM";
+      const profName = buff ? "torsoBuff" : fat ? "torsoFat" : fem ? "torsoF" : "torsoM";
       const tOpt = { cloth: true };
       if (A.belt && !fat) {
         body(ZA.beltGeo(false), [0.07, 0.05, 0.04], { mode: "cloth", seed: zsd + 9, dirt: 0.3 }, "plain", 0, -0.01, 0, spine);
@@ -187,7 +187,7 @@
         };
         const tC = A.vestOnly ? [0.07, 0.065, 0.06] : topRGB;
         const plaidNeck = A.plaid && neckLine !== "none";
-        if (plaidNeck) body(ZA.part(profName), skinRGB, skinO(10), "skin", 0, 0, 0, spine, true);
+        if (plaidNeck) body(ZA.part(profName, { y1: 0.39 }), skinRGB, skinO(10), "skin", 0, 0, 0, spine, true);
         body(ZA.part(profName, plaidNeck ? { cloth: true, y0: 0.44 } : tOpt), tC, clothO(10, { fn: plaidNeck ? camoFn : fT, hemY: 0.05, hemAmt: 0.25, dirt: A.vestOnly ? 0.2 : undefined }), A.vestOnly ? "cloth" : clothKind, 0, 0, 0, spine, true, null, plaidNeck ? THREE.DoubleSide : undefined);
         var decK = 1.046;
       }
@@ -247,14 +247,14 @@
         }
       }
       // ----- pescoço e cabeça -----
-      { const ns = fat ? 1.25 : fem ? 0.85 : 1; body(ZA.part("neck"), skinRGB, skinO(20), "skin", 0, 0.43, 0.008, spine, false, [ns, 1, ns]); }
+      { const ns = buff ? 1.32 : fat ? 1.25 : fem ? 0.85 : 1; body(ZA.part("neck"), skinRGB, skinO(20), "skin", 0, 0.43, 0.008, spine, false, [ns, 1, ns]); }
       add(G.stump, dark, 0, 0.545, 0.008, spine);                         // aparece se a cabeça explodir
       const head = (this.head = new THREE.Group()); head.position.set(0, 0.515, -0.008); spine.add(head); bones.push(head);
       try { this.buildHead(r, { head, fem, skinC, hairC, hairName, A, P, W, hatName, z, tok, lam, vary, white, add, kind, top }); }
       catch (e) { console.error("cabeça:", e); const sk = add(G.skull, skinM, 0, 0.12, 0, head); }
       if (A.hoodie && hatName !== "hood") add(G.hoodDown, top, 0, 0.44, 0.085, spine);
       // ----- braços -----
-      const shX = fem ? 0.178 : fat ? 0.245 : 0.2, armW = fem ? 0.86 : fat || z.brute ? 1.3 : z.runner ? 0.88 : 1;
+      const shX = buff ? 0.24 : fem ? 0.178 : fat ? 0.245 : 0.2, armW = buff ? 1.48 : fem ? 0.86 : fat || z.brute ? 1.3 : z.runner ? 0.88 : 1;
       const longS = A.sleeve === "long", shortS = A.sleeve === "short" && !A.vestOnly;
       const handRGB = P.bloodyHands ? skinRGB.map((v, i) => v + ([0.35, 0.04, 0.05][i] - v) * 0.5) : skinRGB;
       const claw = r() < 0.55;

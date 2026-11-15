@@ -876,7 +876,7 @@
         case "elite": {
           const k = ev[1];
           Snd.play("horn", 0.8, 0.55, 0, 0);
-          if (k === "lumber") Snd.play("giantroar", 1, 0.8, 0, 0.4); else if (k === "tank") Snd.play("tankroar", 0.9, 0.9, 0, 0.3); else if (k === "samurai") Snd.play("kiai", 0.8, 0.9, 0, 0.3); else Snd.play("wail", 0.8, 0.8, 0, 0.5);
+          if (k === "lumber") Snd.play("lum_roar", 1.1, 1, 0, 0.4); else if (k === "tank") Snd.play("tankroar", 0.9, 0.9, 0, 0.3); else if (k === "samurai") Snd.play("kiai", 0.8, 0.9, 0, 0.3); else Snd.play("wail", 0.8, 0.8, 0, 0.5);
           buzz([60, 40, 120]); break;
         }
         case "block": {
@@ -888,24 +888,24 @@
         case "revive": Snd.play("revive", 1, 1, 0, 0.4); buzz([80, 40, 80, 40, 160]); feedLine("SEGUNDA CHANCE", true); break;
         case "burn": burnFlash = 0.35; Snd.play("burn", 0.45, rand(0.9, 1.1), 0, 0.05); buzz(25); break;
         // ---- Lenhador ----
-        case "lum_roar": spatial("giantroar", ev[1], ev[2], 1, 0.75, 0.3, 55); break;
+        case "lum_roar": spatial("lum_roar", ev[1], ev[2], 1.1, 1, 0.3, 60); spatial("axe_whoosh", ev[1], ev[2], 0.7, 0.8, 0.1, 40); break;
         case "lum_stuck": {
           Scars.add(ev[1], ev[2], ev[3], "crack", 4.4); Scars.add(ev[1], ev[2], ev[3], "hole", 1.9);
           dust(ev[1], ev[2], 12, 2.6, 1.2); shockwave(ev[1], ev[2], 3.2, 0xd8c8a0, 0.5, 0.4);
           for (let i = 0, n = Math.round(12 * fxK()); i < n; i++) { const a = Math.random() * 6.283; fxSpark.emit(ev[1], 0.1, -ev[2], Math.cos(a) * 3, rand(1, 5), -Math.sin(a) * 3, 0.5, 1.5); }
-          spatial("tank_slam", ev[1], ev[2], 1.3, 0.8, 0.3, 60); buzz([120, 40, 160]);
+          spatial("axe_ground", ev[1], ev[2], 1.4, 1, 0.3, 65); buzz([120, 40, 160]);
           Scars.cut(ev[1], ev[2], 1.5, true); break;
         }
-        case "lum_pull": spatial("sword_pull", ev[1], ev[2], 1, ev[3] === 2 ? 0.7 : 0.9, 0.3, 45); dust(ev[1], ev[2], ev[3] === 2 ? 8 : 3, 1, 0.8); if (ev[3] === 2) { spatial("clang", ev[1], ev[2], 0.8, 0.5, 0.3, 45); Scars.add(ev[1], ev[2], Math.random() * 6.28, "hole", 1.3); } break;
-        case "lum_spin": spatial("katana_swish", ev[1], ev[2], 1.2, 0.45, 0.2, 50); spatial("roar", ev[1], ev[2], 0.9, 0.7, 0.3, 50); Scars.cut(ev[1], ev[2], 3.4, false); dust(ev[1], ev[2], 6, 2.6, 0.9); break;
+        case "lum_pull": spatial("axe_strain", ev[1], ev[2], 1, ev[3] === 2 ? 0.8 : 1, 0.2, 40); spatial("lum_grunt", ev[1], ev[2], 1, ev[3] === 2 ? 0.85 : 1, 0.2, 45); spatial("sword_pull", ev[1], ev[2], 0.7, ev[3] === 2 ? 0.7 : 0.9, 0.3, 45); dust(ev[1], ev[2], ev[3] === 2 ? 8 : 3, 1, 0.8); if (ev[3] === 2) { spatial("clang", ev[1], ev[2], 0.8, 0.5, 0.3, 45); Scars.add(ev[1], ev[2], Math.random() * 6.28, "hole", 1.3); } break;
+        case "lum_spin": spatial("axe_whoosh", ev[1], ev[2], 1.3, 0.85, 0.2, 55); spatial("lum_grunt", ev[1], ev[2], 1, 0.9, 0.2, 50); Scars.cut(ev[1], ev[2], 3.4, false); dust(ev[1], ev[2], 6, 2.6, 0.9); break;
         case "lum_throw": {
           spatial("katana_swish", ev[1], ev[2], 1, 0.6, 0.2, 50);
           const run = runId, ax = ev[3], ay = ev[4], yw = ev[5];
-          setTimeout(() => { if (run !== runId || state === "menu") return; Scars.add(ax, ay, yw, "crack", 2.4); Scars.add(ax, ay, yw, "hole", 1.1); dust(ax, ay, 6, 1.2, 0.8); spatial("clang", ax, ay, 1, 0.6, 0.3, 55); Scars.cut(ax, ay, 1.2, true); }, 800);
+          setTimeout(() => { if (run !== runId || state === "menu") return; Scars.add(ax, ay, yw, "crack", 2.4); Scars.add(ax, ay, yw, "hole", 1.1); dust(ax, ay, 6, 1.2, 0.8); spatial("axe_ground", ax, ay, 1, 1.2, 0.3, 55); Scars.cut(ax, ay, 1.2, true); }, 800);
           break;
         }
         case "lum_fall": Scars.add(ev[1], ev[2], Math.random() * 6.28, "hole", 3.6); dust(ev[1], ev[2], 14, 3, 1.3); shockwave(ev[1], ev[2], 4, 0xd8c8a0, 0.6, 0.4); spatial("tank_slam", ev[1], ev[2], 1.3, 0.7, 0.3, 60); buzz([160, 60, 100]); break;
-        case "lum_hit": Snd.play("katana_hit", 1, 0.6, 0, 0.1); Snd.play("tank_slam", 0.8, 1.2, 0, 0.2); buzz([150, 50, 150]); break;
+        case "lum_hit": Snd.play("axe_flesh", 1.2, 1, 0, 0.1); Snd.play("tank_slam", 0.7, 1.2, 0, 0.2); buzz([150, 50, 150]); break;
         case "lum_blow": Snd.play("tank_slam", 0.9, 1.5, 0, 0.2); Snd.play("katana_hit", 0.6, 0.5, 0, 0.1); buzz([140, 40, 100]); break;
         case "lum_whiff": spatial("katana_swish", ev[1], ev[2], 0.8, 0.5, 0.1, 35); break;
         case "lum_grab": spatial("sword_pull", ev[1], ev[2], 0.9, 1.1, 0.2, 40); break;
@@ -914,9 +914,9 @@
           if (ev[3] !== me) { spatial("katana_hit", ev[4], ev[5], 1, 0.6, 0.2, 50); break; }
           const z = game.zombies.find((q) => q.id === ev[1]); if (!z) break;
           Gore.start(z, ev[2], game.px, game.py, zviews.get(z.id), Coop.active() ? Coop.shirtOf(me) : 0x4a6a8a, {
-            hit(c, k) { c.shake = k; Snd.play("katana_hit", 1, 0.55, 0, 0.15); Snd.play("tank_slam", 0.9, 1.3, 0, 0.2); Snd.play("die", 0.9, 0.8, 0, 0.3); buzz([200, 60, 260]); },
+            hit(c, k) { c.shake = k; Snd.play("axe_flesh", 1.3, 0.9, 0, 0.15); Snd.play("gore_gush", 1.1, 1, 0, 0.2); Snd.play("tank_slam", 0.7, 1.3, 0, 0.2); Snd.play("die", 0.9, 0.8, 0, 0.3); buzz([200, 60, 260]); },
             thud(c, k) { c.shake = k * 0.5; Snd.play("stomp", k, 0.75, 0, 0.1); },
-            swish() { Snd.play("katana_swish", 1.2, 0.5, 0, 0.1); Snd.play("katana_hit", 0.5, 1.4, 0, 0.1); },
+            swish() { Snd.play("axe_whoosh", 1.3, 1.2, 0, 0.1); Snd.play("axe_flesh", 0.5, 1.5, 0, 0.1); },
           });
           break;
         }

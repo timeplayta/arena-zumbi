@@ -6,7 +6,7 @@
   const Snd = (function () {
     let actx = null, master = null, conv = null, amb = null, volume = 0.8, ambCfg = null, ambOn = false;
     const mix = { sfx: 1, voice: 1, amb: 0.7 };
-    const VOICE = { groan0: 1, groan1: 1, groan2: 1, scream: 1, roar: 1, giantroar: 1, die: 1, tankroar: 1, tankgrunt: 1, kiai: 1, whisper: 1, wail: 1 }, AMB = { thunder: 1, wind: 1, rain: 1 };
+    const VOICE = { groan0: 1, groan1: 1, groan2: 1, scream: 1, roar: 1, giantroar: 1, die: 1, tankroar: 1, tankgrunt: 1, lum_roar: 1, lum_grunt: 1, kiai: 1, whisper: 1, wail: 1 }, AMB = { thunder: 1, wind: 1, rain: 1 };
     const catOf = (n) => (VOICE[n] ? "voice" : AMB[n] ? "amb" : "sfx");
     const bufs = {};
     const E = Math.exp, PI2 = Math.PI * 2, rnd = () => Math.random() * 2 - 1;
@@ -88,6 +88,13 @@
       r.katana_swish = (function () { let a = 0, b = 0; return mk(0.32, (t) => { const n = rnd(); a += 0.55 * (n - a); b += 0.12 * (n - b); return (a - b) * Math.pow(Math.sin(Math.PI * Math.min(1, t / 0.3)), 1.2) * 1.6; }); })();
       r.katana_hit = (function () { let lp = 0; return mk(0.35, (t) => { lp += 0.3 * (rnd() - lp); return lp * E(-t * 22) * 1.6 + Math.sin(PI2 * 140 * t) * E(-t * 20) * 0.9 + Math.sin(PI2 * 2200 * t) * E(-t * 26) * 0.3; }); })();
       r.kiai = groan(150, 0.5, 0.5, 6); r.dodge = (function () { let lp = 0; return mk(0.35, (t) => { lp += 0.2 * (rnd() - lp); return lp * Math.pow(Math.sin(Math.PI * Math.min(1, t / 0.33)), 1.5) * 1.3; }); })();
+      // ---- Lenhador ----
+      r.lum_roar = groan(26, 2.4, 0.42, 2.6); r.lum_grunt = groan(44, 0.75, 0.38, 3.2);
+      r.axe_whoosh = (function () { let a = 0, b = 0; return mk(0.6, (t) => { const n = rnd(); a += 0.22 * (n - a); b += 0.03 * (n - b); return (a - b) * Math.pow(Math.sin(Math.PI * Math.min(1, t / 0.55)), 2.2) * 3 + Math.sin(PI2 * (90 + 60 * t) * t) * Math.pow(Math.sin(Math.PI * Math.min(1, t / 0.55)), 3) * 0.25; }); })();
+      r.axe_ground = (function () { let lp = 0, cr = 0; return mk(1.8, (t) => { lp += 0.04 * (rnd() - lp); cr = rnd() < 0.02 * E(-t * 2) ? 1 : cr * 0.6; return Math.sin(PI2 * (44 - 20 * t) * t) * E(-t * 3) * 2.8 + lp * E(-t * 4) * 5 + Math.sin(PI2 * 620 * t) * E(-t * 40) * 0.6 + cr * (rnd() - 0.5) * 1.4 * E(-t * 1.5); }); })();
+      r.axe_flesh = (function () { let lp = 0, w = 0; return mk(0.9, (t) => { lp += 0.35 * (rnd() - lp); w += 0.08 * (rnd() - w); return lp * E(-t * 14) * 1.8 + Math.sin(PI2 * 75 * t) * E(-t * 12) * 1.3 + w * E(-t * 3) * 2.2 * (0.6 + 0.4 * Math.sin(PI2 * 23 * t)); }); })();
+      r.gore_gush = (function () { let a = 0, b = 0; return mk(2.4, (t) => { const n = rnd(); a += 0.3 * (n - a); b += 0.02 * (n - b); const pulse = 0.55 + 0.45 * Math.sin(PI2 * 1.8 * t); return (a - b) * 1.6 * pulse * Math.min(1, t / 0.08) * E(-t * 0.9) + (rnd() < 0.015 ? (rnd() - 0.5) * 1.2 : 0); }); })();
+      r.axe_strain = (function () { let lp = 0; return mk(1.0, (t) => { lp += 0.08 * (rnd() - lp); return (lp * 3 + Math.sin(PI2 * (110 + 40 * Math.sin(PI2 * 9 * t)) * t) * 0.2) * Math.pow(Math.sin(Math.PI * t), 1.5) + Math.sin(PI2 * 380 * t) * (rnd() < 0.3 ? 0.15 : 0) * Math.sin(Math.PI * t); }); })();
       // ---- Espectro ----
       r.whisper = (function () { let a = 0, b = 0; return mk(2.0, (t) => { const n = rnd(); a += 0.35 * (n - a); b += 0.05 * (n - b); const am = 0.5 + 0.5 * Math.sin(PI2 * 5.5 * t + Math.sin(PI2 * 1.3 * t) * 2); return ((a - b) * 1.2 + Math.sin(PI2 * 520 * t) * 0.08 + Math.sin(PI2 * 527 * t) * 0.08) * am * Math.sin(Math.PI * t / 2.0); }); })();
       r.wail = groan(380, 2.0, 0.4, 6.5);

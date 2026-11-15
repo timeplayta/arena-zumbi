@@ -1,5 +1,10 @@
 # What's new — Arena Zumbi
 
+## Muscular Lumberjack with his own sounds (11/14/2026)
+- The Lumberjack is now muscular: puffed-out chest, broad shoulders, thick arms and a narrow waist instead of a fat body.
+- Fixed the flickering on the plaid shirt: skin no longer pokes through the clothes (also for the other plaid-shirt zombies).
+- New Lumberjack sounds: roar, axe cutting the air, axe hitting the ground, strain to pull the axe out, and the cut and blood in the finishers.
+
 ## The Lumberjack and Second Chance with a map (11/14/2026)
 - New boss: The Lumberjack. A huge bearded zombie in a plaid shirt with a two-handed axe and 7,000 health. He shows up on every difficulty in wave mode.
 - One axe blow kills. If he misses the overhead chop, the axe gets stuck in the ground and he takes 5 to 10 seconds to pull it out. If he misses the spin, the axe flies away and he falls.
