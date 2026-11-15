@@ -1,5 +1,12 @@
 # Novedades — Arena Zumbi
 
+## Leñador gigante y hacha enorme (14/11/2026)
+- El Leñador es mucho más grande: más de 5,5 m de alto y mucho más ancho.
+- El hacha ahora es gigante: mango largo y grueso, hoja enorme. El alcance de sus golpes también creció.
+- Sus manos se cierran en el mango y sujetan el hacha de verdad, incluso clavada en el suelo.
+- Cuando falla el golpe desde arriba, la hoja se hunde hasta la mitad en el suelo.
+- Remates con la cámara ajustada para mostrar al gigante y a la víctima.
+
 ## Leñador musculoso y con sonidos propios (14/11/2026)
 - El Leñador ahora es musculoso: pecho inflado, hombros anchos, brazos gruesos y cintura estrecha, en lugar del cuerpo gordo.
 - Corregido el parpadeo en la camisa a cuadros: la piel ya no atraviesa la ropa (también en los otros zombis con camisa a cuadros).

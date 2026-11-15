@@ -1,5 +1,12 @@
 # What's new — Arena Zumbi
 
+## Giant Lumberjack and huge axe (11/14/2026)
+- The Lumberjack is much bigger: over 5.5 m tall and much wider.
+- The axe is now giant: a long, thick handle and a huge blade. The reach of his blows grew too.
+- His hands close around the handle and really hold the axe, even when it is stuck in the ground.
+- When he misses the overhead chop, the blade sinks halfway into the ground.
+- Finishers with the camera adjusted to show the giant and the victim.
+
 ## Muscular Lumberjack with his own sounds (11/14/2026)
 - The Lumberjack is now muscular: puffed-out chest, broad shoulders, thick arms and a narrow waist instead of a fat body.
 - Fixed the flickering on the plaid shirt: skin no longer pokes through the clothes (also for the other plaid-shirt zombies).

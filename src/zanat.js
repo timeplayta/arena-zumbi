@@ -371,7 +371,8 @@
         parts.push({ geo: palm, mtx: new THREE.Matrix4(), part: 0 });
         const claw = variant === 1;
         const fz = [-0.031, -0.0105, 0.0105, 0.0295], fl = [[0.031, 0.02, 0.016], [0.035, 0.0225, 0.0165], [0.032, 0.021, 0.015], [0.026, 0.017, 0.013]];
-        const cur = claw ? [[0.12, 0.7, 0.7], [0.1, 0.75, 0.8], [0.15, 0.8, 0.8], [0.18, 0.85, 0.7]] : [[0.22, 0.5, 0.4], [0.2, 0.55, 0.45], [0.26, 0.6, 0.5], [0.3, 0.62, 0.5]];
+        const fist = variant === 2;                                                         // mão fechada (segura cabo / soco)
+        const cur = fist ? [[1.0, 1.35, 1.05], [0.95, 1.4, 1.1], [1.0, 1.4, 1.1], [1.05, 1.35, 1.0]] : claw ? [[0.12, 0.7, 0.7], [0.1, 0.75, 0.8], [0.15, 0.8, 0.8], [0.18, 0.85, 0.7]] : [[0.22, 0.5, 0.4], [0.2, 0.55, 0.45], [0.26, 0.6, 0.5], [0.3, 0.62, 0.5]];
         const seg = (L, r0, r1) => tube([[0, r0, r0 * 0.9, 0], [-L, r1, r1 * 0.9, 0]], { seg: 6, sub: 1, cap: 1, vc: true, ao: (p, y) => 0.95 + 0.05 * (y / -L) });
         for (let i = 0; i < 4; i++) {
           let pos = new THREE.Vector3(0, -0.094, fz[i]), ang = 0;
@@ -387,7 +388,7 @@
         for (let s = 0; s < 2; s++) {
           parts.push({ geo: seg(tl[s], 0.0125 - s * 0.0015, 0.0105 - s * 0.0015), mtx: mtxOf(tp, quatTo(td)), part: s === 1 ? 2 : 1 });
           tp = tp.clone().addScaledVector(td.clone().normalize(), tl[s]);
-          td = td.clone().add(new THREE.Vector3(ms * (claw ? 0.15 : 0.35), -0.1, claw ? 0.2 : 0.35));
+          td = td.clone().add(new THREE.Vector3(ms * (fist ? 0.9 : claw ? 0.15 : 0.35), -0.1, fist ? 0.6 : claw ? 0.2 : 0.35));
         }
         return merge(parts);
       });

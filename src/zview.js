@@ -83,7 +83,7 @@
       const handM = P.bloodyHands ? tok(skinC.clone().lerp(bloodC, 0.55)) : skin;
       const dark = M.wound, white = tok(0xd8d2c0);
       const root = (this.root = new THREE.Group()); root.rotation.order = "YXZ";
-      const s = z.s, wide = z.lumber ? 1.12 : z.giant ? 1.22 : z.brute ? 1.18 : fat ? 1.08 : z.runner ? 0.92 : 1;
+      const s = z.s, wide = z.lumber ? 1.24 : z.giant ? 1.22 : z.brute ? 1.18 : fat ? 1.08 : z.runner ? 0.92 : 1;
       root.scale.set(s * wide, s * (fem ? 0.96 : 1), s * wide);
       const add = (geo, m, x, y, zz, p, shadow) => { const o = new THREE.Mesh(geo, m); o.position.set(x, y, zz); (p || root).add(o); if (shadow) o.castShadow = true; return o; };
       let bodyMats = {};
@@ -283,7 +283,7 @@
             if (A.stripes) body(ZA.part("fore", { cloth: true, infl: 1.075, y0: -0.07, y1: -0.1 }), bandRGB, clothO(39, { dirt: 0.2 }), "cloth", 0, 0, 0, el, false, aw, THREE.DoubleSide);
             if (cut === 1) { const st = ZB.stump(0.032 * armW, 0.04); st.position.y = -0.258; el.add(st); }
             else {
-              const hm = ZA.fromTpl(ZA.handTpl(-sx, claw ? 1 : 0), (p, o) => {
+              const hm = ZA.fromTpl(ZA.handTpl(-sx, kind === "lumber" ? 2 : claw ? 1 : 0), (p, o) => {
                 const k = p === 2 ? 0.88 : p === 1 ? 0.97 : 1; o[0] = handRGB[0] * k + (p === 2 ? 0.05 : 0); o[1] = handRGB[1] * k + (p === 2 ? 0.04 : 0); o[2] = handRGB[2] * k;
               }, zsd + idx);
               const hmesh = new THREE.Mesh(hm, plainM); hmesh.userData.ownGeo = true; hmesh.castShadow = false; hmesh.scale.set(armW > 1.1 ? 1.2 : 1, armW > 1.1 ? 1.2 : 1, armW > 1.1 ? 1.2 : 1); hand.add(hmesh);

@@ -95,7 +95,7 @@ const Logic = (function () {
     tank: { hp: 2400, grow: 170, speed: 0.95, dmg: 1.7, pts: 1500, coins: 40, s: [1.9, 2.0] },
     samurai: { hp: 1300, grow: 110, speed: 2.5, dmg: 1.5, pts: 800, coins: 25, s: [0.97, 1.0] },
     wraith: { hp: 1500, grow: 140, speed: 9.5, dmg: 1, pts: 2000, coins: 60, s: [1.27, 1.29] },
-    lumber: { hp: 7000, grow: 450, speed: 1.55, dmg: 1, pts: 4000, coins: 120, s: [2.1, 2.2], min: 7000 },   // Lenhador: o dobro do zumbi comum, machado de duas mãos
+    lumber: { hp: 7000, grow: 450, speed: 1.75, dmg: 1, pts: 4000, coins: 120, s: [3.2, 3.3], min: 7000 },   // Lenhador: o dobro do zumbi comum, machado de duas mãos
   };
   // Lenhador: aparece em todas as dificuldades (onda inicial, intervalo)
   const LUMBER_AT = { easy: [5, 5], normal: [5, 5], hard: [4, 4], nightmare: [4, 4], extremo: [3, 3], apocalipse: [3, 3] };
@@ -994,9 +994,9 @@ const Logic = (function () {
           if (t < 0.75) this.turnToward(z, this.px, this.py, 1.6, dt);
           if (t >= 0.25 && once(1)) this.events.push(["lum_roar", z.x, z.y, 0]);
           if (t >= 1.05 && once(2)) {
-            const ix = z.x + fx * 1.12 * s, iy = z.y + fy * 1.12 * s;
+            const ix = z.x + fx * 1.55 * s, iy = z.y + fy * 1.55 * s;
             quake(1.7, 34);
-            if (alive() && along > 0.2 && along < 1.55 * s && side < 0.95) {
+            if (alive() && along > 0.2 && along < 1.85 * s && side < 0.3 * s + 0.3) {
               const was = alive(); this.hurt(tgtMax * 1.3, z);
               if (was && !alive()) return finish("split");
               this.push(fx * 9, fy * 9); this.events.push(["lum_hit", this.px, this.py]); go("recover", 2.2); return;
@@ -1018,7 +1018,7 @@ const Logic = (function () {
           if (once(1)) this.events.push(["lum_spin", z.x, z.y]);
           if (t < 1.65) {
             z.yaw = wrapAngle(z.yaw + (Math.PI * 2 / 0.8) * dt);
-            if (alive() && !z.landed && dist < 1.22 * s + PLAYER_R) {
+            if (alive() && !z.landed && dist < 1.5 * s + PLAYER_R) {
               z.landed = true; const was = alive(); this.hurt(tgtMax * 1.3, z); quake(1.2);
               if (was && !alive()) return finish("slash");
               const k = dist || 1; this.push((dx / k) * 15, (dy / k) * 15); this.events.push(["lum_hit", this.px, this.py]);
@@ -1063,10 +1063,10 @@ const Logic = (function () {
       const ang = this.turnToward(z, this.px, this.py, 2.0, dt), armed = z.combo === 1;
       if (!armed) { z.orb += dt; if (z.orb > 9) { go("fetch"); return; } }                 // cansou de correr atrás: volta para o machado
       if (z.cd <= 0 && alive() && Math.abs(ang) < 0.5) {
-        if (armed && dist < 1.3 * s) { z.landed = false; z.atk = this.rnd() < 0.5 ? "chop" : "spin"; go(z.atk); return; }
+        if (armed && dist < 1.65 * s) { z.landed = false; z.atk = this.rnd() < 0.5 ? "chop" : "spin"; go(z.atk); return; }
         if (!armed && dist < 1.05 * s) { z.atk = this.rnd() < 0.55 ? "punch" : "kick"; go(z.atk); return; }
       }
-      if (dist > (armed ? 1.0 : 0.7) * s) this.walkToward(z, dt, dx, dy, dist, z.speed * (armed ? 1 : 1.75) * (z.slowT > 0 ? 0.85 : 1));
+      if (dist > (armed ? 1.3 : 0.7) * s) this.walkToward(z, dt, dx, dy, dist, z.speed * (armed ? 1 : 1.75) * (z.slowT > 0 ? 0.85 : 1));
     }
 
     // ---- Colosso Blindado: escudo, investida e batida no chão (sequência de 5 s) ----

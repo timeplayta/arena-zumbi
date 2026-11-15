@@ -1,5 +1,12 @@
 # Novidades — Arena Zumbi
 
+## Lenhador gigante e machado enorme (14/11/2026)
+- O Lenhador ficou muito maior: mais de 5,5 m de altura e bem mais largo.
+- O machado agora é gigante: cabo longo e grosso, lâmina enorme. O alcance dos golpes cresceu junto.
+- As mãos fecham no cabo e seguram o machado de verdade, inclusive com ele cravado no chão.
+- Quando erra o golpe de cima, a lâmina afunda até a metade no chão.
+- Finalizações com a câmera ajustada para mostrar o gigante e a vítima.
+
 ## Lenhador musculoso e com sons próprios (14/11/2026)
 - O Lenhador agora é musculoso: peitoral estufado, ombros largos, braços grossos e cintura fina, no lugar do corpo gordo.
 - Corrigido o pisca-pisca na camisa xadrez: a pele não fura mais a roupa (vale também para os outros zumbis de camisa xadrez).

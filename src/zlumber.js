@@ -4,31 +4,34 @@
   //  Aqui: modelo do machado, poses (braços por cinemática inversa até o cabo) e o machado solto no mundo
   //  (preso no chão, voando, caído).
   // ======================================================================
+  // machado gigante: K aumenta o cabo (para cima) e a cabeça; o punho (onde as mãos seguram) fica no mesmo lugar
+  const AXE_K = 1.7;
   function makeAxe() {
-    const g = new THREE.Group(); g.rotation.order = "YXZ";
+    const K = AXE_K, HY = 0.72 * K, g = new THREE.Group(); g.rotation.order = "YXZ";
     const wood = new THREE.MeshPhongMaterial({ color: 0x3a2413, specular: 0x1a120a, shininess: 8 });
     const steel = new THREE.MeshPhongMaterial({ color: 0x7f868e, specular: 0xaab2bc, shininess: 60 });
     const dark = new THREE.MeshPhongMaterial({ color: 0x2c3036, specular: 0x555a60, shininess: 30 });
     const gore = new THREE.MeshLambertMaterial({ color: 0x4a0606 });
     const mats = [wood, steel, dark, gore]; for (const m of mats) m.userData.own = true;
     const add = (geo, m, x, y, z) => { const o = new THREE.Mesh(geo, m); o.position.set(x, y, z); o.castShadow = true; g.add(o); return o; };
-    // cabo (de -0,45 a 0,8), levemente curvo na ponta
-    add(new THREE.CylinderGeometry(0.02, 0.026, 1.25, 10), wood, 0, 0.175, 0);
-    add(new THREE.CylinderGeometry(0.03, 0.024, 0.07, 10), wood, 0, -0.44, 0);
-    for (let i = 0; i < 4; i++) add(new THREE.CylinderGeometry(0.0275, 0.0275, 0.018, 10), dark, 0, -0.34 + i * 0.075, 0);   // fita do punho
+    // cabo grosso (de -0,47 até a cabeça)
+    const top = HY + 0.09 * K, bot = -0.47, R0 = 0.03, R1 = 0.036;
+    add(new THREE.CylinderGeometry(R0, R1, top - bot, 12), wood, 0, (top + bot) / 2, 0);
+    add(new THREE.CylinderGeometry(0.043, 0.034, 0.08, 12), wood, 0, -0.45, 0);
+    for (let i = 0; i < 5; i++) add(new THREE.CylinderGeometry(0.038, 0.038, 0.02, 12), dark, 0, -0.38 + i * 0.075, 0);   // fita do punho
     // cabeça do machado: olhal + lâmina larga (fio para -Z) + martelo atrás
-    add(new THREE.BoxGeometry(0.06, 0.15, 0.13), dark, 0, 0.72, -0.01);
+    add(new THREE.BoxGeometry(0.075 * K, 0.17 * K, 0.14 * K), dark, 0, HY, -0.01 * K);
     const sh = new THREE.Shape();
-    sh.moveTo(0.05, 0.075); sh.lineTo(0.3, 0.2); sh.quadraticCurveTo(0.385, 0, 0.3, -0.2); sh.lineTo(0.05, -0.075); sh.closePath();
-    const bg = new THREE.ExtrudeGeometry(sh, { depth: 0.012, bevelEnabled: true, bevelThickness: 0.012, bevelSize: 0.014, bevelSegments: 2 });
-    bg.translate(0, 0, -0.006); bg.rotateY(Math.PI / 2);
-    add(bg, steel, 0, 0.72, 0);
-    add(new THREE.BoxGeometry(0.07, 0.09, 0.07), dark, 0, 0.72, 0.085);
-    // sangue seco no fio
-    const sb = new THREE.Shape(); sb.moveTo(0.24, 0.17); sb.lineTo(0.3, 0.2); sb.quadraticCurveTo(0.385, 0, 0.3, -0.2); sb.lineTo(0.22, -0.14); sb.quadraticCurveTo(0.3, 0, 0.24, 0.17);
-    const sg = new THREE.ExtrudeGeometry(sb, { depth: 0.04, bevelEnabled: false }); sg.translate(0, 0, -0.02); sg.rotateY(Math.PI / 2);
-    add(sg, gore, 0, 0.72, 0).castShadow = false;
-    g.userData = { mats, hL: new THREE.Vector3(0, -0.36, 0), hR: new THREE.Vector3(0, -0.1, 0), head: new THREE.Vector3(0, 0.72, -0.3) };
+    sh.moveTo(0.05 * K, 0.075 * K); sh.lineTo(0.3 * K, 0.21 * K); sh.quadraticCurveTo(0.4 * K, 0, 0.3 * K, -0.21 * K); sh.lineTo(0.05 * K, -0.075 * K); sh.closePath();
+    const bg = new THREE.ExtrudeGeometry(sh, { depth: 0.01 * K, bevelEnabled: true, bevelThickness: 0.008 * K, bevelSize: 0.012 * K, bevelSegments: 2 });
+    bg.translate(0, 0, -0.005 * K); bg.rotateY(Math.PI / 2);
+    add(bg, steel, 0, HY, 0);
+    add(new THREE.BoxGeometry(0.085 * K, 0.1 * K, 0.08 * K), dark, 0, HY, 0.09 * K);
+    // sangue seco no fio (um pouco afastado da lâmina para não piscar)
+    const sb = new THREE.Shape(); sb.moveTo(0.25 * K, 0.18 * K); sb.lineTo(0.3 * K, 0.21 * K); sb.quadraticCurveTo(0.4 * K, 0, 0.3 * K, -0.21 * K); sb.lineTo(0.23 * K, -0.15 * K); sb.quadraticCurveTo(0.31 * K, 0, 0.25 * K, 0.18 * K);
+    const sg = new THREE.ExtrudeGeometry(sb, { depth: 0.036 * K, bevelEnabled: false }); sg.translate(0, 0, -0.018 * K); sg.rotateY(Math.PI / 2);
+    add(sg, gore, 0, HY, 0).castShadow = false;
+    g.userData = { mats, hL: new THREE.Vector3(0, -0.36, 0), hR: new THREE.Vector3(0, -0.1, 0), head: new THREE.Vector3(0, HY, -0.32 * K), R: R1 };
     return g;
   }
 
@@ -52,6 +55,9 @@
       this.shL = this.sL.position.clone(); this.shR = this.sR.position.clone();
       this._v = new THREE.Vector3(); this._w = new THREE.Vector3(); this._m = new THREE.Matrix4(); this._q = new THREE.Quaternion();
       this.poleL = new THREE.Vector3(-0.5, -0.6, 0.5); this.poleR = new THREE.Vector3(0.5, -0.6, 0.5);
+      const hk = this.wL.children[0] ? this.wL.children[0].scale.x : 1;                          // tamanho da mão (malha escalada)
+      this.gripX = (0.019 + 0.6 * ax.userData.R) * hk + 0.012; this.gripY = 0.088 * hk;
+      this._A = new THREE.Vector3(); this._G2 = new THREE.Vector3(); this._P = new THREE.Vector3();
     }
     // machado solto no mundo, cravado com a cabeça em (hx,hy,hz) (coordenadas do three) e o cabo apontando de volta ao longo de -f, subindo "elev"
     plant(hx, hy, hz, fx, fz, elev, s) {
@@ -64,6 +70,31 @@
       ax.position.set(hx - this._v.x, hy - this._v.y, hz - this._v.z);
       this.axMode = "world";
     }
+    plantToward(hx, hy, hz, sx, sy, sz, s) {
+      const ax = this.ax, Y = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0), Z = new THREE.Vector3(), off = ax.userData.head.z * s;   // o fio fica abaixo do eixo do cabo
+      Y.set(hx - sx, hy - sy, hz - sz).normalize();
+      for (let i = 0; i < 3; i++) { Z.copy(up).addScaledVector(Y, -Y.dot(up)).normalize(); Y.set(hx - Z.x * off - sx, hy - Z.y * off - sy, hz - Z.z * off - sz).normalize(); }   // o eixo do cabo (não o fio) passa pelo peito
+      Z.copy(up).addScaledVector(Y, -Y.dot(up)).normalize(); const X = new THREE.Vector3().crossVectors(Y, Z);
+      this._m.makeBasis(X, Y, Z);
+      if (ax.parent !== scene) { ax.parent.remove(ax); scene.add(ax); }
+      ax.quaternion.setFromRotationMatrix(this._m); ax.scale.setScalar(s);
+      this._v.copy(ax.userData.head).multiplyScalar(s).applyQuaternion(ax.quaternion);
+      ax.position.set(hx - this._v.x, hy - this._v.y, hz - this._v.z);
+      this.axMode = "world";
+    }
+    // mão fechada no cabo: G = ponto do cabo, A = direção do cabo (para a cabeça), no espaço do tronco; ms = lado (-sx)
+    grip(sh, el, hand, G, A, pole, ms) {
+      const R = ZE, F = this._F || (this._F = new THREE.Vector3()), X = this._X || (this._X = new THREE.Vector3()), Y = this._Y || (this._Y = new THREE.Vector3()), Zv = this._Z || (this._Z = new THREE.Vector3());
+      F.copy(G).sub(sh.position); F.addScaledVector(A, -F.dot(A)); if (F.lengthSq() < 1e-8) F.set(0, 0, -1); F.normalize();      // antebraço chega perpendicular ao cabo
+      Y.copy(F).negate(); Zv.copy(A).negate(); X.crossVectors(Y, Zv).normalize(); Zv.crossVectors(X, Y);
+      const W = this._W || (this._W = new THREE.Vector3());
+      W.copy(G).addScaledVector(X, -ms * this.gripX).addScaledVector(Y, this.gripY);                                          // pulso = ponto do cabo menos o centro da mão fechada
+      R.ik(sh, el, W, pole, 0.29, 0.258);
+      this._m.makeBasis(X, Y, Zv);
+      const qd = this._qd || (this._qd = new THREE.Quaternion()), qp = this._qp || (this._qp = new THREE.Quaternion());
+      qd.setFromRotationMatrix(this._m); qp.copy(sh.quaternion).multiply(el.quaternion).invert();
+      hand.quaternion.copy(qp.multiply(qd));
+    }
     toHand() {
       const ax = this.ax;
       if (ax.parent !== this.spine) this.spine.attach(ax);                               // mantém a posição no mundo e volta suave para as mãos
@@ -75,7 +106,7 @@
       this.hotFlash(z);
       const ax = this.ax, act = z.act, t = z.seqT, fwx = -Math.sin(z.yaw), fwz = -Math.cos(z.yaw);     // frente no mundo (x, z do three)
       if (z.state === "dead") {
-        if (this.axMode === "hand") { ax.updateWorldMatrix(true, false); const p = new THREE.Vector3(); ax.localToWorld(p.copy(ax.userData.head)); this.plant(p.x + fwx * 0.6, 0.05, p.z + fwz * 0.6, fwx, fwz, 0.12, s); }
+        if (this.axMode === "hand") { ax.updateWorldMatrix(true, false); const p = new THREE.Vector3(); ax.localToWorld(p.copy(ax.userData.head)); this.plant(p.x + fwx * 0.6, 0.05, p.z + fwz * 0.6, fwx, fwz, 0.08, s); }
         this.flyTick(dt, z); super.update(z); return;
       }
       const hot = z.hitT > 0;
@@ -160,14 +191,17 @@
       this.setJaw(jaw);
       // ---------- machado ----------
       const wantWorld = (act === "stuck" && t < (z.dodgeDir || 6) * 0.82 + 0.12) || (act === "fin" && z.atk === "split" && t < 2.5) || !armed;
-      if (entered && act === "stuck") { this.plant(z.x + fwx * 1.05 * s, 0.02 * s, -z.y + fwz * 1.05 * s, fwx, fwz, 0.62, s); this.baseQ = ax.quaternion.clone(); this.baseP = ax.position.clone(); }
-      if (entered && act === "fin" && z.atk === "split") { const v = this.victim || [z.x + fwx * 1.05 * s, -z.y + fwz * 1.05 * s]; let dx = v[0] - z.x, dz = v[1] + z.y; const d = Math.hypot(dx, dz) || 1; dx /= d; dz /= d; this.plant(v[0], 0.98, v[1], dx, dz, 0.2, s); }
+      if (entered && act === "stuck") {                                                   // cabeça cravada à frente; o cabo aponta para o peito (mãos alcançam)
+        const hx = z.x + fwx * 1.55 * s, hz = -z.y + fwz * 1.55 * s;                    // mesmo ponto do impacto na lógica
+        this.plantToward(hx, -0.24 * AXE_K * s, hz, z.x + fwx * 0.5 * s, 0.85 * s, -z.y + fwz * 0.5 * s, s);   // lâmina afundada até a metade this.baseQ = ax.quaternion.clone(); this.baseP = ax.position.clone();
+      }
+      if (entered && act === "fin" && z.atk === "split") { const v = this.victim || [z.x + fwx * 1.68 * s, -z.y + fwz * 1.68 * s]; this.plantToward(v[0], 0.98, v[1], z.x + fwx * 0.5 * s, 1.0 * s, -z.y + fwz * 0.5 * s, s); }
       if (entered && act === "down" && this.axMode === "hand") {                          // o machado escapa e voa até (ax, ay)
         ax.updateWorldMatrix(true, false); const p = new THREE.Vector3(), q = new THREE.Quaternion(); ax.getWorldPosition(p); ax.getWorldQuaternion(q);
         ax.parent.remove(ax); scene.add(ax); ax.position.copy(p); ax.quaternion.copy(q); ax.scale.setScalar(s); this.axMode = "world";
         this.fly = { t: 0, T: 0.8, from: p.clone(), to: new THREE.Vector3(z.ax, 0, -z.ay), q0: q.clone() };
       }
-      if (!armed && !this.fly && this.axMode === "hand") this.plant(z.ax, 0.04 * s, -z.ay, fwx, fwz, 0.5, s);      // (entrou no meio: machado já está no chão)
+      if (!armed && !this.fly && this.axMode === "hand") this.plant(z.ax, 0.04 * s, -z.ay, fwx, fwz, 0.35, s);      // (entrou no meio: machado já está no chão)
       if (this.axMode === "world" && !wantWorld && !this.fly) { root.updateMatrixWorld(true); this.toHand(); }
       this.flyTick(dt, z);
       if (this.axMode === "world" && act === "stuck" && this.baseQ) {                      // puxões: o cabo balança, na terceira sai
@@ -177,13 +211,15 @@
       const U = ax.userData;
       if (this.axMode === "hand") {
         ax.position.set(e("apx", ap[0]), e("apy", ap[1]), e("apz", ap[2])); ax.rotation.set(e("arx", ar[0]), e("ary", ar[1]), e("arz", ar[2])); ax.updateMatrix();
-        this._v.copy(U.hL).applyMatrix4(ax.matrix); R.ik(this.sL, this.eL, this._v, this.poleL, 0.29, 0.258);
-        this._w.copy(U.hR).applyMatrix4(ax.matrix); R.ik(this.sR, this.eR, this._w, this.poleR, 0.29, 0.258);
-        this.wL.rotation.set(0.1, 0, 0); this.wR.rotation.set(0.1, 0, 0);
+        this._A.set(0, 1, 0).applyQuaternion(ax.quaternion);
+        this.grip(this.sL, this.eL, this.wL, this._v.copy(U.hL).applyMatrix4(ax.matrix), this._A, this.poleL, 1);
+        this.grip(this.sR, this.eR, this.wR, this._w.copy(U.hR).applyMatrix4(ax.matrix), this._A, this.poleR, -1);
       } else if (wantWorld && armed) {                                                    // mãos no cabo do machado cravado
         root.updateMatrixWorld(true); ax.updateMatrixWorld(true);
-        this.spine.worldToLocal(ax.localToWorld(this._v.copy(U.hL))); R.ik(this.sL, this.eL, this._v, this.poleL, 0.29, 0.258);
-        this.spine.worldToLocal(ax.localToWorld(this._w.copy(U.hR))); R.ik(this.sR, this.eR, this._w, this.poleR, 0.29, 0.258);
+        this.spine.worldToLocal(ax.localToWorld(this._v.copy(U.hL))); this.spine.worldToLocal(ax.localToWorld(this._w.copy(U.hR)));
+        this._A.copy(this._w).sub(this._v).normalize();                                      // direção do cabo (do punho para a cabeça) no espaço do tronco
+        this.grip(this.sL, this.eL, this.wL, this._v, this._A, this.poleL, 1);
+        this.grip(this.sR, this.eR, this.wR, this._w, this._A, this.poleR, -1);
       } else {
         const f = free || [0.2 - sw * 0.3, 0.3, 0.2 + sw * 0.3, 0.3, -0.1, 0.1];
         this.sL.rotation.set(e("fl", f[0], 14), 0, e("flz", f[4], 10)); this.eL.rotation.set(e("fle", f[1], 14), 0, 0);
@@ -198,7 +234,7 @@
       ax.rotateX(-dt * 17);
       if (u >= 1) {
         let dx = f.to.x - f.from.x, dz = f.to.z - f.from.z; const d = Math.hypot(dx, dz) || 1; dx /= d; dz /= d;
-        this.plant(f.to.x, 0.03 * s, f.to.z, dx, dz, 0.55, s); this.fly = null;
+        this.plant(f.to.x, 0.03 * s, f.to.z, dx, dz, 0.4, s); this.fly = null;
       }
     }
     destroy() {
@@ -262,7 +298,7 @@
       stop();
       if (!pool) pool = new Pool(new THREE.BoxGeometry(0.075, 0.075, 0.075), M.blood, 150);
       let dx = px - z.x, dy = py - z.y; const d0 = Math.hypot(dx, dy) || 1; dx /= d0; dy /= d0;
-      const s = z.s, D = Math.min(Math.max(d0, 0.9 * s), 1.2 * s);
+      const s = z.s, D = type === "split" ? 1.68 * s : Math.min(Math.max(d0, 1.15 * s), 1.45 * s);
       let vx = z.x + dx * D, vy = z.y + dy * D;
       const lim = L.C.ARENA - 0.8; vx = Math.max(-lim, Math.min(lim, vx)); vy = Math.max(-lim, Math.min(lim, vy));
       const dm = dummy(shirt || 0x4a6a8a);
@@ -271,10 +307,10 @@
       scene.add(dm.root);
       if (view) { view.victim = [vx, -vy]; view.finYaw = Math.atan2(-(vx - z.x), vy - z.y); }
       // câmera atrás do jogador: ele no meio da tela, o lenhador logo à frente
-      let cx = vx + dx * 2.9 + -dy * 0.5, cy = vy + dy * 2.9 + dx * 0.5;
+      let cx = vx + dx * 3.9 + -dy * 1.3, cy = vy + dy * 3.9 + dx * 1.3;      // atrás da vítima: a lâmina fica de perfil e não tapa o corpo
       cx = Math.max(-lim, Math.min(lim, cx)); cy = Math.max(-lim, Math.min(lim, cy));
       const pp = L.pushOut(cx, cy, 0.5); cx = pp[0]; cy = pp[1];
-      cur = { z, type, t: 0, dm, vx, vy, dx, dy, cam: new V(cx, 1.95, -cy), look: new V(vx - dx * 0.6, 1.45, -(vy - dy * 0.6)), from: null, hooks: hooks || {}, ev: 0, dur: type === "split" ? 6.2 : 7.0, pools: 0 };
+      cur = { z, type, t: 0, dm, vx, vy, dx, dy, cam: new V(cx, 2.0, -cy), look: new V(vx - dx * 1.6, 2.05, -(vy - dy * 1.6)), from: null, hooks: hooks || {}, ev: 0, dur: type === "split" ? 6.2 : 7.0, pools: 0 };
       return cur;
     }
     function stop() {
