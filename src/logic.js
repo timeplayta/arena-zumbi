@@ -183,10 +183,24 @@ const Logic = (function () {
 
   // mapa do modo Infecção (mapit.js): vila italiana com morros, casas e lojas
   const ITALY_BOXES = ITALIA.boxes.map((b) => [b[0], b[1], b[2], b[3], b[4], b[5] || 0]);   // [x0, x1, y0, y1, topo, base]
-  let BOXES = ARENA_BOXES, MAP = "arena";
-  function setMap(m) {
-    MAP = m === "italia" ? "italia" : m === "grande" ? "grande" : "arena";
-    BOXES = MAP === "italia" ? ITALY_BOXES : MAP === "grande" ? BIG.boxes : ARENA_BOXES; ARENA = MAP === "italia" ? ITALIA.A : MAP === "grande" ? BIG.A : ARENA0;
+  let BOXES = ARENA_BOXES, MAP = "arena", MAPV = 0;
+  // Modo Prédio: cada andar é um mapa próprio (custom = { boxes, A }); MAPV muda a cada andar para o campo de fluxo não reaproveitar o andar anterior
+  function setMap(m, custom) {
+    MAP = m === "italia" ? "italia" : m === "grande" ? "grande" : m === "predio" && custom ? "predio" : "arena";
+    BOXES = MAP === "predio" ? custom.boxes : MAP === "italia" ? ITALY_BOXES : MAP === "grande" ? BIG.boxes : ARENA_BOXES; ARENA = MAP === "predio" ? custom.A : MAP === "italia" ? ITALIA.A : MAP === "grande" ? BIG.A : ARENA0;
+    MAPV++;
+  }
+  // linha de visão: algum bloco alto (parede, estante, armário) corta o segmento A-B na altura h?
+  function segBlocked(x0, y0, x1, y1, h) {
+    const dx = x1 - x0, dy = y1 - y0;
+    for (const b of BOXES) {
+      if (b[4] < h || b[5] > h) continue;
+      let t0 = 0, t1 = 1;
+      if (Math.abs(dx) < 1e-9) { if (x0 <= b[0] || x0 >= b[1]) continue; } else { let a = (b[0] - x0) / dx, c = (b[1] - x0) / dx; if (a > c) [a, c] = [c, a]; t0 = Math.max(t0, a); t1 = Math.min(t1, c); if (t0 >= t1) continue; }
+      if (Math.abs(dy) < 1e-9) { if (y0 <= b[2] || y0 >= b[3]) continue; } else { let a = (b[2] - y0) / dy, c = (b[3] - y0) / dy; if (a > c) [a, c] = [c, a]; t0 = Math.max(t0, a); t1 = Math.min(t1, c); if (t0 >= t1) continue; }
+      return true;
+    }
+    return false;
   }
 
   const clamp = (v, lo, hi) => (v < lo ? lo : v > hi ? hi : v);
@@ -232,9 +246,11 @@ const Logic = (function () {
   // ---------- campo de fluxo: zumbis "espertos" contornam containers, carros e prédios (arena e mapa grande; a Infecção não usa) ----------
   // grade de 1 m; Dijkstra a partir da célula do alvo; cada zumbi desce o campo e mira no ponto mais distante que ele enxerga
   const Flow = (() => {
-    const C = 1, grids = {};
+    let C = 1; const grids = {};
     function grid(r) {
-      const k = MAP + ":" + r; if (grids[k]) return grids[k];
+      C = MAP === "predio" ? 0.5 : 1;                                    // prédio: grade de 0,5 m (portas de 1,4 m)
+      const k = MAP + ":" + MAPV + ":" + r; if (grids[k]) return grids[k];
+      for (const q in grids) if (q.split(":")[0] === "predio" && q !== k) delete grids[q];
       const A = ARENA, N = Math.ceil((2 * A) / C), blk = new Uint8Array(N * N);
       for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) {
         const x = -A + (i + 0.5) * C, y = -A + (j + 0.5) * C;
@@ -267,7 +283,7 @@ const Logic = (function () {
         }
       }
       g.fields.set(tc, { d, t: now });
-      if (g.fields.size > 10) { let ok = -1, ot = 1e18; for (const [k, v] of g.fields) if (v.t < ot) { ot = v.t; ok = k; } g.fields.delete(ok); }
+      if (g.fields.size > (MAP === "predio" ? 24 : 10)) { let ok = -1, ot = 1e18; for (const [k, v] of g.fields) if (v.t < ot) { ot = v.t; ok = k; } g.fields.delete(ok); }
       return d;
     }
     function los(g, x0, y0, x1, y1) {
@@ -1451,6 +1467,7 @@ const Logic = (function () {
     }
 
     zombieAI(z, dt, base) {
+      if (this.gm === "predio" && this.towerAI) { this.towerAI(z, dt, base); return; }
       const dx = this.px - z.x, dy = this.py - z.y, dist = Math.hypot(dx, dy) || 1e-6;
       if (z.tank) { this.updateTank(z, dt, dist); return; }
       if (z.lumber) { this.updateLumber(z, dt, dist, dx, dy); return; }
@@ -1545,7 +1562,8 @@ const Logic = (function () {
       for (const e of this.sched) if (e.t <= 0) { if (e.fn === "melee") this.doMelee(); else if (e.fn === "shake") this.shake = Math.max(this.shake, e.v); else if (e.ev) this.events.push(e.ev); }
       this.sched = this.sched.filter((e) => e.t > 0);
       if (this.alive) {
-        this.updatePlayer(dt, inp);
+        if (this.tw && this.tw.hide) { this.moving = false; this.sprinting = false; this.ads = false; }   // escondido no armário: não anda
+        else this.updatePlayer(dt, inp);
         if (this.hp < 30) { this.hbT -= dt; if (this.hbT <= 0) { this.hbT = 0.5 + this.hp / 60; this.events.push(["heart"]); } }
       } else { this.moving = false; this.ads = false; }
       this.invulnT = Math.max(0, this.invulnT - dt); this.boostT = Math.max(0, this.boostT - dt);
@@ -1564,6 +1582,7 @@ const Logic = (function () {
       if (this.coop && this.coop.role === "guest") { this.mirrorStep(dt); this.updateCracks(dt); this.potsVisual(dt); return; }   // convidado: o mundo vem pelo anfitrião
       if (this.gm === "infect") { this.updateInfect(dt); this.updateZombies(dt); this.updatePickups(dt); this.updateBoosts(dt); this.updatePots(dt); }
       else if (this.gm === "explore") { this.updateBoosts(dt); }
+      else if (this.gm === "predio") { this.updateTower(dt); this.updateZombies(dt); this.updatePickups(dt); }
       else { this.updateWaves(dt); this.updateZombies(dt); this.updatePickups(dt); this.updateCracks(dt); }
       if (this.coop && !this.alive && !this.reviveWait && !this.over && !this.others.some((o) => o.alive)) this.over = true;
     }
@@ -2235,7 +2254,7 @@ const Logic = (function () {
   }
 
   return {
-    Game, Zombie, Pickup, Nav, Flow, BIG, BOT_AI, POT, buildSlot, groundAt, setMap, getMap: () => MAP, rangeFactor, damageAt, weaponStats, recoilPattern, pushOut, insideAny, clamp, wrapAngle, BOXES, OBSTACLES, LAMPS, WEAPONS, WEAPON_ORDER, DIFF, DIFF_ORDER, ELITE, SAM,
+    Game, Zombie, Pickup, Nav, Flow, BIG, segBlocked, STEP, HEAD_ROOM, ZOMBIE_R, ATTACK_RANGE, BOT_AI, POT, buildSlot, groundAt, setMap, getMap: () => MAP, rangeFactor, damageAt, weaponStats, recoilPattern, pushOut, insideAny, clamp, wrapAngle, BOXES, OBSTACLES, LAMPS, WEAPONS, WEAPON_ORDER, DIFF, DIFF_ORDER, ELITE, SAM,
     C: { ZOMBIE_RESPAWN, get ARENA() { return ARENA; }, WALL_H, EYE_H, CROUCH_DROP, PLAYER_R, RADAR_RANGE: 18, SWITCH_TIME, MELEE_CD, PICK_TTL },
   };
 })();
