@@ -377,15 +377,16 @@
     finally { scene.add = realAdd; L.setMap(prev); }
   }
   function useMap(m) {
-    const it = m === "italia", big = m === "grande";
+    const it = m === "italia", big = m === "grande", pr = m === "predio";
     if (it) ensureItalia();
     if (big) ensureBig();
-    L.setMap(it ? "italia" : big ? "grande" : "arena");
+    if (!pr) L.setMap(it ? "italia" : big ? "grande" : "arena");          // prédio: o mapa de cada andar é montado pelo jogo (towerlogic.js)
     if (!arenaLights.length && lampLights.length) arenaLights.push(...lampLights);
-    if (worldArena) worldArena.visible = !it && !big;
+    if (worldArena) worldArena.visible = !it && !big && !pr;
+    TowerView.setVisible(pr);
     if (worldItaly) worldItaly.visible = it;
     if (worldBig) worldBig.visible = big;
-    lampLights.length = 0; lampLights.push(...(it ? itLights : big ? bigLights : arenaLights));
+    lampLights.length = 0; lampLights.push(...(it ? itLights : big ? bigLights : pr ? TowerView.ensureLights(arenaLights.length || 6) : arenaLights));
     if (!it) for (const v of boostViews) v.root.visible = false;
     applyEnv();
   }

@@ -391,6 +391,23 @@ table.sc td:first-child { font-family: var(--font-display); font-size: 22px; col
 #touch .pf, #touch .ph { width: calc(52 * var(--u)); height: calc(52 * var(--u)); font-size: calc(11 * var(--u)); letter-spacing: 0; line-height: 1; grid-auto-flow: row; align-content: center; gap: 2px; }
 #touch .pf { right: calc(var(--sr) + 236 * var(--u)); bottom: calc(26px + 112 * var(--u)); border-color: rgba(255, 130, 40, 0.85); background: rgba(120, 40, 8, 0.5); }
 #touch .ph { right: calc(var(--sr) + 236 * var(--u)); bottom: calc(26px + 176 * var(--u)); border-color: rgba(90, 255, 130, 0.8); background: rgba(10, 80, 30, 0.5); }
+#touch .us { right: calc(var(--sr) + 236 * var(--u)); bottom: calc(26px + 240 * var(--u)); width: calc(64 * var(--u)); height: calc(52 * var(--u)); font-size: calc(13 * var(--u)); border-color: rgba(120, 200, 255, 0.9); background: rgba(10, 50, 90, 0.55); }
+#twHud { position: absolute; left: 16px; top: calc(118px * var(--hs, 1)); display: grid; gap: 6px; font-family: var(--f-display, "Barlow Condensed", sans-serif); letter-spacing: 0.04em; pointer-events: none; }
+#twHud .tw-bat { display: flex; align-items: center; gap: 8px; color: #ffe9a8; font-size: 15px; }
+#twHud .tw-ic { font-size: 16px; filter: grayscale(0.2); }
+#twHud .tw-bar { width: 120px; height: 7px; background: rgba(255, 255, 255, 0.12); border-radius: 4px; overflow: hidden; }
+#twHud .tw-bar i { display: block; height: 100%; width: 100%; transform-origin: left; background: #ffd23a; }
+#twHud .tw-bag { display: flex; flex-wrap: wrap; gap: 4px; max-width: 340px; }
+#twHud .tw-bag span { font-size: 13px; padding: 2px 6px; border: 1px solid rgba(255, 255, 255, 0.25); border-radius: 3px; color: #e8ecf2; background: rgba(0, 0, 0, 0.35); }
+#twHud .tw-bag span.z { opacity: 0.4; } #twHud .tw-bag span.sel { border-color: #ffd23a; color: #ffe9a8; }
+#twHud .tw-keys { font-size: 12px; color: rgba(232, 236, 242, 0.6); }
+#twAct { position: absolute; left: 50%; top: 62%; transform: translateX(-50%); padding: 6px 14px; border-radius: 4px; background: rgba(0, 0, 0, 0.55); border: 1px solid rgba(120, 200, 255, 0.7); color: #e8f4ff; font: 600 18px/1.2 var(--f-display, "Barlow Condensed", sans-serif); letter-spacing: 0.06em; pointer-events: none; white-space: nowrap; }
+#twLocker { position: absolute; inset: 0; pointer-events: none; z-index: 3; background:
+  linear-gradient(90deg, #000 0 24%, transparent 24% 76%, #000 76%),
+  repeating-linear-gradient(180deg, #050606 0 34px, transparent 34px 52px, #050606 52px 60px);
+  -webkit-mask: radial-gradient(ellipse at 50% 50%, #000 60%, #000 100%); }
+#twLocker::after { content: ""; position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 45%, transparent 30%, rgba(0, 0, 0, 0.85) 80%); }
+.twnote { font-size: 14px; color: var(--muted, #9aa3ad); margin-top: 8px; }
 #touch .pf i, #touch .ph i { font-style: normal; font-size: calc(15 * var(--u)); }
 .hud .pots { margin-top: 6px; font-size: 13px; letter-spacing: 0.04em; display: flex; gap: 10px; justify-content: flex-end; }
 .hud .pots span { padding: 2px 7px; border-radius: 4px; background: rgba(0, 0, 0, 0.35); }
@@ -539,6 +556,7 @@ table.sc td:first-child { font-family: var(--font-display); font-size: 22px; col
   <div id="scope"></div>
 
   <div class="hud" id="hud" hidden>
+    <div id="twLocker" hidden></div>
     <div class="stats">
       <div class="wave" id="wave">ONDA 1</div>
       <div class="stat">Zumbis <b id="zleft">0</b></div>
@@ -569,6 +587,8 @@ table.sc td:first-child { font-family: var(--font-display); font-size: 22px; col
     <div id="msg"></div>
     <div id="boss" hidden><div class="bname" id="bossName">GIGANTE</div><div class="bbar"><div id="bossfill"></div></div></div>
     <div id="fps" hidden></div>
+    <div id="twHud" hidden><div class="tw-bat"><span class="tw-ic" aria-hidden="true">🔦</span><div class="tw-bar"><i id="twBat"></i></div><b id="twBatN">100%</b></div><div class="tw-bag" id="twBag"></div><div class="tw-keys" id="twKeys"></div></div>
+    <div id="twAct" hidden></div>
     <div id="hint">WASD mover · Mouse mirar · Clique atirar · Botão direito mirar · R recarregar · 1/2 ou roda trocar arma · C agachar · 3 pegar faca · B modo de tiro · Shift correr · F lanterna · Esc pausar</div>
   </div>
 
@@ -584,6 +604,7 @@ table.sc td:first-child { font-family: var(--font-display); font-size: 22px; col
     <button type="button" class="tb cr" data-act="crouch" aria-label="Agachar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/><path d="M5 19h14"/></svg></button>
     <button type="button" class="tb md" data-act="mode" aria-label="Modo de tiro">MODO</button>
     <button type="button" class="tb pf" data-act="potfire" aria-label="Poção de fogo" hidden>FOGO<i>0</i></button>
+    <button type="button" class="tb us" data-act="use" aria-label="Usar" hidden>USAR</button>
     <button type="button" class="tb ph" data-act="potheal" aria-label="Poção de cura" hidden>CURA<i>0</i></button>
     <div class="ttop">
       <button type="button" class="tb" data-act="torch" aria-label="Lanterna"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3h6v5l-2 3v10h-2V11L9 8z"/></svg></button>
@@ -619,6 +640,8 @@ table.sc td:first-child { font-family: var(--font-display); font-size: 22px; col
         <div class="sec"><h3>Sobrevivente</h3>
           <div class="field"><label for="pname">Nome no placar de recordes (o da sua conta)</label><input type="text" id="pname" maxlength="14" autocomplete="off" readonly></div>
         </div>
+        <div class="sec"><h3>Modo de jogo</h3><div class="opts" id="optMode"></div></div>
+        <div class="sec" hidden><h3>Prédio</h3><div class="opts" id="optTw"></div><p class="twnote">Escuro total: só a lanterna (a bateria acaba). Ande agachado para não fazer barulho, se esconda nos armários grandes, jogue garrafas para distrair e ache a escada de cada andar. No terraço, corra até o helicóptero.</p></div>
         <div class="sec"><h3>Dificuldade</h3><div class="opts" id="optDiff"></div></div>
         <div class="sec"><h3>Ambiente</h3><div class="opts" id="optEnv"></div></div>
         <div class="sec"><h3>Briefing</h3><p>Você está preso numa arena fechada. As ondas de zumbis só aumentam: corredores a partir da onda 3, brutos blindados a partir da onda 5 e, nas dificuldades Veterano e Pesadelo, gigantes de mais de 3 metros com muita vida. Mire na cabeça, use as caixas como cobertura e escolha com cuidado o que leva no Arsenal.</p>

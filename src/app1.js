@@ -23,7 +23,7 @@
     name: "Sobrevivente", diff: "normal", env: "night", quality: "med", fov: 90, sens: 12, adsSens: 70,
     invertY: false, bob: true, radar: true, hints: true, gore: true, vol: 80,
     crossColor: "#ffffff", crossStyle: "cross", crossSize: 10, camo: "black",
-    loadout: ["ax4", "p45"], att: {}, lang: "",
+    loadout: ["ax4", "p45"], att: {}, lang: "", mode: "arena", twLevel: 0, twUnlocked: 0,
     // som
     muted: false, volSfx: 100, volVoice: 100, volAmb: 70,
     // gráficos
@@ -167,13 +167,13 @@
   rain.frustumCulled = false; rain.visible = false; scene.add(rain);
 
   function applyEnv() {
-    env = (L.getMap() === "italia" ? ENVS.tarde : ENVS[S.env]) || ENVS.night;          // a vila da Infecção é sempre de tarde
+    env = (L.getMap() === "predio" ? TowerUI.env() : L.getMap() === "italia" ? ENVS.tarde : ENVS[S.env]) || ENVS.night;          // a vila da Infecção é sempre de tarde; o prédio é escuro
     scene.fog.color.setHex(env.fog); scene.fog.density = env.dens;
     renderer.setClearColor(env.fog);
     hemi.color.setHex(env.hemi[0]); hemi.groundColor.setHex(env.hemi[1]); hemi.intensity = env.hemi[2];
     moon.color.setHex(env.moon[0]); moon.intensity = env.moon[1];
     lampLights.forEach((l) => { l.intensity = env.lamp; });
-    rain.visible = !!env.rain && S.rainFx;
+    rain.visible = !!env.rain && S.rainFx && L.getMap() !== "predio";
     wdApplyEnv(env);
     Snd.ambient(state === "run" || state === "pause" || state === "dead", env);
   }

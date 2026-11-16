@@ -54,6 +54,7 @@
     $("pname").value = S.name;
     $("optDiff").innerHTML = Object.keys(DIFF).map((k) => optBtn("diff", k, DIFF[k].name, DIFF[k].sub, S.diff === k)).join("");
     $("optEnv").innerHTML = Object.keys(ENVS).map((k) => optBtn("env", k, ENVS[k].n, ENVS[k].sub, S.env === k)).join("");
+    TowerUI.renderMenu();
   }
   // gráfico: dano de um tiro (todos os projéteis acertando) conforme a distância
   function renderWeaponRange(c, st) {
@@ -205,7 +206,7 @@
       const k = t.getAttribute("data-set"), v = t.getAttribute("data-val");
       S[k] = v;
       applySetting(k);
-      if (k === "env" || k === "diff") renderMission();
+      if (k === "env" || k === "diff" || k === "mode" || k === "twLevel") renderMission();
       else if (k === "camo" || k === "crossStyle" || k === "crossColor") renderCustom();
       else renderSettings();
     }

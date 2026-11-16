@@ -257,7 +257,9 @@
     const ro = runOpts(); runUsed = ro.used; burnFlash = 0;
     game = new Game({ loadout: loadoutSel(), diff: Coop.inRoom() && !Coop.isHost() ? Coop.st.diff : S.diff, perks: ro.perks, melee: ro.melee });
     clearAllies(); Coop.attach(game); Coop.sendInfo(ro);
-    useMap(game.gm === "infect" ? "italia" : game.diff.big ? "grande" : "arena");   // Infecção: vila italiana; Extremo/Apocalipse: mapa grande; resto: arena
+    const twMode = S.mode === "predio" && !Coop.inRoom() && game.gm !== "infect";
+    useMap(game.gm === "infect" ? "italia" : twMode ? "predio" : game.diff.big ? "grande" : "arena");   // Infecção: vila italiana; Prédio: andares; Extremo/Apocalipse: mapa grande; resto: arena
+    if (twMode) { game.towerStart(Math.min(S.twLevel | 0, S.twUnlocked | 0), 0); TowerUI.start(); } else TowerUI.off();
     setMeleeModel(wallet.melee); updateWho();
     vmKey = ""; setViewGun(game.w());
     adsT = 0; sprintBlend = 0; hfov = S.fov; dmgT = 0; $("feed").innerHTML = "";
@@ -286,7 +288,7 @@
   }
   function toMenu() {
     try { document.exitPointerLock(); } catch (e) {}
-    canvas.style.cursor = ""; state = "menu"; Coop.onToMenu(); payRun(game, runUsed); useMap("arena"); clearViews(); resetFx(); menuGame = makeMenuGame(); hfov = 70;
+    canvas.style.cursor = ""; state = "menu"; Coop.onToMenu(); payRun(game, runUsed); TowerUI.off(); useMap("arena"); clearViews(); resetFx(); menuGame = makeMenuGame(); hfov = 70;
     $("menu").hidden = false; $("hud").hidden = true; $("pause").hidden = true; $("dead").hidden = true; $("scope").style.opacity = "0";
     $("view").classList.remove("low"); $("fx-low").style.opacity = "0"; $("fx-hurt").style.opacity = "0";
     applyEnv(); renderAll(); showTab(ui.tab); resetTouch(); applyTouchUI();
@@ -297,10 +299,11 @@
     try { document.exitPointerLock(); } catch (e) {}
     const g = game, acc = g.shots ? Math.round((100 * g.hits) / g.shots) : 0;
     {                                                            // Infecção: o título mostra quem venceu
-      const inf = g.gm === "infect" && !!g.inf, w = inf ? g.inf.win : "", hw = w === "h";
-      $("deadKick").textContent = inf ? "Fim da Infecção" : "Fim de jogo";
-      $("deadTitle").textContent = inf ? (w === "h" ? "HUMANOS VENCERAM" : w === "z" ? "ZUMBIS VENCERAM" : "PARTIDA ENCERRADA") : "Você morreu";
+      const inf = g.gm === "infect" && !!g.inf, w = inf ? g.inf.win : "", tw = g.gm === "predio" && g.tw, hw = w === "h" || (tw && tw.won);
+      $("deadKick").textContent = inf ? "Fim da Infecção" : tw ? "Modo Prédio · " + TOWER.LEVELS[tw.level].name : "Fim de jogo";
+      $("deadTitle").textContent = inf ? (w === "h" ? "HUMANOS VENCERAM" : w === "z" ? "ZUMBIS VENCERAM" : "PARTIDA ENCERRADA") : tw && tw.won ? "VOCÊ ESCAPOU!" : "Você morreu";
       $("deadTitle").classList.toggle("hwin", !!hw);
+      if (tw) TowerUI.finish(g);
     }
     $("fWave").textContent = g.wave; $("fScore").textContent = g.score; $("fKills").textContent = g.kills;
     $("fHead").textContent = g.headshots; $("fAcc").textContent = acc + "%"; $("fTime").textContent = fmtTime(g.time);
@@ -318,8 +321,8 @@
   $("btnToMenu2").addEventListener("click", toMenu);
 
   // ---------------- teclas configuráveis (Controles > Teclado) ----------------
-  const BIND_DEF = { fwd: "KeyW", back: "KeyS", left: "KeyA", right: "KeyD", sprint: "ShiftLeft", crouch: "KeyC", reload: "KeyR", slot1: "Digit1", slot2: "Digit2", swap: "KeyQ", melee: "Digit3", mode: "KeyB", torch: "KeyF", mute: "KeyM", pause: "KeyP", potFire: "KeyG", potHeal: "KeyH", potCycle: "Digit4" };
-  const BIND_LABEL = { fwd: "Andar para frente", back: "Andar para trás", left: "Andar para a esquerda", right: "Andar para a direita", sprint: "Correr / prender a respiração", crouch: "Agachar",
+  const BIND_DEF = { use: "KeyE", fwd: "KeyW", back: "KeyS", left: "KeyA", right: "KeyD", sprint: "ShiftLeft", crouch: "KeyC", reload: "KeyR", slot1: "Digit1", slot2: "Digit2", swap: "KeyQ", melee: "Digit3", mode: "KeyB", torch: "KeyF", mute: "KeyM", pause: "KeyP", potFire: "KeyG", potHeal: "KeyH", potCycle: "Digit4" };
+  const BIND_LABEL = { use: "Usar (armário, escada, elevador · Prédio)", fwd: "Andar para frente", back: "Andar para trás", left: "Andar para a esquerda", right: "Andar para a direita", sprint: "Correr / prender a respiração", crouch: "Agachar",
     reload: "Recarregar", slot1: "Arma 1", slot2: "Arma 2", swap: "Trocar de arma", melee: "Pegar / guardar a faca", mode: "Modo de tiro (auto / semi / rajada)", torch: "Lanterna", mute: "Som liga/desliga", pause: "Pausar (Esc sempre pausa)", potFire: "Poção de fogo (Infecção)", potHeal: "Poção de cura (Infecção)", potCycle: "Alternar poções (Infecção)" };
   function loadBinds() { let b = {}; try { b = JSON.parse(S.binds || "{}") || {}; } catch (e) {} const o = Object.assign({}, BIND_DEF); for (const k in o) if (typeof b[k] === "string" && b[k]) o[k] = b[k]; return o; }
   let KB = loadBinds(), bindWait = null;
@@ -377,6 +380,10 @@
       else if (c === KB.melee) { if (PotVM.busy()) PotVM.stop(); game.toggleKnife(); }
       else if (c === KB.mode) game.toggleFireMode();
       else if (c === KB.torch) { torchEnabled = !torchEnabled; }
+      else if (game.gm === "predio" && c === KB.use) game.towerUse();
+      else if (game.gm === "predio" && c === KB.potCycle) game.towerCycle();
+      else if (game.gm === "predio" && c === KB.potFire) { if (!game.towerThrow()) { feedLine("NADA PARA JOGAR", false); Snd.play("deny", 0.5); } }
+      else if (game.gm === "predio" && c === KB.potHeal) { if (!game.towerHeal()) { feedLine(game.hp >= game.maxHp ? "VIDA CHEIA" : "SEM CURATIVOS NA MOCHILA", false); Snd.play("deny", 0.5); } }
       else if (c === KB.potCycle) cyclePot();
       else if (c === KB.potFire) throwPot("fire");
       else if (c === KB.potHeal) throwPot("heal");
@@ -529,6 +536,9 @@
     else if (act === "crouch") TS.crouch = !TS.crouch;
     else if (act === "mode") game.toggleFireMode();
     else if (act === "torch") torchEnabled = !torchEnabled;
+    else if (act === "use" && game.gm === "predio") game.towerUse();
+    else if (act === "potfire" && game.gm === "predio") { if (!game.towerThrow()) Snd.play("deny", 0.5); }
+    else if (act === "potheal" && game.gm === "predio") { if (!game.towerHeal()) Snd.play("deny", 0.5); }
     else if (act === "potfire") throwPot("fire");
     else if (act === "potheal") throwPot("heal");
     else if (act === "autofire") { S.autoFire = !S.autoFire; saveSettings(); feedLine(S.autoFire ? "TIRO AUTOMÁTICO LIGADO" : "TIRO AUTOMÁTICO DESLIGADO", false); }   // só existe no HUD de toque
@@ -726,7 +736,9 @@
     const g = game, c = g.w().cfg;
     setViewGun(g.w());
     const zm = g.team === "z";
-    gunRoot.visible = !zm && !PotVM.busy() && !g.knifeOut; torch.visible = torchEnabled;
+    const twK = g.gm === "predio" && g.tw;
+    if (twK) { g.tw.torch = torchEnabled && g.tw.bat > 0; if (g.tw.bat <= 0) torchEnabled = false; }
+    gunRoot.visible = !zm && !PotVM.busy() && !g.knifeOut && !(twK && (g.tw.hide !== null || g.tw.won)); torch.visible = twK ? g.tw.torch && !g.tw.won : torchEnabled;
     $("view").classList.toggle("zmode", zm); $("hud").classList.toggle("zhud", zm);
     const bobh = S.bob && g.moving ? Math.abs(Math.sin(g.bob)) * (g.sprinting ? 0.05 : g.runShoot ? 0.04 : 0.03) : 0;
     const sh = g.hurtT * 0.05 + g.shake * 0.03, sway = g.aimSway();
@@ -742,6 +754,7 @@
     syncZombies(g); Gore.update(dt); if (Gore.busy()) Gore.camera(camera, dt);
     syncPickups(g); syncCracks(g); updateShocks(dt); syncAllies(g, dt); syncBoosts(g); PotFX.sync(g, g.time);
     fxBlood.update(dt); fxSpark.update(dt); fxBrass.update(dt); fxShell.update(dt); fxSmoke.update(dt); fxTrace.update(dt); updatePools(dt); updateDropped(dt);
+    if (twK) TowerView.frame(dt);
   }
 
   // ---------------- eventos do jogo -> som e efeitos ----------------
@@ -768,6 +781,7 @@
   function processEvents() {
     for (const ev of game.popEvents()) {
       if (ev.drop) continue;
+      if (typeof ev[0] === "string" && ev[0].indexOf("tw_") === 0) { TowerUI.event(ev); continue; }
       switch (ev[0]) {
         case "rshot": {
           const wid = ev[2], o = game.others.find((q) => q.id === ev[1]);
@@ -986,7 +1000,7 @@
   const setText = (node, key, val) => { if (hudLast[key] !== val) { hudLast[key] = val; node.textContent = val; } };
   function updateHud(dt) {
     const g = game, s = g.w(), c = s.cfg;
-    Coop.hud(g); potsHud(g);
+    Coop.hud(g); if (g.gm === "predio" && g.tw) TowerUI.hud(g); else potsHud(g);
     setText(el.wave, "wave", "ONDA " + Math.max(1, g.wave));
     setText(el.zleft, "zleft", String(g.aliveZombies().length + g.toSpawn));
     setText(el.score, "score", String(g.score)); setText(el.kills, "kills", String(g.kills));
@@ -1089,6 +1103,7 @@
       else { game.update(dt, lastInp); Coop.afterUpdate(game, dt); processEvents(); syncGame(dt); updateHud(dt); updateWeather(dt); if (Rev.open()) Rev.draw(); }
       if (Gore.busy() || game.reviveWait) { /* finalização ou escolha no mapa: a tela de morte espera */ }
       else if (!game.alive && Coop.ended()) onDeath();
+      else if (game.gm === "predio" && game.over) onDeath();
       else if (Coop.active() && Coop.ended()) onDeath();
     } else if (state === "pause" && Coop.active()) {
       game.update(dt, {}); Coop.afterUpdate(game, dt); processEvents(); syncGame(dt); updateHud(dt); updateWeather(dt);
