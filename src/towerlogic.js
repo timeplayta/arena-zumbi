@@ -17,7 +17,7 @@
     function boxesFor(P) {
       const A = P.A, b = [], t = 1, edgeH = P.roof ? 1.1 : 9;
       b.push([-A - t, A + t, A, A + t, edgeH, 0], [-A - t, A + t, -A - t, -A, edgeH, 0], [A, A + t, -A, A, edgeH, 0], [-A - t, -A, -A, A, edgeH, 0]);
-      const wall = (w, h) => { const x0 = Math.min(w[0], w[2]), x1 = Math.max(w[0], w[2]), y0 = Math.min(w[1], w[3]), y1 = Math.max(w[1], w[3]); b.push([x0 - WALL_T / 2, x1 + WALL_T / 2, y0 - WALL_T / 2, y1 + WALL_T / 2, h, 0]); };
+      const wall = (w, h) => { const x0 = Math.min(w[0], w[2]), x1 = Math.max(w[0], w[2]), y0 = Math.min(w[1], w[3]), y1 = Math.max(w[1], w[3]), ex = x0 === x1 ? WALL_T / 2 : 0, ey = y0 === y1 ? WALL_T / 2 : 0; b.push([x0 - ex, x1 + ex, y0 - ey, y1 + ey, h, 0]); };   // engrossa só para os lados (o vão da porta fica com 1,4 m)
       for (const w of P.walls) wall(w, P.roof ? 3.2 : WALL_H);
       for (const f of P.furn) {
         if (f.k === "monitor" || f.k === "quadro") continue;                 // monitor fica em cima da mesa; quadro é chapado na parede

@@ -189,11 +189,31 @@ const Logic = (function () {
     MAP = m === "italia" ? "italia" : m === "grande" ? "grande" : m === "predio" && custom ? "predio" : "arena";
     BOXES = MAP === "predio" ? custom.boxes : MAP === "italia" ? ITALY_BOXES : MAP === "grande" ? BIG.boxes : ARENA_BOXES; ARENA = MAP === "predio" ? custom.A : MAP === "italia" ? ITALIA.A : MAP === "grande" ? BIG.A : ARENA0;
     MAPV++;
+    BIDX = MAP === "predio" ? indexBoxes(BOXES, ARENA) : null;
+  }
+  // índice espacial (células de 2 m) para mapas com muitos blocos (o prédio tem centenas de móveis)
+  let BIDX = null;
+  function indexBoxes(bx, A) {
+    const C = 2, N = Math.ceil((2 * A + 6) / C), o = A + 3, cells = Array.from({ length: N * N }, () => []);
+    bx.forEach((b) => {
+      const i0 = Math.max(0, Math.floor((b[0] - 1.2 + o) / C)), i1 = Math.min(N - 1, Math.floor((b[1] + 1.2 + o) / C));
+      const j0 = Math.max(0, Math.floor((b[2] - 1.2 + o) / C)), j1 = Math.min(N - 1, Math.floor((b[3] + 1.2 + o) / C));
+      for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) cells[j * N + i].push(b);
+    });
+    return { C, N, o, cells };
+  }
+  const EMPTY = [];
+  function near(x, y) {                                                  // blocos perto de (x, y) (até ~1,2 m de folga)
+    if (!BIDX) return BOXES;
+    const i = Math.floor((x + BIDX.o) / BIDX.C), j = Math.floor((y + BIDX.o) / BIDX.C);
+    return i < 0 || j < 0 || i >= BIDX.N || j >= BIDX.N ? EMPTY : BIDX.cells[j * BIDX.N + i];
   }
   // linha de visão: algum bloco alto (parede, estante, armário) corta o segmento A-B na altura h?
   function segBlocked(x0, y0, x1, y1, h) {
     const dx = x1 - x0, dy = y1 - y0;
-    for (const b of BOXES) {
+    let list = BOXES;
+    if (BIDX) { const set = new Set(), n = Math.ceil(Math.hypot(dx, dy) / 1.5) + 1; for (let k = 0; k <= n; k++) for (const b of near(x0 + dx * k / n, y0 + dy * k / n)) set.add(b); list = set; }
+    for (const b of list) {
       if (b[4] < h || b[5] > h) continue;
       let t0 = 0, t1 = 1;
       if (Math.abs(dx) < 1e-9) { if (x0 <= b[0] || x0 >= b[1]) continue; } else { let a = (b[0] - x0) / dx, c = (b[1] - x0) / dx; if (a > c) [a, c] = [c, a]; t0 = Math.max(t0, a); t1 = Math.min(t1, c); if (t0 >= t1) continue; }
@@ -213,13 +233,13 @@ const Logic = (function () {
   // chão: maior topo alcançável a partir da altura atual (sobe degraus de até STEP)
   function groundAt(x, y, cur) {
     let g = 0; const lim = (cur || 0) + STEP + 0.01;
-    for (const b of BOXES) if (x > b[0] && x < b[1] && y > b[2] && y < b[3] && b[4] <= lim && b[4] > g) g = b[4];
+    for (const b of near(x, y)) if (x > b[0] && x < b[1] && y > b[2] && y < b[3] && b[4] <= lim && b[4] > g) g = b[4];
     return g;
   }
   function pushOut(x, y, r, gz) {
     gz = gz || 0;
     for (let pass = 0; pass < 2; pass++) {
-      for (const bx of BOXES) {
+      for (const bx of near(x, y)) {
         if (bx[4] <= gz + STEP || bx[5] >= gz + HEAD_ROOM) continue;          // degrau baixo ou passa por baixo (verga da porta)
         const x0 = bx[0], x1 = bx[1], y0 = bx[2], y1 = bx[3];
         const nx = x < x0 ? x0 : x > x1 ? x1 : x;
@@ -250,12 +270,12 @@ const Logic = (function () {
     function grid(r) {
       C = MAP === "predio" ? 0.5 : 1;                                    // prédio: grade de 0,5 m (portas de 1,4 m)
       const k = MAP + ":" + MAPV + ":" + r; if (grids[k]) return grids[k];
-      for (const q in grids) if (q.split(":")[0] === "predio" && q !== k) delete grids[q];
+      for (const q in grids) { const p = q.split(":"); if (p[0] === "predio" && +p[1] !== MAPV) delete grids[q]; }
       const A = ARENA, N = Math.ceil((2 * A) / C), blk = new Uint8Array(N * N);
       for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) {
         const x = -A + (i + 0.5) * C, y = -A + (j + 0.5) * C;
         if (Math.abs(x) > A - r || Math.abs(y) > A - r) { blk[j * N + i] = 1; continue; }
-        for (const b of BOXES) { if (b[4] <= STEP) continue; const nx = clamp(x, b[0], b[1]), ny = clamp(y, b[2], b[3]); if ((x - nx) * (x - nx) + (y - ny) * (y - ny) < r * r) { blk[j * N + i] = 1; break; } }
+        for (const b of near(x, y)) { if (b[4] <= STEP) continue; const nx = clamp(x, b[0], b[1]), ny = clamp(y, b[2], b[3]); if ((x - nx) * (x - nx) + (y - ny) * (y - ny) < r * r) { blk[j * N + i] = 1; break; } }
       }
       return (grids[k] = { N, A, blk, fields: new Map(), heap: new Int32Array(N * N * 4), hk: new Float32Array(N * N * 4) });
     }
@@ -295,7 +315,9 @@ const Logic = (function () {
     function steer(x, y, tx, ty, r, now) {
       const g = grid(r);
       if (los(g, x, y, tx, ty)) return null;
-      const d = field(g, cell(g, tx, ty), now), N = g.N;
+      let tc = cell(g, tx, ty);
+      if (MAP === "predio") { const rx = Math.round(tx / 2) * 2, ry = Math.round(ty / 2) * 2; if (los(g, tx, ty, rx, ry)) tc = cell(g, rx, ry); }   // prédio: alvo arredondado a 2 m (reaproveita o campo), se não passar parede
+      const d = field(g, tc, now), N = g.N;
       let c = nearestFree(g, cell(g, x, y)), aim = -1;
       for (let step = 0; step < 6; step++) {
         const i = c % N, j = (c / N) | 0; let best = -1, bv = d[c];
