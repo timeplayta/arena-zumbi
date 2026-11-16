@@ -277,7 +277,7 @@ const Logic = (function () {
         if (Math.abs(x) > A - r || Math.abs(y) > A - r) { blk[j * N + i] = 1; continue; }
         for (const b of near(x, y)) { if (b[4] <= STEP) continue; const nx = clamp(x, b[0], b[1]), ny = clamp(y, b[2], b[3]); if ((x - nx) * (x - nx) + (y - ny) * (y - ny) < r * r) { blk[j * N + i] = 1; break; } }
       }
-      return (grids[k] = { N, A, blk, fields: new Map(), heap: new Int32Array(N * N * 4), hk: new Float32Array(N * N * 4) });
+      return (grids[k] = { N, A, blk, fields: new Map(), heap: new Int32Array(N * N * 10), hk: new Float32Array(N * N * 10) });
     }
     const cell = (g, x, y) => { const i = clamp(Math.floor((x + g.A) / C), 0, g.N - 1), j = clamp(Math.floor((y + g.A) / C), 0, g.N - 1); return j * g.N + i; };
     const NB = [[1, 0, 1], [-1, 0, 1], [0, 1, 1], [0, -1, 1], [1, 1, 1.414], [1, -1, 1.414], [-1, 1, 1.414], [-1, -1, 1.414]];

@@ -8,7 +8,14 @@
     const H = 3.0;                                                       // pé-direito
     let floorG = null, builtKey = "", spots = [], lights = [], lockers = [], items = [], heli = null, flyers = [], flareV = [], P = null, assignT = 0, tt = 0, winCam = null;
     const lam = (o) => new THREE.MeshLambertMaterial(o), bas = (o) => new THREE.MeshBasicMaterial(o);
-    let MT = null;
+    let MT = null, dust = null;
+    function ensureDust() {                                                  // poeira flutuando em volta da câmera (brilha no facho da lanterna)
+      if (dust) return dust;
+      const n = 500, pos = new Float32Array(n * 3), r = wdR(5); for (let i = 0; i < n * 3; i++) pos[i] = (r() - 0.5) * 9;
+      const g = new THREE.BufferGeometry(); g.setAttribute("position", new THREE.BufferAttribute(pos, 3));
+      dust = new THREE.Points(g, new THREE.PointsMaterial({ color: 0xd8d0c0, size: 0.018, transparent: true, opacity: 0.55, depthWrite: false, sizeAttenuation: true }));
+      dust.frustumCulled = false; root.add(dust); return dust;
+    }
     // ---------- texturas (desenhadas em canvas, uma vez) ----------
     function grime(x, S, r, n, a) { for (let i = 0; i < n; i++) wdBlot(x, S, S, r() * S, r() * S, 8 + r() * S * 0.18, [20, 16, 12], a * (0.4 + r() * 0.6), true); }
     function tilesTex(S, n, base, line, seed, a) {
@@ -58,6 +65,11 @@
       x.fillStyle = col; x.font = "700 52px 'Barlow Condensed','Arial Narrow',sans-serif"; x.textAlign = "center"; x.textBaseline = "middle"; x.fillText(txt, 128, 52);
       const t = new THREE.CanvasTexture(c); return t;
     }
+    function bloodTex() {                                                  // poça/rastro de sangue seco (decalque no chão)
+      const [c, x] = wdCv(128, 128), r = wdR(66);
+      for (let i = 0; i < 26; i++) { const px = 64 + (r() - 0.5) * 70, py = 64 + (r() - 0.5) * 70, rad = 4 + r() * 22; const g = x.createRadialGradient(px, py, 0, px, py, rad); g.addColorStop(0, "rgba(70,6,6,0.85)"); g.addColorStop(0.7, "rgba(60,4,4,0.55)"); g.addColorStop(1, "rgba(50,4,4,0)"); x.fillStyle = g; x.beginPath(); x.arc(px, py, rad, 0, 6.3); x.fill(); }
+      return new THREE.CanvasTexture(c);
+    }
     function glowTex(rgb) { const [c, x] = wdCv(64, 64), g = x.createRadialGradient(32, 32, 0, 32, 32, 32); g.addColorStop(0, wdRgba(rgb[0], rgb[1], rgb[2], 1)); g.addColorStop(0.35, wdRgba(rgb[0], rgb[1], rgb[2], 0.35)); g.addColorStop(1, wdRgba(rgb[0], rgb[1], rgb[2], 0)); x.fillStyle = g; x.fillRect(0, 0, 64, 64); return new THREE.CanvasTexture(c); }
     function mats() {
       if (MT) return MT;
@@ -77,6 +89,10 @@
         exit: bas({ map: signTex("ESCADA ↑", "#3dff8a", "#06200f") }), elevS: bas({ map: signTex("ELEVADOR", "#ffd27a", "#201806") }), downS: bas({ map: signTex("↓ DESCE", "#ff6a5a", "#200806") }), inS: bas({ map: signTex("ENTRADA", "#9fd0ff", "#061420") }),
         solar: lam({ color: 0x1d3458 }), solarF: lam({ color: 0x9aa0a6 }), water: lam({ color: 0x3f6a80 }), sky: bas({ color: 0xa8d0e8, transparent: true, opacity: 0.5 }), plant: lam({ color: 0x3a6a34 }), soil: lam({ color: 0x3a2a1a }),
         steel: lam({ color: 0xa7adb3 }), hut: lam({ map: wdConcreteTex(34, 120) }), pad: lam({ color: 0xb8952e }), padW: lam({ color: 0x7c7a74 }),
+        cone: new THREE.MeshBasicMaterial({ color: 0x9fb8e8, transparent: true, opacity: 0.055, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, fog: true }),
+        coneG: new THREE.MeshBasicMaterial({ color: 0x3dff8a, transparent: true, opacity: 0.05, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide }),
+        paperF: lam({ color: 0xa8a290, side: THREE.DoubleSide }), blood: lam({ map: bloodTex(), transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }),
+        cable: lam({ color: 0x0c0c0e }),
         gl: { white: glow([220, 235, 255], 0.6), green: glow([60, 255, 140], 0.7), red: glow([255, 60, 40], 0.8), blue: glow([120, 190, 255], 0.6), amber: glow([255, 200, 110], 0.7), item: glow([255, 230, 150], 0.55) },
       };
       return MT;
@@ -200,9 +216,16 @@
           const along = g.x1 - g.x0 > g.y1 - g.y0, u = (i + 0.5) / n, x = along ? g.x0 + (g.x1 - g.x0) * u : g.cx, y = along ? g.cy : g.y0 + (g.y1 - g.y0) * u;
           const on = rr() < (g.kind === "hall" ? 0.45 : 0.3);
           bx(B, on ? m.lamp : m.lampOff, x, y, along ? 1.2 : 0.3, along ? 0.3 : 1.2, 0.04, H - 0.05);
-          if (on) spots.push({ x, y, h: H - 0.25, c: 0xcfdcff, i: 0.85, r: 8.5, flick: rr() < 0.4 ? rr() * 10 : -1 }), deco.push(["white", x, y, H - 0.12, 1.4]);
+          if (on) { spots.push({ x, y, h: H - 0.25, c: 0xcfdcff, i: 0.85, r: 8.5, flick: rr() < 0.4 ? rr() * 10 : -1 }); deco.push(["white", x, y, H - 0.12, 1.4]); B.add(m.cone, new THREE.ConeGeometry(1.5, H - 0.1, 18, 1, true), wdT(x, (H - 0.1) / 2, -y)); }
         }
         if (g.kind === "hall" && rr() < 0.6) spots.push({ x: g.cx, y: g.cy, h: 2.6, c: 0xff3a24, i: 0.5, r: 8, pulse: rr() * 6 }), deco.push(["red", g.cx, g.cy, 2.75, 0.5]);
+      }
+      // bagunça: papéis no chão, manchas de sangue, cabos pendurados do forro
+      if (!P.roof) for (const g of P.regs) {
+        const n = Math.round(g.area / 14);
+        for (let i = 0; i < n; i++) { const x = g.x0 + 0.5 + rr() * (g.x1 - g.x0 - 1), y = g.y0 + 0.5 + rr() * (g.y1 - g.y0 - 1); B.add(m.paperF, new THREE.PlaneGeometry(0.22, 0.3), wdT(x, 0.006 + i * 0.0003, -y, -Math.PI / 2, 0, rr() * 6.28)); }
+        if (rr() < 0.35) { const x = g.cx + (rr() - 0.5) * (g.x1 - g.x0) * 0.6, y = g.cy + (rr() - 0.5) * (g.y1 - g.y0) * 0.6, sz = 1 + rr() * 1.6; B.add(m.blood, new THREE.PlaneGeometry(sz, sz * (0.6 + rr())), wdT(x, 0.012, -y, -Math.PI / 2, 0, rr() * 6.28)); }
+        if (rr() < 0.3) { const x = g.cx + (rr() - 0.5) * 3, y = g.cy + (rr() - 0.5) * 3, len = 0.5 + rr() * 1.3; B.add(m.cable, new THREE.BoxGeometry(0.025, len, 0.025), wdT(x, H - len / 2, -y, (rr() - 0.5) * 0.3, 0, (rr() - 0.5) * 0.3)); B.add(m.lampOff, new THREE.BoxGeometry(0.6, 0.02, 0.6), wdT(x + 0.2, H - 0.25, -y, 0.5, rr(), 0.3)); }
       }
       // escada para cima: lance de degraus subindo até um vão no teto + placa verde
       const flight = (p, up) => {
@@ -224,6 +247,7 @@
         B.add(sign, new THREE.PlaneGeometry(0.9, 0.34), wdT(p.x - sx * (L / 2 + 0.1), 2.35, -p.y, 0, sx > 0 ? -Math.PI / 2 : Math.PI / 2, 0));
         spots.push({ x: p.x - sx * (L / 2 + 0.3), y: p.y, h: 2.4, c: up ? 0x3dff8a : 0xff5a4a, i: up ? 1.3 : 0.7, r: up ? 9 : 6, key: up });
         deco.push([up ? "green" : "red", p.x - sx * (L / 2 + 0.12), p.y, 2.35, 1.1]);
+        if (up) B.add(m.coneG, new THREE.ConeGeometry(1.4, 2.3, 16, 1, true), wdT(p.x - sx * (L / 2 + 0.3), 1.2, -p.y));
       };
       if (P.up) flight(P.up, true);
       if (P.floor > 0 && !P.roof) flight(P.arrive, false);
@@ -284,6 +308,7 @@
         l.intensity += (want - l.intensity) * Math.min(1, dt * 8);
       }
       floorG.children.forEach((o) => { if (o.userData.blink) o.visible = tt % 1.4 < 0.15; });
+      { const d = ensureDust(); d.visible = !P.roof; if (d.visible) { const c = camera.position, a = d.geometry.attributes.position, A = a.array; for (let i = 0; i < A.length; i += 3) { A[i + 1] -= dt * 0.03; A[i] += Math.sin(tt * 0.3 + i) * dt * 0.02; let dx = A[i] - c.x, dy = A[i + 1] - c.y, dz = A[i + 2] - c.z; if (dx > 4.5) A[i] -= 9; else if (dx < -4.5) A[i] += 9; if (dy > 4.5) A[i + 1] -= 9; else if (dy < -4.5) A[i + 1] += 9; if (dz > 4.5) A[i + 2] -= 9; else if (dz < -4.5) A[i + 2] += 9; } a.needsUpdate = true; } }
       for (const v of items) { v.g.visible = v.it.on; if (v.it.on) { v.g.rotation.y += dt * 1.5; v.g.position.y = 0.14 + Math.sin(tt * 2 + v.it.id) * 0.03; } }
       for (const L of lockers) { L.open += (L.want - L.open) * Math.min(1, dt * 7); if (L.shut > 0) { L.shut -= dt; if (L.shut <= 0) L.want = 0; } for (const d of L.doors) d.piv.rotation.y = d.s * L.open * 1.6; }
       // garrafas/sinalizadores voando e sinalizadores no chão
