@@ -1,5 +1,13 @@
 # What's new — Arena Zumbi
 
+## New Building mode (11/16/2026)
+- New game mode: Building. Pick it in Mission > Game mode. There are 5 levels, with buildings of 7, 9, 13, 18 and 20 floors of 72 × 72 m, full of rooms, hallways and doors.
+- Total darkness: only your flashlight lights the way. The battery runs out; find batteries along the way (they swap automatically).
+- Backpack with bandages, medkits, bottles and flares. H heals, G throws the bottle or flare to distract zombies, 4 swaps what you throw.
+- Big lockers: press E to hide. Crouching you barely make noise; running and shooting, everyone hears you.
+- Smaller zombies that get smarter at each level: they wander, then hear noise, chase you, search the lockers and, on the last level, hide and hunt you.
+- Find the stairs on each floor (sometimes there is an elevator that goes up 1 floor). On the roof, run to the rescue helicopter to escape. Beating a level unlocks the next one.
+
 ## Big map, smarter zombies and bosses by difficulty (11/15/2026)
 - Extreme and Apocalypse now use a big map, about 3 times the arena's area, with buildings in the middle and more containers, cars and crates. Zombies spawn 18–30 m from you, not at the wall.
 - Smarter zombies at each difficulty: they go around containers, cars and buildings instead of getting stuck. On Soldier only some do it; from Nightmare on, all of them. On Extreme and Apocalypse they also surround you from different sides.

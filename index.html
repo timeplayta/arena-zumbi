@@ -391,6 +391,24 @@ table.sc td:first-child { font-family: var(--font-display); font-size: 22px; col
 #touch .pf, #touch .ph { width: calc(52 * var(--u)); height: calc(52 * var(--u)); font-size: calc(11 * var(--u)); letter-spacing: 0; line-height: 1; grid-auto-flow: row; align-content: center; gap: 2px; }
 #touch .pf { right: calc(var(--sr) + 236 * var(--u)); bottom: calc(26px + 112 * var(--u)); border-color: rgba(255, 130, 40, 0.85); background: rgba(120, 40, 8, 0.5); }
 #touch .ph { right: calc(var(--sr) + 236 * var(--u)); bottom: calc(26px + 176 * var(--u)); border-color: rgba(90, 255, 130, 0.8); background: rgba(10, 80, 30, 0.5); }
+#touch .us { right: calc(var(--sr) + 236 * var(--u)); bottom: calc(26px + 240 * var(--u)); width: calc(64 * var(--u)); height: calc(52 * var(--u)); font-size: calc(13 * var(--u)); border-color: rgba(120, 200, 255, 0.9); background: rgba(10, 50, 90, 0.55); }
+#twHud { position: absolute; left: 16px; top: 196px; display: grid; gap: 6px; font-family: var(--f-display, "Barlow Condensed", sans-serif); letter-spacing: 0.04em; pointer-events: none; }
+#twHud .tw-bat { display: flex; align-items: center; gap: 8px; color: #ffe9a8; font-size: 15px; }
+#twHud .tw-ic { font-size: 16px; filter: grayscale(0.2); }
+#twHud .tw-bar { width: 120px; height: 7px; background: rgba(255, 255, 255, 0.12); border-radius: 4px; overflow: hidden; }
+#twHud .tw-bar i { display: block; height: 100%; width: 100%; transform-origin: left; background: #ffd23a; }
+#twHud .tw-bag { display: flex; flex-wrap: wrap; gap: 4px; max-width: 340px; }
+#twHud .tw-bag span { font-size: 13px; padding: 2px 6px; border: 1px solid rgba(255, 255, 255, 0.25); border-radius: 3px; color: #e8ecf2; background: rgba(0, 0, 0, 0.35); }
+#twHud .tw-bag span.z { opacity: 0.4; } #twHud .tw-bag span.sel { border-color: #ffd23a; color: #ffe9a8; }
+#twHud .tw-keys { font-size: 12px; color: rgba(232, 236, 242, 0.6); }
+#twAct { position: absolute; left: 50%; top: 62%; transform: translateX(-50%); padding: 6px 14px; border-radius: 4px; background: rgba(0, 0, 0, 0.55); border: 1px solid rgba(120, 200, 255, 0.7); color: #e8f4ff; font: 600 18px/1.2 var(--f-display, "Barlow Condensed", sans-serif); letter-spacing: 0.06em; pointer-events: none; white-space: nowrap; }
+#twLocker { position: absolute; inset: 0; pointer-events: none; background:
+  linear-gradient(90deg, #000 0 24%, transparent 24% 76%, #000 76%),
+  repeating-linear-gradient(180deg, #050606 0 34px, transparent 34px 52px, #050606 52px 60px);
+  -webkit-mask: radial-gradient(ellipse at 50% 50%, #000 60%, #000 100%); }
+#twLocker::after { content: ""; position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 45%, transparent 30%, rgba(0, 0, 0, 0.85) 80%); }
+#hud.twcine > :not(#banner) { visibility: hidden; }
+.twnote { font-size: 14px; color: var(--muted, #9aa3ad); margin-top: 8px; }
 #touch .pf i, #touch .ph i { font-style: normal; font-size: calc(15 * var(--u)); }
 .hud .pots { margin-top: 6px; font-size: 13px; letter-spacing: 0.04em; display: flex; gap: 10px; justify-content: flex-end; }
 .hud .pots span { padding: 2px 7px; border-radius: 4px; background: rgba(0, 0, 0, 0.35); }
@@ -539,6 +557,7 @@ table.sc td:first-child { font-family: var(--font-display); font-size: 22px; col
   <div id="scope"></div>
 
   <div class="hud" id="hud" hidden>
+    <div id="twLocker" hidden></div>
     <div class="stats">
       <div class="wave" id="wave">ONDA 1</div>
       <div class="stat">Zumbis <b id="zleft">0</b></div>
@@ -569,6 +588,8 @@ table.sc td:first-child { font-family: var(--font-display); font-size: 22px; col
     <div id="msg"></div>
     <div id="boss" hidden><div class="bname" id="bossName">GIGANTE</div><div class="bbar"><div id="bossfill"></div></div></div>
     <div id="fps" hidden></div>
+    <div id="twHud" hidden><div class="tw-bat"><span class="tw-ic" aria-hidden="true">🔦</span><div class="tw-bar"><i id="twBat"></i></div><b id="twBatN">100%</b></div><div class="tw-bag" id="twBag"></div><div class="tw-keys" id="twKeys"></div></div>
+    <div id="twAct" hidden></div>
     <div id="hint">WASD mover · Mouse mirar · Clique atirar · Botão direito mirar · R recarregar · 1/2 ou roda trocar arma · C agachar · 3 pegar faca · B modo de tiro · Shift correr · F lanterna · Esc pausar</div>
   </div>
 
@@ -584,6 +605,7 @@ table.sc td:first-child { font-family: var(--font-display); font-size: 22px; col
     <button type="button" class="tb cr" data-act="crouch" aria-label="Agachar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/><path d="M5 19h14"/></svg></button>
     <button type="button" class="tb md" data-act="mode" aria-label="Modo de tiro">MODO</button>
     <button type="button" class="tb pf" data-act="potfire" aria-label="Poção de fogo" hidden>FOGO<i>0</i></button>
+    <button type="button" class="tb us" data-act="use" aria-label="Usar" hidden>USAR</button>
     <button type="button" class="tb ph" data-act="potheal" aria-label="Poção de cura" hidden>CURA<i>0</i></button>
     <div class="ttop">
       <button type="button" class="tb" data-act="torch" aria-label="Lanterna"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3h6v5l-2 3v10h-2V11L9 8z"/></svg></button>
@@ -619,6 +641,8 @@ table.sc td:first-child { font-family: var(--font-display); font-size: 22px; col
         <div class="sec"><h3>Sobrevivente</h3>
           <div class="field"><label for="pname">Nome no placar de recordes (o da sua conta)</label><input type="text" id="pname" maxlength="14" autocomplete="off" readonly></div>
         </div>
+        <div class="sec"><h3>Modo de jogo</h3><div class="opts" id="optMode"></div></div>
+        <div class="sec" hidden><h3>Prédio</h3><div class="opts" id="optTw"></div><p class="twnote">Escuro total: só a lanterna (a bateria acaba). Ande agachado para não fazer barulho, se esconda nos armários grandes, jogue garrafas para distrair e ache a escada de cada andar. No terraço, corra até o helicóptero.</p></div>
         <div class="sec"><h3>Dificuldade</h3><div class="opts" id="optDiff"></div></div>
         <div class="sec"><h3>Ambiente</h3><div class="opts" id="optEnv"></div></div>
         <div class="sec"><h3>Briefing</h3><p>Você está preso numa arena fechada. As ondas de zumbis só aumentam: corredores a partir da onda 3, brutos blindados a partir da onda 5 e, nas dificuldades Veterano e Pesadelo, gigantes de mais de 3 metros com muita vida. Mire na cabeça, use as caixas como cobertura e escolha com cuidado o que leva no Arsenal.</p>
@@ -819,7 +843,7 @@ table.sc td:first-child { font-family: var(--font-display); font-size: 22px; col
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
-const GAME_VERSION = 202611160030, GAME_NOTES = {"t": "Mapa grande, zumbis mais espertos e chefes por dificuldade (15/11/2026)", "b": ["Extremo e Apocalipse agora usam um mapa grande, com cerca de 3 vezes a área da arena, prédios no meio, mais containers, carros e caixotes. Os zumbis nascem a 18–30 m de você, não lá no muro.", "Zumbis mais espertos a cada dificuldade: eles contornam containers, carros e prédios em vez de travar. No Soldado só alguns fazem isso; do Pesadelo em diante, todos. No Extremo e no Apocalipse eles também cercam você por lados diferentes.", "Mais variedade de zumbis: corredores e brutamontes aparecem mais cedo e em maior número conforme a dificuldade, e o Pesadelo ficou com menos zumbis fáceis.", "Chefes chegando aos poucos em cada dificuldade: Gigante a partir do Recruta, Colosso Blindado a partir do Soldado, Mestre da Katana a partir do Veterano. O Espectro e o Lenhador ficam só no Apocalipse, nas ondas mais avançadas.", "O modo Infecção não mudou."], "en": {"t": "Big map, smarter zombies and bosses by difficulty (11/15/2026)", "b": ["Extreme and Apocalypse now use a big map, about 3 times the arena's area, with buildings in the middle and more containers, cars and crates. Zombies spawn 18–30 m from you, not at the wall.", "Smarter zombies at each difficulty: they go around containers, cars and buildings instead of getting stuck. On Soldier only some do it; from Nightmare on, all of them. On Extreme and Apocalypse they also surround you from different sides.", "More zombie variety: runners and brutes show up earlier and in greater numbers as the difficulty rises, and Nightmare has fewer easy zombies.", "Bosses arrive gradually on each difficulty: Giant from Recruit, Armored Colossus from Soldier, Katana Master from Veteran. The Specter and the Lumberjack are only on Apocalypse, in the later waves.", "Infection mode is unchanged."]}, "es": {"t": "Mapa grande, zombis más listos y jefes por dificultad (15/11/2026)", "b": ["Extremo y Apocalipsis ahora usan un mapa grande, con unas 3 veces el área de la arena, edificios en el medio y más contenedores, coches y cajas. Los zombis aparecen a 18–30 m de ti, no junto al muro.", "Zombis más listos en cada dificultad: rodean contenedores, coches y edificios en lugar de quedarse atascados. En Soldado solo algunos lo hacen; desde Pesadilla, todos. En Extremo y Apocalipsis además te rodean por distintos lados.", "Más variedad de zombis: los corredores y los brutos aparecen antes y en mayor número según la dificultad, y Pesadilla tiene menos zombis fáciles.", "Los jefes llegan poco a poco en cada dificultad: Gigante desde Recluta, Coloso Blindado desde Soldado, Maestro de la Katana desde Veterano. El Espectro y el Leñador quedan solo en Apocalipsis, en las oleadas más avanzadas.", "El modo Infección no cambió."]}};
+const GAME_VERSION = 202611160246, GAME_NOTES = {"t": "Novo Modo Prédio (16/11/2026)", "b": ["Novo modo de jogo: Prédio. Escolha em Missão > Modo de jogo. São 5 níveis, com prédios de 7, 9, 13, 18 e 20 andares de 72 × 72 m, cheios de salas, corredores e portas.", "Escuro total: só a sua lanterna ilumina. A bateria acaba; ache baterias pelo caminho (a troca é automática).", "Mochila com bandagens, kits médicos, garrafas e sinalizadores. H cura, G joga a garrafa ou o sinalizador para distrair os zumbis, 4 troca o que jogar.", "Armários grandes: aperte E para se esconder. Agachado você quase não faz barulho; correndo e atirando, todo mundo escuta.", "Zumbis menores e mais espertos a cada nível: andam à toa, depois escutam barulho, correm atrás de você, procuram nos armários e, no último nível, se escondem e caçam você.", "Ache a escada de cada andar (às vezes há um elevador que sobe 1 andar). No terraço, corra até o helicóptero de resgate para escapar. Vencer um nível libera o próximo."], "en": {"t": "New Building mode (11/16/2026)", "b": ["New game mode: Building. Pick it in Mission > Game mode. There are 5 levels, with buildings of 7, 9, 13, 18 and 20 floors of 72 × 72 m, full of rooms, hallways and doors.", "Total darkness: only your flashlight lights the way. The battery runs out; find batteries along the way (they swap automatically).", "Backpack with bandages, medkits, bottles and flares. H heals, G throws the bottle or flare to distract zombies, 4 swaps what you throw.", "Big lockers: press E to hide. Crouching you barely make noise; running and shooting, everyone hears you.", "Smaller zombies that get smarter at each level: they wander, then hear noise, chase you, search the lockers and, on the last level, hide and hunt you.", "Find the stairs on each floor (sometimes there is an elevator that goes up 1 floor). On the roof, run to the rescue helicopter to escape. Beating a level unlocks the next one."]}, "es": {"t": "Nuevo modo Edificio (16/11/2026)", "b": ["Nuevo modo de juego: Edificio. Elígelo en Misión > Modo de juego. Son 5 niveles, con edificios de 7, 9, 13, 18 y 20 pisos de 72 × 72 m, llenos de salas, pasillos y puertas.", "Oscuridad total: solo tu linterna ilumina. La batería se acaba; encuentra baterías por el camino (el cambio es automático).", "Mochila con vendas, botiquines, botellas y bengalas. H cura, G lanza la botella o la bengala para distraer a los zombis, 4 cambia lo que lanzas.", "Armarios grandes: pulsa E para esconderte. Agachado casi no haces ruido; corriendo y disparando, todos te oyen.", "Zombis más pequeños y más listos en cada nivel: deambulan, luego oyen ruido, te persiguen, buscan en los armarios y, en el último nivel, se esconden y te cazan.", "Encuentra la escalera de cada piso (a veces hay un ascensor que sube 1 piso). En la azotea, corre hasta el helicóptero de rescate para escapar. Ganar un nivel desbloquea el siguiente."]}};
   // ===================== IDIOMAS (inglês, espanhol, português) =====================
   // O jogo é escrito em português. Este tradutor troca, na tela, todo texto que aparece (menus, HUD, avisos, mensagens do servidor).
   // REGRA: todo texto novo do jogo precisa de uma entrada aqui (D = frase exata, P = frase com números/nomes). Veja I18N.md.
@@ -848,6 +872,23 @@ const GAME_VERSION = 202611160030, GAME_NOTES = {"t": "Mapa grande, zumbis mais 
         [": invisible and immune until he materializes to raise a giant sword and split the ground. The cracks burn and slow you for 10 seconds. Earn coins and spend them in the Store.",
          ": invisible e inmune hasta que se materializa para alzar una espada gigante y partir el suelo. Las grietas queman y te frenan durante 10 segundos. Gana monedas y gástalas en la Tienda."],
       "Jogar": ["Play", "Jugar"], "Jogar de novo": ["Play again", "Jugar de nuevo"],
+      // ---------- Modo Prédio ----------
+      "Modo de jogo": ["Game mode", "Modo de juego"], "Arena": ["Arena", "Arena"], "Prédio": ["Building", "Edificio"],
+      "Ondas de zumbis, chefes e recordes.": ["Zombie waves, bosses and high scores.", "Oleadas de zombis, jefes y récords."],
+      "Suba andar por andar no escuro, só com a lanterna, até o helicóptero no terraço.": ["Climb floor by floor in the dark, with only your flashlight, up to the helicopter on the roof.", "Sube piso a piso en la oscuridad, solo con la linterna, hasta el helicóptero de la azotea."],
+      "Escuro total: só a lanterna (a bateria acaba). Ande agachado para não fazer barulho, se esconda nos armários grandes, jogue garrafas para distrair e ache a escada de cada andar. No terraço, corra até o helicóptero.":
+        ["Total darkness: only your flashlight (the battery runs out). Crouch to stay quiet, hide in the big lockers, throw bottles to distract and find the stairs on each floor. On the roof, run to the helicopter.",
+         "Oscuridad total: solo la linterna (la batería se acaba). Agáchate para no hacer ruido, escóndete en los armarios grandes, lanza botellas para distraer y encuentra la escalera de cada piso. En la azotea, corre hasta el helicóptero."],
+      "Andam à toa": ["They wander around", "Deambulan sin rumbo"], "Ouvem barulho e vão ver": ["They hear noise and come to check", "Oyen ruido y van a ver"],
+      "Correm quando te veem": ["They run when they see you", "Corren cuando te ven"], "Patrulham e procuram nos armários": ["They patrol and search the lockers", "Patrullan y buscan en los armarios"],
+      "Se escondem e caçam você": ["They hide and hunt you", "Se esconden y te cazan"],
+      "TÉRREO": ["GROUND FLOOR", "PLANTA BAJA"], "TERRAÇO": ["ROOF", "AZOTEA"], "Chegue ao helicóptero": ["Reach the helicopter", "Llega al helicóptero"],
+      "Ache a escada para subir": ["Find the stairs to go up", "Encuentra la escalera para subir"], "VOCÊ ESCAPOU!": ["YOU ESCAPED!", "¡ESCAPASTE!"], "O helicóptero vai decolar": ["The helicopter is taking off", "El helicóptero va a despegar"],
+      "ESCONDER NO ARMÁRIO": ["HIDE IN THE LOCKER", "ESCONDERSE EN EL ARMARIO"], "SAIR DO ARMÁRIO": ["LEAVE THE LOCKER", "SALIR DEL ARMARIO"], "SUBIR A ESCADA": ["GO UP THE STAIRS", "SUBIR LA ESCALERA"], "PEGAR O ELEVADOR": ["TAKE THE ELEVATOR", "TOMAR EL ASCENSOR"],
+      "ELEVADOR: SUBIU 1 ANDAR": ["ELEVATOR: UP 1 FLOOR", "ASCENSOR: SUBISTE 1 PISO"], "MOCHILA CHEIA": ["BACKPACK FULL", "MOCHILA LLENA"], "BATERIA TROCADA": ["BATTERY SWAPPED", "BATERÍA CAMBIADA"],
+      "KIT MÉDICO +60": ["MEDKIT +60", "BOTIQUÍN +60"], "BANDAGEM +25": ["BANDAGE +25", "VENDA +25"], "ACHARAM VOCÊ!": ["THEY FOUND YOU!", "¡TE ENCONTRARON!"],
+      "NADA PARA JOGAR": ["NOTHING TO THROW", "NADA PARA LANZAR"], "VIDA CHEIA": ["FULL HEALTH", "VIDA LLENA"], "SEM CURATIVOS NA MOCHILA": ["NO HEALING IN THE BACKPACK", "SIN CURAS EN LA MOCHILA"],
+      "JOGAR": ["THROW", "LANZAR"], "USAR": ["USE", "USAR"], "Usar (armário, escada, elevador · Prédio)": ["Use (locker, stairs, elevator · Building)", "Usar (armario, escalera, ascensor · Edificio)"],
       // ---------- dificuldades e ambientes ----------
       "Recruta": ["Recruit", "Recluta"], "Zumbis mais fracos e lentos, munição de sobra.": ["Weaker, slower zombies and plenty of ammo.", "Zombis más débiles y lentos, munición de sobra."],
       "Soldado": ["Soldier", "Soldado"], "A experiência padrão da arena.": ["The standard arena experience.", "La experiencia estándar de la arena."], "A experiência padrão da arena, com um gigante de vez em quando.": ["The standard arena experience, with a giant now and then.", "La experiencia estándar de la arena, con un gigante de vez en cuando."],
@@ -1044,6 +1085,18 @@ const GAME_VERSION = 202611160030, GAME_NOTES = {"t": "Mapa grande, zumbis mais 
       [/^ONDA (\d+) COMPLETA$/, "WAVE $1 COMPLETE", "OLEADA $1 COMPLETADA"],
       [/^\+(\d+) vida · munição$/, "+$1 health · ammo", "+$1 vida · munición"],
       [/^próxima onda em (\d+)$/, "next wave in $1", "próxima oleada en $1"],
+      // ---------- Modo Prédio ----------
+      [/^ANDAR (\d+)\/(\d+)$/, "FLOOR $1/$2", "PISO $1/$2"], [/^ANDAR (\d+)$/, "FLOOR $1", "PISO $1"],
+      [/^Nível (\d+)$/, "Level $1", "Nivel $1"], [/^Nível (\d+) · ache a escada$/, "Level $1 · find the stairs", "Nivel $1 · encuentra la escalera"],
+      [/^Modo Prédio · Nível (\d+)$/, "Building mode · Level $1", "Modo Edificio · Nivel $1"],
+      [/^Bloqueado · vença o nível (\d+)$/, "Locked · beat level $1", "Bloqueado · gana el nivel $1"],
+      [/^(\d+) andares · (.+)$/, (m, t) => m[1] + " floors · " + t(m[2]), (m, t) => m[1] + " pisos · " + t(m[2])],
+      [/^(BATERIA|BANDAGEM|KIT MÉDICO|GARRAFA|SINALIZADOR) ×(\d+)$/, (m) => ({ BATERIA: "BATTERY", BANDAGEM: "BANDAGE", "KIT MÉDICO": "MEDKIT", GARRAFA: "BOTTLE", SINALIZADOR: "FLARE" }[m[1]]) + " ×" + m[2], (m) => ({ BATERIA: "BATERÍA", BANDAGEM: "VENDA", "KIT MÉDICO": "BOTIQUÍN", GARRAFA: "BOTELLA", SINALIZADOR: "BENGALA" }[m[1]]) + " ×" + m[2]],
+      [/^\+1 (BATERIA|BANDAGEM|KIT MÉDICO|GARRAFA|SINALIZADOR)$/, (m) => "+1 " + ({ BATERIA: "BATTERY", BANDAGEM: "BANDAGE", "KIT MÉDICO": "MEDKIT", GARRAFA: "BOTTLE", SINALIZADOR: "FLARE" }[m[1]]), (m) => "+1 " + ({ BATERIA: "BATERÍA", BANDAGEM: "VENDA", "KIT MÉDICO": "BOTIQUÍN", GARRAFA: "BOTELLA", SINALIZADOR: "BENGALA" }[m[1]])],
+      [/^JOGAR: (BATERIA|BANDAGEM|KIT MÉDICO|GARRAFA|SINALIZADOR)$/, (m) => "THROW: " + ({ GARRAFA: "BOTTLE", SINALIZADOR: "FLARE" }[m[1]] || m[1]), (m) => "LANZAR: " + ({ GARRAFA: "BOTELLA", SINALIZADOR: "BENGALA" }[m[1]] || m[1])],
+      [/^(\S+) CURA · (\S+) JOGA · (\S+) TROCA$/, "$1 HEAL · $2 THROW · $3 SWAP", "$1 CURA · $2 LANZA · $3 CAMBIA"],
+      [/^\[(.+)\] (ESCONDER NO ARMÁRIO|SAIR DO ARMÁRIO|SUBIR A ESCADA|PEGAR O ELEVADOR)$/, (m, t) => "[" + m[1] + "] " + t(m[2]), (m, t) => "[" + m[1] + "] " + t(m[2])],
+      [/^(\d+)% · \+(\d+)$/, "$1% · +$2", "$1% · +$2"],
       [/^INFECÇÃO EM (\d+)$/, "INFECTION IN $1", "INFECCIÓN EN $1"],
       [/^VOCÊ VOLTA EM (\d+)$/, "BACK IN $1", "VUELVES EN $1"],
       [/^HUMANOS (\d+)$/, "HUMANS $1", "HUMANOS $1"], [/^ZUMBIS (\d+)$/, "ZOMBIES $1", "ZOMBIS $1"], [/^VELOCIDADE (\d+) s$/, "SPEED $1 s", "VELOCIDAD $1 s"],
@@ -1527,10 +1580,44 @@ const Logic = (function () {
 
   // mapa do modo Infecção (mapit.js): vila italiana com morros, casas e lojas
   const ITALY_BOXES = ITALIA.boxes.map((b) => [b[0], b[1], b[2], b[3], b[4], b[5] || 0]);   // [x0, x1, y0, y1, topo, base]
-  let BOXES = ARENA_BOXES, MAP = "arena";
-  function setMap(m) {
-    MAP = m === "italia" ? "italia" : m === "grande" ? "grande" : "arena";
-    BOXES = MAP === "italia" ? ITALY_BOXES : MAP === "grande" ? BIG.boxes : ARENA_BOXES; ARENA = MAP === "italia" ? ITALIA.A : MAP === "grande" ? BIG.A : ARENA0;
+  let BOXES = ARENA_BOXES, MAP = "arena", MAPV = 0;
+  // Modo Prédio: cada andar é um mapa próprio (custom = { boxes, A }); MAPV muda a cada andar para o campo de fluxo não reaproveitar o andar anterior
+  function setMap(m, custom) {
+    MAP = m === "italia" ? "italia" : m === "grande" ? "grande" : m === "predio" && custom ? "predio" : "arena";
+    BOXES = MAP === "predio" ? custom.boxes : MAP === "italia" ? ITALY_BOXES : MAP === "grande" ? BIG.boxes : ARENA_BOXES; ARENA = MAP === "predio" ? custom.A : MAP === "italia" ? ITALIA.A : MAP === "grande" ? BIG.A : ARENA0;
+    MAPV++;
+    BIDX = MAP === "predio" ? indexBoxes(BOXES, ARENA) : null;
+  }
+  // índice espacial (células de 2 m) para mapas com muitos blocos (o prédio tem centenas de móveis)
+  let BIDX = null;
+  function indexBoxes(bx, A) {
+    const C = 2, N = Math.ceil((2 * A + 6) / C), o = A + 3, cells = Array.from({ length: N * N }, () => []);
+    bx.forEach((b) => {
+      const i0 = Math.max(0, Math.floor((b[0] - 1.2 + o) / C)), i1 = Math.min(N - 1, Math.floor((b[1] + 1.2 + o) / C));
+      const j0 = Math.max(0, Math.floor((b[2] - 1.2 + o) / C)), j1 = Math.min(N - 1, Math.floor((b[3] + 1.2 + o) / C));
+      for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) cells[j * N + i].push(b);
+    });
+    return { C, N, o, cells };
+  }
+  const EMPTY = [];
+  function near(x, y) {                                                  // blocos perto de (x, y) (até ~1,2 m de folga)
+    if (!BIDX) return BOXES;
+    const i = Math.floor((x + BIDX.o) / BIDX.C), j = Math.floor((y + BIDX.o) / BIDX.C);
+    return i < 0 || j < 0 || i >= BIDX.N || j >= BIDX.N ? EMPTY : BIDX.cells[j * BIDX.N + i];
+  }
+  // linha de visão: algum bloco alto (parede, estante, armário) corta o segmento A-B na altura h?
+  function segBlocked(x0, y0, x1, y1, h) {
+    const dx = x1 - x0, dy = y1 - y0;
+    let list = BOXES;
+    if (BIDX) { const set = new Set(), n = Math.ceil(Math.hypot(dx, dy) / 1.5) + 1; for (let k = 0; k <= n; k++) for (const b of near(x0 + dx * k / n, y0 + dy * k / n)) set.add(b); list = set; }
+    for (const b of list) {
+      if (b[4] < h || b[5] > h) continue;
+      let t0 = 0, t1 = 1;
+      if (Math.abs(dx) < 1e-9) { if (x0 <= b[0] || x0 >= b[1]) continue; } else { let a = (b[0] - x0) / dx, c = (b[1] - x0) / dx; if (a > c) [a, c] = [c, a]; t0 = Math.max(t0, a); t1 = Math.min(t1, c); if (t0 >= t1) continue; }
+      if (Math.abs(dy) < 1e-9) { if (y0 <= b[2] || y0 >= b[3]) continue; } else { let a = (b[2] - y0) / dy, c = (b[3] - y0) / dy; if (a > c) [a, c] = [c, a]; t0 = Math.max(t0, a); t1 = Math.min(t1, c); if (t0 >= t1) continue; }
+      return true;
+    }
+    return false;
   }
 
   const clamp = (v, lo, hi) => (v < lo ? lo : v > hi ? hi : v);
@@ -1543,13 +1630,13 @@ const Logic = (function () {
   // chão: maior topo alcançável a partir da altura atual (sobe degraus de até STEP)
   function groundAt(x, y, cur) {
     let g = 0; const lim = (cur || 0) + STEP + 0.01;
-    for (const b of BOXES) if (x > b[0] && x < b[1] && y > b[2] && y < b[3] && b[4] <= lim && b[4] > g) g = b[4];
+    for (const b of near(x, y)) if (x > b[0] && x < b[1] && y > b[2] && y < b[3] && b[4] <= lim && b[4] > g) g = b[4];
     return g;
   }
   function pushOut(x, y, r, gz) {
     gz = gz || 0;
     for (let pass = 0; pass < 2; pass++) {
-      for (const bx of BOXES) {
+      for (const bx of near(x, y)) {
         if (bx[4] <= gz + STEP || bx[5] >= gz + HEAD_ROOM) continue;          // degrau baixo ou passa por baixo (verga da porta)
         const x0 = bx[0], x1 = bx[1], y0 = bx[2], y1 = bx[3];
         const nx = x < x0 ? x0 : x > x1 ? x1 : x;
@@ -1576,14 +1663,16 @@ const Logic = (function () {
   // ---------- campo de fluxo: zumbis "espertos" contornam containers, carros e prédios (arena e mapa grande; a Infecção não usa) ----------
   // grade de 1 m; Dijkstra a partir da célula do alvo; cada zumbi desce o campo e mira no ponto mais distante que ele enxerga
   const Flow = (() => {
-    const C = 1, grids = {};
+    let C = 1; const grids = {};
     function grid(r) {
-      const k = MAP + ":" + r; if (grids[k]) return grids[k];
+      C = MAP === "predio" ? 0.5 : 1;                                    // prédio: grade de 0,5 m (portas de 1,4 m)
+      const k = MAP + ":" + MAPV + ":" + r; if (grids[k]) return grids[k];
+      for (const q in grids) { const p = q.split(":"); if (p[0] === "predio" && +p[1] !== MAPV) delete grids[q]; }
       const A = ARENA, N = Math.ceil((2 * A) / C), blk = new Uint8Array(N * N);
       for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) {
         const x = -A + (i + 0.5) * C, y = -A + (j + 0.5) * C;
         if (Math.abs(x) > A - r || Math.abs(y) > A - r) { blk[j * N + i] = 1; continue; }
-        for (const b of BOXES) { if (b[4] <= STEP) continue; const nx = clamp(x, b[0], b[1]), ny = clamp(y, b[2], b[3]); if ((x - nx) * (x - nx) + (y - ny) * (y - ny) < r * r) { blk[j * N + i] = 1; break; } }
+        for (const b of near(x, y)) { if (b[4] <= STEP) continue; const nx = clamp(x, b[0], b[1]), ny = clamp(y, b[2], b[3]); if ((x - nx) * (x - nx) + (y - ny) * (y - ny) < r * r) { blk[j * N + i] = 1; break; } }
       }
       return (grids[k] = { N, A, blk, fields: new Map(), heap: new Int32Array(N * N * 4), hk: new Float32Array(N * N * 4) });
     }
@@ -1611,7 +1700,7 @@ const Logic = (function () {
         }
       }
       g.fields.set(tc, { d, t: now });
-      if (g.fields.size > 10) { let ok = -1, ot = 1e18; for (const [k, v] of g.fields) if (v.t < ot) { ot = v.t; ok = k; } g.fields.delete(ok); }
+      if (g.fields.size > (MAP === "predio" ? 24 : 10)) { let ok = -1, ot = 1e18; for (const [k, v] of g.fields) if (v.t < ot) { ot = v.t; ok = k; } g.fields.delete(ok); }
       return d;
     }
     function los(g, x0, y0, x1, y1) {
@@ -1623,7 +1712,9 @@ const Logic = (function () {
     function steer(x, y, tx, ty, r, now) {
       const g = grid(r);
       if (los(g, x, y, tx, ty)) return null;
-      const d = field(g, cell(g, tx, ty), now), N = g.N;
+      let tc = cell(g, tx, ty);
+      if (MAP === "predio") { const rx = Math.round(tx / 2) * 2, ry = Math.round(ty / 2) * 2; if (los(g, tx, ty, rx, ry)) tc = cell(g, rx, ry); }   // prédio: alvo arredondado a 2 m (reaproveita o campo), se não passar parede
+      const d = field(g, tc, now), N = g.N;
       let c = nearestFree(g, cell(g, x, y)), aim = -1;
       for (let step = 0; step < 6; step++) {
         const i = c % N, j = (c / N) | 0; let best = -1, bv = d[c];
@@ -2795,6 +2886,7 @@ const Logic = (function () {
     }
 
     zombieAI(z, dt, base) {
+      if (this.gm === "predio" && this.towerAI) { this.towerAI(z, dt, base); return; }
       const dx = this.px - z.x, dy = this.py - z.y, dist = Math.hypot(dx, dy) || 1e-6;
       if (z.tank) { this.updateTank(z, dt, dist); return; }
       if (z.lumber) { this.updateLumber(z, dt, dist, dx, dy); return; }
@@ -2889,7 +2981,8 @@ const Logic = (function () {
       for (const e of this.sched) if (e.t <= 0) { if (e.fn === "melee") this.doMelee(); else if (e.fn === "shake") this.shake = Math.max(this.shake, e.v); else if (e.ev) this.events.push(e.ev); }
       this.sched = this.sched.filter((e) => e.t > 0);
       if (this.alive) {
-        this.updatePlayer(dt, inp);
+        if (this.tw && this.tw.hide) { this.moving = false; this.sprinting = false; this.ads = false; }   // escondido no armário: não anda
+        else this.updatePlayer(dt, inp);
         if (this.hp < 30) { this.hbT -= dt; if (this.hbT <= 0) { this.hbT = 0.5 + this.hp / 60; this.events.push(["heart"]); } }
       } else { this.moving = false; this.ads = false; }
       this.invulnT = Math.max(0, this.invulnT - dt); this.boostT = Math.max(0, this.boostT - dt);
@@ -2908,6 +3001,7 @@ const Logic = (function () {
       if (this.coop && this.coop.role === "guest") { this.mirrorStep(dt); this.updateCracks(dt); this.potsVisual(dt); return; }   // convidado: o mundo vem pelo anfitrião
       if (this.gm === "infect") { this.updateInfect(dt); this.updateZombies(dt); this.updatePickups(dt); this.updateBoosts(dt); this.updatePots(dt); }
       else if (this.gm === "explore") { this.updateBoosts(dt); }
+      else if (this.gm === "predio") { this.updateTower(dt); this.updateZombies(dt); this.updatePickups(dt); }
       else { this.updateWaves(dt); this.updateZombies(dt); this.updatePickups(dt); this.updateCracks(dt); }
       if (this.coop && !this.alive && !this.reviveWait && !this.over && !this.others.some((o) => o.alive)) this.over = true;
     }
@@ -3579,11 +3673,794 @@ const Logic = (function () {
   }
 
   return {
-    Game, Zombie, Pickup, Nav, Flow, BIG, BOT_AI, POT, buildSlot, groundAt, setMap, getMap: () => MAP, rangeFactor, damageAt, weaponStats, recoilPattern, pushOut, insideAny, clamp, wrapAngle, BOXES, OBSTACLES, LAMPS, WEAPONS, WEAPON_ORDER, DIFF, DIFF_ORDER, ELITE, SAM,
+    Game, Zombie, Pickup, Nav, Flow, BIG, segBlocked, STEP, HEAD_ROOM, ZOMBIE_R, ATTACK_RANGE, BOT_AI, POT, buildSlot, groundAt, setMap, getMap: () => MAP, rangeFactor, damageAt, weaponStats, recoilPattern, pushOut, insideAny, clamp, wrapAngle, BOXES, OBSTACLES, LAMPS, WEAPONS, WEAPON_ORDER, DIFF, DIFF_ORDER, ELITE, SAM,
     C: { ZOMBIE_RESPAWN, get ARENA() { return ARENA; }, WALL_H, EYE_H, CROUCH_DROP, PLAYER_R, RADAR_RANGE: 18, SWITCH_TIME, MELEE_CD, PICK_TTL },
   };
 })();
 // ==LOGIC-END==
+  // ======================================================================
+  //  MODO PRÉDIO: plantas dos andares (geradas por semente: todo mundo vê o mesmo prédio)
+  //  Cada andar: salas e corredores (BSP), portas ligando tudo (árvore + alguns atalhos),
+  //  escada para cima longe de onde você chega, às vezes um elevador (sobe 1 andar),
+  //  armários grandes para se esconder, baterias e itens da mochila, zumbis.
+  //  O último andar de cada nível tem um terraço a céu aberto com a saída (heliponto).
+  //  Coordenadas do jogo: x para a direita, y para a frente; o andar vai de -A a A.
+  // ======================================================================
+  const TOWER = (function () {
+    const A = 36;                                      // andar de 72 x 72 m (mesma escala do mapa grande)
+    const LEVELS = [
+      { floors: 7, name: "Nível 1", ai: 0, zBase: 7, zFloor: 0.5, bat: 6, items: 5, lockers: 10, loops: 0.12, elev: 0.2 },
+      { floors: 9, name: "Nível 2", ai: 1, zBase: 9, zFloor: 0.6, bat: 5, items: 5, lockers: 11, loops: 0.16, elev: 0.25 },
+      { floors: 13, name: "Nível 3", ai: 2, zBase: 11, zFloor: 0.6, bat: 5, items: 4, lockers: 12, loops: 0.2, elev: 0.3 },
+      { floors: 18, name: "Nível 4", ai: 3, zBase: 13, zFloor: 0.55, bat: 4, items: 4, lockers: 13, loops: 0.24, elev: 0.3 },
+      { floors: 20, name: "Nível 5", ai: 4, zBase: 15, zFloor: 0.55, bat: 4, items: 3, lockers: 14, loops: 0.28, elev: 0.35 },
+    ];
+    // comportamento dos zumbis por nível (o andar não muda isso, só o nível)
+    const AI = [
+      { name: "Andam à toa", see: 7, hear: 4, chase: 1.5, run: false, search: false, hide: false, track: 0 },
+      { name: "Ouvem barulho e vão ver", see: 9, hear: 9, chase: 1.8, run: false, search: true, hide: false, track: 0 },
+      { name: "Correm quando te veem", see: 12, hear: 12, chase: 4.0, run: true, search: true, hide: false, track: 3 },
+      { name: "Patrulham e procuram nos armários", see: 14, hear: 14, chase: 4.4, run: true, search: true, hide: false, track: 6 },
+      { name: "Se escondem e caçam você", see: 16, hear: 16, chase: 4.8, run: true, search: true, hide: true, track: 10 },
+    ];
+    function rng(seed) { let s = (seed >>> 0) || 1; return () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; }; }
+
+    // ---------- último andar: só o terraço, com a casinha da escada e o helicóptero no heliponto ----------
+    function roof(level, floor, prev, r, uni) {
+      const LV = LEVELS[level], ax = prev ? prev.up.x : 0, ay = prev ? prev.up.y : -A + 6;
+      const arrive = { x: ax, y: ay };
+      // casinha da escada em volta da chegada; a porta fica virada para o heliponto
+      const hw = 7, hd = 6, hx = Math.max(-A + 1 + hw / 2, Math.min(A - 1 - hw / 2, ax)), hy = Math.max(-A + 1 + hd / 2, Math.min(A - 1 - hd / 2, ay));
+      const hut = { kind: "room", type: "acesso", x0: hx - hw / 2, y0: hy - hd / 2, x1: hx + hw / 2, y1: hy + hd / 2 };
+      const ter = { kind: "terrace", type: "terraco", x0: -A, y0: -A, x1: A, y1: A };
+      const regs = [ter, hut]; regs.forEach((g, i) => { g.id = i; g.cx = (g.x0 + g.x1) / 2; g.cy = (g.y0 + g.y1) / 2; g.area = (g.x1 - g.x0) * (g.y1 - g.y0); });
+      // heliponto: o canto oposto, longe da casinha
+      const ex = hx > 0 ? -A + 13 : A - 13, ey = hy > 0 ? -A + 13 : A - 13, exit = { x: ex, y: ey, r: 6.5 };
+      // porta da casinha na parede virada para o heliponto
+      const dx = ex - hx, dy = ey - hy, alongX = Math.abs(dx) > Math.abs(dy);
+      const door = alongX ? { x: dx > 0 ? hut.x1 : hut.x0, y: hy, axis: "x", w: 2.0 } : { x: hx, y: dy > 0 ? hut.y1 : hut.y0, axis: "y", w: 2.0 };
+      door.a = 1; door.b = 0; door.open = false;
+      const doors = [door], walls = [];
+      const wallCut = (x0, y0, x1, y1) => {                                // parede da casinha com o vão da porta
+        const ax2 = x0 === x1 ? "x" : "y", c = ax2 === "x" ? x0 : y0, lo = ax2 === "x" ? y0 : x0, hi = ax2 === "x" ? y1 : x1;
+        if (door.axis === ax2 && Math.abs((ax2 === "x" ? door.x : door.y) - c) < 0.01) { const m = ax2 === "x" ? door.y : door.x; walls.push(ax2 === "x" ? [c, lo, c, m - door.w / 2] : [lo, c, m - door.w / 2, c]); walls.push(ax2 === "x" ? [c, m + door.w / 2, c, hi] : [m + door.w / 2, c, hi, c]); }
+        else walls.push([x0, y0, x1, y1]);
+      };
+      wallCut(hut.x0, hut.y0, hut.x1, hut.y0); wallCut(hut.x0, hut.y1, hut.x1, hut.y1); wallCut(hut.x0, hut.y0, hut.x0, hut.y1); wallCut(hut.x1, hut.y0, hut.x1, hut.y1);
+      const parapet = [[-A, -A, A, -A], [-A, A, A, A], [-A, -A, -A, A], [A, -A, A, A]];   // mureta de 1,1 m na borda
+      // objetos do telhado
+      const furn = [];
+      const hit = (x, y, w, d, m) => furn.some((f) => Math.abs(f.x - x) < (f.w + w) / 2 + m && Math.abs(f.y - y) < (f.d + d) / 2 + m);
+      const clearOf = (x, y, w, d) => Math.abs(x - hx) > (hw + w) / 2 + 2.2 || Math.abs(y - hy) > (hd + d) / 2 + 2.2;
+      const putR = (k, x, y, w, d, h, m) => { if (Math.abs(x) + w / 2 > A - 0.4 || Math.abs(y) + d / 2 > A - 0.4) return false; if (Math.hypot(x - ex, y - ey) < exit.r + Math.max(w, d) / 2 + 2.5 || !clearOf(x, y, w, d) || hit(x, y, w, d, m)) return false; furn.push({ k, x, y, w, d, h }); return true; };
+      for (let i = 0; i < 300 && furn.filter((f) => f.k === "solar").length < 24; i++) { const x = uni(-A + 4, A - 4), y = uni(-A + 4, A - 4); putR("solar", x, y, 3.2, 1.7, 0.9, 0.6); }     // placas solares
+      for (let i = 0, n = 0; n < 10 && i < 200; i++) if (putR("ar", uni(-A + 3, A - 3), uni(-A + 3, A - 3), 1.6, 1.6, 1.2, 1.4)) n++;      // ar-condicionado
+      for (let i = 0, n = 0; n < 3 && i < 200; i++) if (putR("caixa_dagua", uni(-A + 4, A - 4), uni(-A + 4, A - 4), 2.8, 2.8, 3.4, 2)) n++;
+      for (let i = 0, n = 0; n < 4 && i < 200; i++) if (putR("claraboia", uni(-A + 4, A - 4), uni(-A + 4, A - 4), 2.4, 2.4, 0.6, 1.4)) n++;
+      for (let i = 0, n = 0; n < 2 && i < 200; i++) if (putR("antena", uni(-A + 3, A - 3), uni(-A + 3, A - 3), 0.8, 0.8, 7, 2)) n++;
+      for (const sd of [0, 1, 2, 3]) for (let u = -A + 3; u < A - 3; u += uni(5, 9)) { const pp = [[u, -A + 0.6], [u, A - 0.6], [-A + 0.6, u], [A - 0.6, u]][sd]; putR("jardineira", pp[0], pp[1], sd < 2 ? 2.6 : 0.8, sd < 2 ? 0.8 : 2.6, 0.7, 0.3); }
+      for (let i = 0, n = 0; n < 5 && i < 200; i++) if (putR("banco", uni(-A + 3, A - 3), uni(-A + 3, A - 3), 1.8, 0.5, 0.45, 1)) n++;
+      const lockers = [];
+      for (let i = 0; i < 200 && lockers.length < 4; i++) { const x = uni(-A + 3, A - 3), y = uni(-A + 3, A - 3); if (putR("armario", x, y, 1.4, 0.7, 2.1, 1.2)) { furn[furn.length - 1].locker = true; lockers.push({ x, y, face: 0, room: 0 }); } }   // armário de ferramentas: dá para se esconder
+      const items = [], zombies = [];
+      const spot = (m) => { for (let i = 0; i < 100; i++) { const x = uni(-A + 2, A - 2), y = uni(-A + 2, A - 2); if (!hit(x, y, 0.5, 0.5, m) && clearOf(x, y, 0.5, 0.5) && Math.hypot(x - ex, y - ey) > exit.r + 1) return [x, y]; } return null; };
+      for (let i = 0; i < 3; i++) { const p = spot(0.3); if (p) items.push({ kind: i ? "bateria" : "kit", x: p[0], y: p[1], room: 0 }); }
+      const nz = Math.round((LV.zBase + floor * LV.zFloor) * 0.6);
+      for (let i = 0; i < 200 && zombies.length < nz; i++) { const p = spot(0.3); if (p && Math.hypot(p[0] - ax, p[1] - ay) > 14) zombies.push({ x: p[0], y: p[1], room: 0, hidden: AI[LV.ai].hide && r() < 0.35 }); }
+      const heli = { x: ex, y: ey, yaw: Math.atan2(hx - ex, hy - ey) };       // o nariz aponta para quem chega
+      return { A, level, floor, top: true, roof: true, regs, doors, walls, parapet, arrive, up: null, elev: null, exit, heli, lockers, items, zombies, furn, dist: [0, 0], ai: AI[LV.ai], TYPES: Object.assign({}, TYPES_ALL, { acesso: "Saída da escada" }) };
+    }
+    const TYPES_ALL = { escritorio: "Escritório", reuniao: "Reunião", copa: "Copa", banheiro: "Banheiro", deposito: "Depósito", estar: "Sala de estar", servidores: "Servidores", arquivo: "Arquivo", corredor: "Corredor", terraco: "Terraço" };
+    const memo = new Map();
+    function plan(level, floor) { const k = level * 100 + floor; if (!memo.has(k)) memo.set(k, build(level, floor)); return memo.get(k); }
+    function build(level, floor) {
+      const LV = LEVELS[level], r = rng(1000003 * (level + 1) + 7919 * (floor + 1)), top = floor === LV.floors - 1;
+      const uni = (a, b) => a + r() * (b - a);
+      // ---------- salas: BSP com corredores nas divisões de cima ----------
+      const regs = [];                                    // { x0, y0, x1, y1, kind: "room" | "hall" | "terrace" }
+      let root = { x0: -A, y0: -A, x1: A, y1: A };
+      const prev = floor > 0 ? plan(level, floor - 1) : null;
+      if (top) return roof(level, floor, prev, r, uni);
+      const HALL = 3.2, MIN = 5.5, MAX = 15;
+      (function split(b, depth) {
+        const w = b.x1 - b.x0, h = b.y1 - b.y0;
+        const big = Math.max(w, h);
+        if (big <= MAX && (big < MIN * 2.2 || r() < 0.35 + depth * 0.05)) { regs.push(Object.assign({ kind: "room" }, b)); return; }
+        const vert = w > h * 1.15 ? true : h > w * 1.15 ? false : r() < 0.5;
+        const hall = depth < 2 && (vert ? w : h) > 22;     // corredores largos nas primeiras divisões
+        const len = vert ? w : h, gap = hall ? HALL : 0;
+        const at = uni(0.36, 0.64) * (len - gap);
+        if (vert) {
+          const c = b.x0 + at;
+          split({ x0: b.x0, y0: b.y0, x1: c, y1: b.y1 }, depth + 1);
+          if (hall) regs.push({ kind: "hall", x0: c, y0: b.y0, x1: c + gap, y1: b.y1 });
+          split({ x0: c + gap, y0: b.y0, x1: b.x1, y1: b.y1 }, depth + 1);
+        } else {
+          const c = b.y0 + at;
+          split({ x0: b.x0, y0: b.y0, x1: b.x1, y1: c }, depth + 1);
+          if (hall) regs.push({ kind: "hall", x0: b.x0, y0: c, x1: b.x1, y1: c + gap });
+          split({ x0: b.x0, y0: c + gap, x1: b.x1, y1: b.y1 }, depth + 1);
+        }
+      })(root, 0);
+      regs.forEach((g, i) => { g.id = i; g.cx = (g.x0 + g.x1) / 2; g.cy = (g.y0 + g.y1) / 2; g.area = (g.x1 - g.x0) * (g.y1 - g.y0); });
+      // ---------- vizinhança (parede em comum) ----------
+      const adj = [];
+      const shared = (a, b) => {
+        const e = 0.01;
+        if (Math.abs(a.x1 - b.x0) < e || Math.abs(b.x1 - a.x0) < e) { const x = Math.abs(a.x1 - b.x0) < e ? a.x1 : a.x0, lo = Math.max(a.y0, b.y0), hi = Math.min(a.y1, b.y1); if (hi - lo > 2.4) return { axis: "x", c: x, lo, hi }; }
+        if (Math.abs(a.y1 - b.y0) < e || Math.abs(b.y1 - a.y0) < e) { const y = Math.abs(a.y1 - b.y0) < e ? a.y1 : a.y0, lo = Math.max(a.x0, b.x0), hi = Math.min(a.x1, b.x1); if (hi - lo > 2.4) return { axis: "y", c: y, lo, hi }; }
+        return null;
+      };
+      for (let i = 0; i < regs.length; i++) for (let j = i + 1; j < regs.length; j++) { const s = shared(regs[i], regs[j]); if (s) adj.push(Object.assign({ a: i, b: j, w: r() + (regs[i].kind !== "room" || regs[j].kind !== "room" ? -0.6 : 0) }, s)); }
+      // ---------- portas: árvore geradora (tudo alcançável) + atalhos ----------
+      const par = regs.map((_, i) => i), find = (i) => (par[i] === i ? i : (par[i] = find(par[i])));
+      const doors = [], links = regs.map(() => []);
+      const addDoor = (e) => {
+        const w = e.a !== undefined && (regs[e.a].kind === "terrace" || regs[e.b].kind === "terrace") ? 2.4 : 1.4;
+        const pos = uni(e.lo + 1.0 + w / 2, e.hi - 1.0 - w / 2);
+        const d = e.axis === "x" ? { x: e.c, y: pos, axis: "x", w } : { x: pos, y: e.c, axis: "y", w };
+        d.a = e.a; d.b = e.b; d.open = false; doors.push(d); links[e.a].push(e.b); links[e.b].push(e.a);
+      };
+      adj.sort((p, q) => p.w - q.w);
+      for (const e of adj) { const fa = find(e.a), fb = find(e.b); if (fa !== fb) { par[fa] = fb; addDoor(e); } else if (r() < LV.loops) addDoor(e); }
+      // ---------- paredes (com o vão das portas) ----------
+      const walls = [];
+      const cut = (axis, c, lo, hi) => {
+        const ds = doors.filter((d) => d.axis === axis && Math.abs((axis === "x" ? d.x : d.y) - c) < 0.01).map((d) => [(axis === "x" ? d.y : d.x) - d.w / 2, (axis === "x" ? d.y : d.x) + d.w / 2]).sort((p, q) => p[0] - q[0]);
+        let s = lo; for (const [a, b] of ds) { if (b <= lo || a >= hi) continue; if (a > s) walls.push(axis === "x" ? [c, s, c, a] : [s, c, a, c]); s = Math.max(s, b); }
+        if (hi > s) walls.push(axis === "x" ? [c, s, c, hi] : [s, c, hi, c]);
+      };
+      // todas as bordas de todas as salas, juntando os trechos na mesma linha (sem buracos entre salas pequenas)
+      const lines = { x: new Map(), y: new Map() }, key = (v) => Math.round(v * 100) / 100;
+      const addL = (axis, c, lo, hi) => { const m = lines[axis], k = key(c); if (!m.has(k)) m.set(k, []); m.get(k).push([lo, hi]); };
+      for (const g of regs) { addL("x", g.x0, g.y0, g.y1); addL("x", g.x1, g.y0, g.y1); addL("y", g.y0, g.x0, g.x1); addL("y", g.y1, g.x0, g.x1); }
+      for (const axis of ["x", "y"]) for (const [c, iv] of lines[axis]) {
+        iv.sort((p, q) => p[0] - q[0]); let [lo, hi] = iv[0];
+        for (let i = 1; i <= iv.length; i++) { if (i < iv.length && iv[i][0] <= hi + 0.01) { hi = Math.max(hi, iv[i][1]); continue; } cut(axis, c, lo, hi); if (i < iv.length) [lo, hi] = iv[i]; }
+      }
+      // ---------- distâncias entre salas (BFS pelas portas) ----------
+      const bfs = (src) => { const d = regs.map(() => 1e9), q = [src]; d[src] = 0; while (q.length) { const u = q.shift(); for (const v of links[u]) if (d[v] > d[u] + 1) { d[v] = d[u] + 1; q.push(v); } } return d; };
+      const rooms = regs.filter((g) => g.kind === "room");
+      // chegada: onde a escada do andar de baixo termina (andar 0: entrada do prédio, numa sala da borda)
+      let arrive;
+      if (prev) arrive = { x: prev.up.x, y: prev.up.y };
+      else { const edge = rooms.filter((g) => g.y0 <= -A + 0.01); const g = edge.length ? edge[Math.floor(r() * edge.length)] : rooms[0]; arrive = { x: g.cx, y: g.y0 + 2 }; }
+      const inReg = (x, y) => regs.find((g) => x >= g.x0 && x <= g.x1 && y >= g.y0 && y <= g.y1) || regs[0];
+      const startReg = inReg(arrive.x, arrive.y), dist = bfs(startReg.id);
+      const reach = rooms.filter((g) => dist[g.id] < 1e9 && g.id !== startReg.id && g.area >= 30);
+      reach.sort((p, q) => dist[q.id] - dist[p.id] || Math.hypot(q.cx - arrive.x, q.cy - arrive.y) - Math.hypot(p.cx - arrive.x, p.cy - arrive.y));
+      const used = new Set([startReg.id]);
+      let up = null, elev = null, exit = null;
+      const corner = (g, k) => { const m = 1.8; return [[g.x0 + m, g.y0 + m], [g.x1 - m, g.y0 + m], [g.x0 + m, g.y1 - m], [g.x1 - m, g.y1 - m]][k]; };
+      if (top) {                                           // saída: heliponto no terraço
+        const t = regs.find((g) => g.kind === "terrace"); exit = { x: t.cx, y: t.cy, r: 4 }; used.add(t.id);
+      } else {
+        const far = reach.slice(0, Math.max(1, Math.ceil(reach.length * 0.25)));
+        const g = far[Math.floor(r() * far.length)]; used.add(g.id); const p = corner(g, Math.floor(r() * 4)); up = { x: p[0], y: p[1], room: g.id };
+        if (floor > 0 && floor < LV.floors - 2 && r() < LV.elev) {   // elevador: atalho no meio do caminho (só sobe 1 andar)
+          const mid = reach.filter((q) => !used.has(q.id) && dist[q.id] >= 2 && dist[q.id] <= Math.max(2, dist[g.id] - 2));
+          if (mid.length) { const e = mid[Math.floor(r() * mid.length)]; used.add(e.id); const c = corner(e, Math.floor(r() * 4)); elev = { x: c[0], y: c[1], room: e.id }; }
+        }
+      }
+      // ---------- armários grandes (esconderijo), baterias, itens, zumbis ----------
+      const taken = [];
+      const free = (x, y, m) => Math.hypot(x - arrive.x, y - arrive.y) > 3 && (!up || Math.hypot(x - up.x, y - up.y) > 2.6) && (!elev || Math.hypot(x - elev.x, y - elev.y) > 2.6) && taken.every((t) => Math.hypot(t[0] - x, t[1] - y) > m);
+      const lockers = [];
+      for (let i = 0, n = 0; n < LV.lockers && i < 400; i++) {
+        const g = rooms[Math.floor(r() * rooms.length)], side = Math.floor(r() * 4);
+        const along = side < 2 ? uni(g.x0 + 1.2, g.x1 - 1.2) : uni(g.y0 + 1.2, g.y1 - 1.2);
+        const p = [[along, g.y0 + 0.5, 0], [along, g.y1 - 0.5, 2], [g.x0 + 0.5, along, 1], [g.x1 - 0.5, along, 3]][side];
+        if (doors.some((d) => Math.hypot(d.x - p[0], d.y - p[1]) < 2.2) || !free(p[0], p[1], 2.5)) continue;
+        lockers.push({ x: p[0], y: p[1], face: p[2], room: g.id }); taken.push([p[0], p[1]]); n++;
+      }
+      // ---------- móveis de cada sala (tipo da sala pelo tamanho e formato) ----------
+      const furn = [];                                     // { k, x, y, w, d, h } (w ao longo de x, d ao longo de y)
+      const hit = (x, y, w, d, m) => furn.some((f) => Math.abs(f.x - x) < (f.w + w) / 2 + m && Math.abs(f.y - y) < (f.d + d) / 2 + m);
+      for (const l of lockers) furn.push({ k: "armario", x: l.x, y: l.y, w: l.face % 2 ? 0.7 : 1.4, d: l.face % 2 ? 1.4 : 0.7, h: 2.1, locker: true });
+      const keep = [[arrive.x, arrive.y, 2.6]]; if (up) keep.push([up.x, up.y, 2.8]); if (elev) keep.push([elev.x, elev.y, 2.8]); if (exit) keep.push([exit.x, exit.y, exit.r + 1.5]);
+      const okAt = (g, x, y, w, d, m) => {
+        if (x - w / 2 < g.x0 + 0.12 || x + w / 2 > g.x1 - 0.12 || y - d / 2 < g.y0 + 0.12 || y + d / 2 > g.y1 - 0.12) return false;
+        for (const dr of doors) if ((dr.a === g.id || dr.b === g.id) && Math.abs(dr.x - x) < w / 2 + 1.7 && Math.abs(dr.y - y) < d / 2 + 1.7) return false;
+        for (const k of keep) if (Math.abs(k[0] - x) < w / 2 + k[2] && Math.abs(k[1] - y) < d / 2 + k[2]) return false;
+        return !hit(x, y, w, d, m === undefined ? 0.05 : m);
+      };
+      const put = (g, k, x, y, w, d, h, m) => { if (!okAt(g, x, y, w, d, m)) return false; furn.push({ k, x, y, w, d, h, room: g.id }); return true; };
+      // fileira encostada nas paredes: peças de "len" x "dep", com espaço "gap"
+      const wallRow = (g, k, len, dep, h, gap, sides) => {
+        for (const sd of sides || [0, 1, 2, 3]) {
+          const horiz = sd < 2, L0 = horiz ? g.x0 : g.y0, L1 = horiz ? g.x1 : g.y1;
+          for (let u = L0 + 0.6 + len / 2; u < L1 - 0.6 - len / 2; u += len + gap) {
+            const c = [g.y0 + dep / 2 + 0.14, g.y1 - dep / 2 - 0.14, g.x0 + dep / 2 + 0.14, g.x1 - dep / 2 - 0.14][sd];
+            if (horiz) put(g, k, u, c, len, dep, h); else put(g, k, c, u, dep, len, h);
+          }
+        }
+      };
+      const corners = (g, k, sz, h) => { for (const [x, y] of [[g.x0 + sz / 2 + 0.2, g.y0 + sz / 2 + 0.2], [g.x1 - sz / 2 - 0.2, g.y0 + sz / 2 + 0.2], [g.x0 + sz / 2 + 0.2, g.y1 - sz / 2 - 0.2], [g.x1 - sz / 2 - 0.2, g.y1 - sz / 2 - 0.2]]) if (r() < 0.6) put(g, k, x, y, sz, sz, h); };
+      const TYPES = { escritorio: "Escritório", reuniao: "Reunião", copa: "Copa", banheiro: "Banheiro", deposito: "Depósito", estar: "Sala de estar", servidores: "Servidores", arquivo: "Arquivo", corredor: "Corredor", terraco: "Terraço" };
+      for (const g of regs) {
+        const W = g.x1 - g.x0, H = g.y1 - g.y0, mn = Math.min(W, H), ar = g.area, horiz = W >= H;
+        if (g.kind === "hall") {
+          g.type = "corredor";
+          const len = Math.max(W, H);
+          for (let u = -len / 2 + 6; u < len / 2 - 4; u += uni(7, 12)) {
+            const kk = r(), cx = horiz ? g.cx + u : (r() < 0.5 ? g.x0 + 0.45 : g.x1 - 0.45), cy = horiz ? (r() < 0.5 ? g.y0 + 0.45 : g.y1 - 0.45) : g.cy + u;
+            if (kk < 0.4) put(g, "planta", cx, cy, 0.7, 0.7, 1.4); else if (kk < 0.65) put(g, "banco", cx, cy, horiz ? 1.8 : 0.5, horiz ? 0.5 : 1.8, 0.45); else if (kk < 0.85) put(g, "maquina", cx, cy, horiz ? 1.0 : 0.8, horiz ? 0.8 : 1.0, 1.9); else put(g, "lixeira", cx, cy, 0.5, 0.5, 0.8);
+          }
+          continue;
+        }
+        if (g.kind === "terrace") {
+          g.type = "terraco";
+          for (let i = 0; i < 9; i++) put(g, "ar", uni(g.x0 + 2, g.x1 - 2), uni(g.y0 + 2, g.y1 - 2), 1.6, 1.6, 1.2, 1.2);
+          for (let i = 0; i < 2; i++) put(g, "caixa_dagua", uni(g.x0 + 3, g.x1 - 3), uni(g.y0 + 3, g.y1 - 3), 2.6, 2.6, 3.2, 1.5);
+          wallRow(g, "jardineira", 3, 0.8, 0.7, uni(2, 4));
+          for (let i = 0; i < 4; i++) put(g, "banco", uni(g.x0 + 2, g.x1 - 2), uni(g.y0 + 2, g.y1 - 2), 1.8, 0.5, 0.45, 1);
+          put(g, "antena", uni(g.x0 + 2, g.x1 - 2), uni(g.y0 + 2, g.y1 - 2), 0.8, 0.8, 6, 1);
+          continue;
+        }
+        const t = ar < 14 ? (r() < 0.6 ? "banheiro" : "arquivo") : ar < 36 ? ["copa", "deposito", "servidores", "escritorio", "arquivo"][Math.floor(r() * 5)]
+          : ar < 90 ? ["escritorio", "escritorio", "reuniao", "estar", "copa", "deposito"][Math.floor(r() * 6)] : ["escritorio", "escritorio", "deposito", "estar"][Math.floor(r() * 4)];
+        g.type = t;
+        if (t === "escritorio") {
+          // ilhas de 4 mesas (2 x 2) com cadeiras, corredores de 1,6 m
+          const cw = 3.0, cd = 2.4, nx = Math.max(0, Math.floor((W - 3.4) / (cw + 1.6))), ny = Math.max(0, Math.floor((H - 3.4) / (cd + 1.8)));
+          for (let i = 0; i < nx; i++) for (let j = 0; j < ny; j++) {
+            const x = g.cx + (i - (nx - 1) / 2) * (cw + 1.6), y = g.cy + (j - (ny - 1) / 2) * (cd + 1.8);
+            if (!okAt(g, x, y, cw + 0.6, cd + 1.2, 0.2) || r() < 0.12) continue;
+            for (const sx of [-1, 1]) for (const sy of [-1, 1]) { furn.push({ k: "mesa", x: x + sx * 0.75, y: y + sy * 0.4, w: 1.45, d: 0.75, h: 0.75, room: g.id }); furn.push({ k: "cadeira", x: x + sx * 0.75, y: y + sy * 1.15, w: 0.55, d: 0.55, h: 0.9, room: g.id }); if (r() < 0.7) furn.push({ k: "monitor", x: x + sx * 0.75, y: y + sy * 0.25, w: 0.55, d: 0.12, h: 1.2, room: g.id, deco: true }); }
+          }
+          wallRow(g, "gaveteiro", 0.9, 0.55, 1.3, uni(3, 7), [Math.floor(r() * 4)]);
+          corners(g, "planta", 0.7, 1.5);
+        } else if (t === "reuniao") {
+          const L = (horiz ? W : H) - 4.2;
+          if (L > 2) {
+            const w = horiz ? L : 1.3, d = horiz ? 1.3 : L;
+            if (put(g, "mesa_longa", g.cx, g.cy, w, d, 0.76, 0.9)) for (let u = -L / 2 + 0.5; u <= L / 2 - 0.4; u += 0.9) for (const s2 of [-1, 1]) furn.push(horiz ? { k: "cadeira", x: g.cx + u, y: g.cy + s2 * 1.0, w: 0.55, d: 0.55, h: 0.9, room: g.id } : { k: "cadeira", x: g.cx + s2 * 1.0, y: g.cy + u, w: 0.55, d: 0.55, h: 0.9, room: g.id });
+          }
+          wallRow(g, "quadro", 2.0, 0.12, 1.8, 3, [horiz ? 2 : 0]);
+          corners(g, "planta", 0.7, 1.5);
+        } else if (t === "copa") {
+          const sd = Math.floor(r() * 4); wallRow(g, "balcao", 2.4, 0.65, 0.95, 0, [sd]);
+          wallRow(g, "geladeira", 0.8, 0.75, 1.9, 6, [sd ^ 1]);
+          for (let i = 0; i < 3; i++) { const x = uni(g.x0 + 2.2, g.x1 - 2.2), y = uni(g.y0 + 2.2, g.y1 - 2.2); if (put(g, "mesa_redonda", x, y, 1.1, 1.1, 0.75, 0.9)) for (const [a, b] of [[0.9, 0], [-0.9, 0], [0, 0.9], [0, -0.9]]) if (r() < 0.8) furn.push({ k: "cadeira", x: x + a, y: y + b, w: 0.5, d: 0.5, h: 0.9, room: g.id }); }
+        } else if (t === "banheiro") {
+          const sd = horiz ? 0 : 2; wallRow(g, "box", 1.0, 1.4, 2.0, 0.05, [sd]); wallRow(g, "pia", 0.9, 0.5, 0.9, 0.3, [sd ^ 1]);
+        } else if (t === "deposito" || t === "arquivo" || t === "servidores") {
+          const k = t === "servidores" ? "rack" : t === "arquivo" ? "arquivo" : "estante", dep = t === "servidores" ? 1.0 : 0.6, hh = t === "servidores" ? 2.1 : 2.0;
+          const along = horiz ? H : W, across = horiz ? W : H, rows = Math.max(1, Math.floor((across - 2.6) / (dep + 1.5)));
+          for (let i = 0; i < rows; i++) {
+            const c = (horiz ? g.x0 : g.y0) + 1.6 + dep / 2 + i * (dep + 1.5), L = along - 3.6;
+            if (L < 1.2) continue;
+            const mid = horiz ? g.cy : g.cx;
+            for (const half of [-1, 1]) { const len = L / 2 - 0.6, u = mid + half * (L / 4 + 0.3); if (len > 0.8) horiz ? put(g, k, c, u, dep, len, hh, 0.2) : put(g, k, u, c, len, dep, hh, 0.2); }   // fileira com passagem no meio
+          }
+          if (t === "deposito") for (let i = 0; i < 6; i++) put(g, "caixas", uni(g.x0 + 1, g.x1 - 1), uni(g.y0 + 1, g.y1 - 1), 0.8, 0.8, 0.8, 0.4);
+        } else if (t === "estar") {
+          wallRow(g, "sofa", 2.1, 0.9, 0.85, uni(1.2, 3));
+          put(g, "mesinha", g.cx, g.cy, 1.2, 0.7, 0.45, 0.6);
+          wallRow(g, "tv", 1.6, 0.25, 1.4, 4, [Math.floor(r() * 4)]);
+          corners(g, "planta", 0.7, 1.5);
+        }
+      }
+      const KINDS = ["bandagem", "kit", "garrafa", "sinalizador", "bateria"];
+      const items = [];
+      const drop = (kind) => { for (let i = 0; i < 80; i++) { const g = rooms[Math.floor(r() * rooms.length)], x = uni(g.x0 + 1, g.x1 - 1), y = uni(g.y0 + 1, g.y1 - 1); if (!free(x, y, 1.5) || hit(x, y, 0.4, 0.4, 0.15)) continue; items.push({ kind, x, y, room: g.id }); taken.push([x, y]); return; } };
+      for (let i = 0; i < LV.bat; i++) drop("bateria");
+      for (let i = 0; i < LV.items; i++) drop(KINDS[Math.floor(r() * 4)]);
+      const nz = Math.round(LV.zBase + floor * LV.zFloor), zombies = [];
+      for (let i = 0; i < 200 && zombies.length < nz; i++) {
+        const g = regs[Math.floor(r() * regs.length)]; if (g.id === startReg.id) continue;
+        const x = uni(g.x0 + 1, g.x1 - 1), y = uni(g.y0 + 1, g.y1 - 1);
+        if (Math.hypot(x - arrive.x, y - arrive.y) < 14 || hit(x, y, 0.5, 0.5, 0.2)) continue;
+        zombies.push({ x, y, room: g.id, hidden: AI[LV.ai].hide && r() < 0.35 });   // nível 5: parte deles fica escondida esperando
+      }
+      return { A, level, floor, top, regs, doors, walls, arrive, up, elev, exit, lockers, items, zombies, furn, dist, ai: AI[LV.ai], TYPES };
+    }
+    return { A, LEVELS, AI, plan };
+  })();
+  // ======================================================================
+  //  MODO PRÉDIO: lógica (andares, lanterna com bateria, mochila, armários, barulho, zumbis por nível)
+  //  Cada andar vira um mapa ("predio") montado a partir da planta de TOWER.plan(nível, andar).
+  //  Só para um jogador (sem co-op). A visão 3D fica em towerview.js.
+  // ======================================================================
+  const TowerPlay = (function () {
+    const L = Logic, G = L.Game.prototype, clamp = L.clamp, wrapAngle = L.wrapAngle;
+    const WALL_T = 0.2, WALL_H = 3.0, BAG_MAX = 8;
+    const ITEM = {
+      bateria: { name: "Bateria", sub: "Lanterna +45%" },
+      bandagem: { name: "Bandagem", sub: "+25 de vida" },
+      kit: { name: "Kit médico", sub: "+60 de vida" },
+      garrafa: { name: "Garrafa", sub: "Jogue para distrair" },
+      sinalizador: { name: "Sinalizador", sub: "Luz e barulho por 20 s" },
+    };
+    // ---------- blocos de colisão do andar ----------
+    function boxesFor(P) {
+      const A = P.A, b = [], t = 1, edgeH = P.roof ? 1.1 : 9;
+      b.push([-A - t, A + t, A, A + t, edgeH, 0], [-A - t, A + t, -A - t, -A, edgeH, 0], [A, A + t, -A, A, edgeH, 0], [-A - t, -A, -A, A, edgeH, 0]);
+      const wall = (w, h) => { const x0 = Math.min(w[0], w[2]), x1 = Math.max(w[0], w[2]), y0 = Math.min(w[1], w[3]), y1 = Math.max(w[1], w[3]), ex = x0 === x1 ? WALL_T / 2 : 0, ey = y0 === y1 ? WALL_T / 2 : 0; b.push([x0 - ex, x1 + ex, y0 - ey, y1 + ey, h, 0]); };   // engrossa só para os lados (o vão da porta fica com 1,4 m)
+      for (const w of P.walls) wall(w, P.roof ? 3.2 : WALL_H);
+      for (const f of P.furn) {
+        if (f.k === "monitor" || f.k === "quadro") continue;                 // monitor fica em cima da mesa; quadro é chapado na parede
+        b.push([f.x - f.w / 2, f.x + f.w / 2, f.y - f.d / 2, f.y + f.d / 2, f.k === "solar" ? 0.9 : f.h, 0]);
+      }
+      return b;
+    }
+    // frente do armário (onde o jogador fica para entrar/sair)
+    const FACE = [[0, 1], [1, 0], [0, -1], [-1, 0]];
+    const lockerFront = (l, k) => { const f = FACE[l.face]; return [l.x + f[0] * (k || 0.95), l.y + f[1] * (k || 0.95)]; };
+    const regAt = (P, x, y) => P.regs.find((g) => x >= g.x0 && x <= g.x1 && y >= g.y0 && y <= g.y1) || null;
+
+    // ---------- começo do modo e troca de andar ----------
+    G.towerStart = function (level, floor) {
+      this.gm = "predio"; this.pickups = []; this.toSpawn = 0; this.queue = []; this.giantsLeft = 0; this.between = false;
+      this.tw = { level, floor: floor || 0, P: null, bat: 100, torch: true, bag: { bateria: 0, bandagem: 1, kit: 0, garrafa: 1, sinalizador: 0 }, throwK: "garrafa",
+        hide: null, hideT: 0, seenT: 99, items: [], throws: [], flares: [], noise: [], prompt: "", act: null, useWas: false, won: false, busy: 0, lastShots: 0, rideT: 0, opening: [] };
+      this.towerFloor(this.tw.floor, true);
+    };
+    G.towerFloor = function (f, first) {
+      const T = this.tw, P = TOWER.plan(T.level, f);
+      T.floor = f; T.P = P; T.hide = null; T.items = P.items.map((it, i) => ({ id: i, kind: it.kind, x: it.x, y: it.y, on: true }));
+      T.throws = []; T.flares = []; T.noise = []; T.opening = []; T.busy = 0;
+      L.setMap("predio", { boxes: boxesFor(P), A: P.A });
+      this.zombies = []; this.pickups = [];
+      const AI = P.ai, D = this.diff, lvK = 1 + 0.1 * T.level + 0.015 * f;
+      for (const q of P.zombies) {
+        const hp = 100 * D.hp * lvK, spd = this.uniform(0.9, 1.25);
+        const z = new L.Zombie(q.x, q.y, hp, spd, "walker", this.randint(3), this, 1 + 0.12 * T.level);
+        z.s = this.uniform(0.74, 0.84);                                           // zumbis do prédio: menores
+        z.limp = AI.run ? false : z.limp; z.yaw = this.uniform(-3.1, 3.1);
+        z.tw = { mode: q.hidden ? "ambush" : "wander", tx: q.x, ty: q.y, t: this.uniform(0.5, 4), look: 0, home: q.room, lx: 0, ly: 0, trackT: 0, hp, locker: -1, openT: 0, heard: 0 };
+        z.flowT = this.rnd() * 0.3; z.groanT = q.hidden ? 1e9 : this.uniform(3, 12);
+        this.zombies.push(z);
+      }
+      this.wave = f + 1;
+      const a = P.arrive; this.px = a.x; this.py = a.y; this.gz = 0; this.vz = 0; this.kvx = this.kvy = 0;
+      // olha para dentro do andar (longe da parede mais perto)
+      const reg = regAt(P, a.x, a.y);
+      this.yaw = reg ? Math.atan2(-((reg.x0 + reg.x1) / 2 - a.x), (reg.y0 + reg.y1) / 2 - a.y) : 0; this.pitch = 0;
+      if (!first) this.invulnT = Math.max(this.invulnT, 1.5);
+      this.banner = P.roof ? "TERRAÇO" : f === 0 ? "TÉRREO" : "ANDAR " + (f + 1);
+      this.bannerSub = P.roof ? "Chegue ao helicóptero" : f === 0 ? TOWER.LEVELS[T.level].name + " · ache a escada" : "Ache a escada para subir";
+      this.bannerT = 3;
+      this.events.push(["tw_floor", f]);
+    };
+
+    // ---------- barulho: os zumbis escutam (raio em metros) ----------
+    G.twNoise = function (x, y, r, kind) { this.tw.noise.push({ x, y, r, kind: kind || "", t: 0.25 }); };
+
+    // ---------- por quadro ----------
+    G.updateTower = function (dt) {
+      const T = this.tw, P = T.P; if (!P) return;
+      T.seenT += dt; T.busy = Math.max(0, T.busy - dt);
+      for (const n of T.noise) n.t -= dt; T.noise = T.noise.filter((n) => n.t > 0);
+      // lanterna: gasta bateria; acabou e tem bateria na mochila: troca sozinho
+      if (T.torch && this.alive) T.bat = Math.max(0, T.bat - dt * 0.55);
+      if (T.bat <= 0 && T.bag.bateria > 0) { T.bag.bateria--; T.bat = 45; this.events.push(["tw_battery"]); }
+      // passos e tiros fazem barulho
+      if (this.alive && !T.hide && this.moving) {
+        const r = this.sprinting ? 14 : this.crouchT > 0.5 ? 1.8 : 6.5;
+        T.stepN = (T.stepN || 0) + dt; if (T.stepN > 0.3) { T.stepN = 0; this.twNoise(this.px, this.py, r, "step"); }
+      }
+      if (this.shots !== T.lastShots) { T.lastShots = this.shots; this.twNoise(this.px, this.py, 32, "shot"); }
+      // itens no chão: pega encostando (se couber na mochila)
+      if (this.alive && !T.hide) for (const it of T.items) {
+        if (!it.on || Math.hypot(it.x - this.px, it.y - this.py) > 1.1) continue;
+        const tot = Object.values(T.bag).reduce((a, b) => a + b, 0);
+        if (tot >= BAG_MAX) { if (!T.fullT || this.time - T.fullT > 3) { T.fullT = this.time; this.events.push(["tw_full"]); } continue; }
+        it.on = false; T.bag[it.kind] = (T.bag[it.kind] || 0) + 1; this.events.push(["tw_pick", it.kind, it.id]);
+      }
+      // garrafas e sinalizadores voando
+      for (const o of T.throws) {
+        o.t += dt; const k = Math.min(1, o.t / o.dur);
+        o.x = o.x0 + (o.x1 - o.x0) * k; o.y = o.y0 + (o.y1 - o.y0) * k; o.h = 1.4 + (o.peak) * Math.sin(Math.PI * k) - 1.3 * k;
+        if (k >= 1 && !o.done) {
+          o.done = true;
+          if (o.kind === "garrafa") { this.twNoise(o.x, o.y, 22, "glass"); this.events.push(["tw_glass", o.x, o.y]); }
+          else { T.flares.push({ x: o.x, y: o.y, t: 20 }); this.events.push(["tw_flare", o.x, o.y]); }
+        }
+      }
+      T.throws = T.throws.filter((o) => !o.done);
+      for (const f of T.flares) { f.t -= dt; f.pulse = (f.pulse || 0) - dt; if (f.pulse <= 0) { f.pulse = 1; this.twNoise(f.x, f.y, 12, "flare"); } }
+      T.flares = T.flares.filter((f) => f.t > 0);
+      // terraço: chegou no helicóptero = venceu o nível
+      if (P.roof && this.alive && !T.won && Math.hypot(this.px - P.exit.x, this.py - P.exit.y) < P.exit.r - 1.2) {
+        T.won = true; T.winT = 0; this.bonus += 150 * (T.level + 1); this.events.push(["tw_win"]);
+        this.banner = "VOCÊ ESCAPOU!"; this.bannerSub = "O helicóptero vai decolar"; this.bannerT = 5;
+      }
+      if (T.won) { T.winT += dt; this.invulnT = 1; if (T.winT > 6.5 && !this.over) { this.over = true; this.events.push(["tw_end"]); } }
+      // o que dá para fazer aqui (texto do botão "usar")
+      T.act = null;
+      if (this.alive && !T.won) {
+        if (T.hide !== null) T.act = { k: "leave" };
+        else {
+          if (P.up && Math.hypot(this.px - P.up.x, this.py - P.up.y) < 1.6) T.act = { k: "stairs" };
+          else if (P.elev && Math.hypot(this.px - P.elev.x, this.py - P.elev.y) < 1.6) T.act = { k: "elev" };
+          else {
+            let best = -1, bd = 1.35;
+            P.lockers.forEach((l, i) => { const f = lockerFront(l); const d = Math.hypot(this.px - f[0], this.py - f[1]); if (d < bd) { bd = d; best = i; } });
+            if (best >= 0) T.act = { k: "hide", i: best };
+          }
+        }
+      }
+    };
+    // botão "usar" (E / toque): entra/sai do armário, sobe a escada, pega o elevador
+    G.towerUse = function () {
+      const T = this.tw; if (!T || !T.act || T.busy > 0 || !this.alive) return;
+      const P = T.P, a = T.act;
+      if (a.k === "hide") {
+        const l = P.lockers[a.i]; T.hide = a.i; T.hideT = 0; T.busy = 0.5;
+        this.px = l.x; this.py = l.y; this.yaw = Math.atan2(-FACE[l.face][0], FACE[l.face][1]); this.pitch = 0; this.crouchT = 0;
+        if (T.seenT < 1.5) T.spotted = a.i;                                   // um zumbi viu você entrar
+        else T.spotted = -1;
+        this.events.push(["tw_locker", a.i, 1]);
+      } else if (a.k === "leave") {
+        const l = P.lockers[T.hide], f = lockerFront(l, 1.0); this.events.push(["tw_locker", T.hide, 0]);
+        T.hide = null; T.busy = 0.5; this.px = f[0]; this.py = f[1];
+      } else if (a.k === "stairs" || a.k === "elev") {
+        this.events.push([a.k === "elev" ? "tw_elev" : "tw_stairs"]);
+        T.busy = 1; this.towerFloor(T.floor + 1, false);
+      }
+    };
+    // mochila: H cura (bandagem se faltar pouca vida, senão o kit) · G joga · 4 troca o que jogar
+    G.towerHeal = function () {
+      const T = this.tw; if (!T || !this.alive || this.hp >= this.maxHp) return false;
+      const miss = this.maxHp - this.hp, k = T.bag.kit > 0 && (miss > 40 || T.bag.bandagem === 0) ? "kit" : T.bag.bandagem > 0 ? "bandagem" : null;
+      if (!k) return false;
+      T.bag[k]--; this.hp = Math.min(this.maxHp, this.hp + (k === "kit" ? 60 : 25)); this.events.push(["tw_heal", k]); return true;
+    };
+    G.towerCycle = function () { const T = this.tw; if (!T) return; T.throwK = T.throwK === "garrafa" ? "sinalizador" : "garrafa"; this.events.push(["tw_cycle", T.throwK]); };
+    G.towerThrow = function () {
+      const T = this.tw; if (!T || !this.alive || T.hide !== null) return false;
+      let k = T.throwK; if (!T.bag[k]) k = k === "garrafa" ? "sinalizador" : "garrafa"; if (!T.bag[k]) return false;
+      T.bag[k]--;
+      const dx = -Math.sin(this.yaw), dy = Math.cos(this.yaw), far = 4 + 10 * clamp(0.6 + this.pitch, 0.25, 1);
+      let d = far; for (let s = 0.5; s <= far; s += 0.25) if (L.segBlocked(this.px, this.py, this.px + dx * s, this.py + dy * s, 1.2)) { d = Math.max(0.6, s - 0.4); break; }
+      T.throws.push({ kind: k, x0: this.px, y0: this.py, x1: this.px + dx * d, y1: this.py + dy * d, x: this.px, y: this.py, h: 1.4, t: 0, dur: 0.35 + d * 0.045, peak: 0.6 + d * 0.06 });
+      this.events.push(["tw_throw", k]); return true;
+    };
+
+    // ---------- zumbis do prédio ----------
+    G.twMove = function (z, tx, ty, spd, dt) {
+      const dx = tx - z.x, dy = ty - z.y, d = Math.hypot(dx, dy) || 1e-6;
+      z.flowT -= dt;
+      if (z.flowT <= 0) { z.flowT = 0.25 + this.rnd() * 0.12; z.flowDir = L.Flow.steer(z.x, z.y, tx, ty, 0.3, this.time || 0); }
+      let ux = dx / d, uy = dy / d;
+      if (z.flowDir) { ux = z.flowDir[0]; uy = z.flowDir[1]; z.sideT = 0; }
+      if (z.sideT > 0) { z.sideT -= dt; const nx = ux - uy * z.side * 1.1, ny = uy + ux * z.side * 1.1, ln = Math.hypot(nx, ny) || 1; ux = nx / ln; uy = ny / ln; }
+      const want = spd * dt, got = this.stepZ(z, ux, uy, spd, dt);
+      if (want > 1e-6 && got < want * 0.45 && d > 1.2) { z.blocked += dt; if (z.blocked > 0.25 && z.sideT <= 0) { z.side = this.rnd() < 0.5 ? -1 : 1; z.sideT = this.uniform(0.6, 1.3); z.blocked = 0; } }
+      else z.blocked = Math.max(0, z.blocked - dt);
+      this.turnToward(z, z.x + ux, z.y + uy, 6, dt);
+      z.phase += dt * (spd * 2.4 + 1);
+      return d;
+    };
+    // um ponto para vagar: centro da própria sala ou de uma sala vizinha (pontos repetidos: o campo de fluxo é reaproveitado)
+    G.twWanderPoint = function (z) {
+      const P = this.tw.P, here = regAt(P, z.x, z.y) || P.regs[0];
+      const nb = P.doors.filter((d) => d.a === here.id || d.b === here.id).map((d) => (d.a === here.id ? d.b : d.a));
+      const g = this.rnd() < 0.45 || !nb.length ? here : P.regs[nb[this.randint(nb.length)]];
+      const W = g.x1 - g.x0, H = g.y1 - g.y0, gx = Math.round(this.uniform(-0.3, 0.3) * W / 2) * 2, gy = Math.round(this.uniform(-0.3, 0.3) * H / 2) * 2;
+      return [clamp(g.cx + gx / 2, g.x0 + 1, g.x1 - 1), clamp(g.cy + gy / 2, g.y0 + 1, g.y1 - 1)];
+    };
+    G.twCanSee = function (z, AI) {
+      const T = this.tw; if (T.hide !== null || !this.alive) return false;
+      const dx = this.px - z.x, dy = this.py - z.y, d = Math.hypot(dx, dy);
+      let range = AI.see * (T.torch && T.bat > 0 ? 1.35 : 0.75) * (this.crouchT > 0.5 ? 0.65 : 1);
+      for (const f of T.flares) if (Math.hypot(f.x - this.px, f.y - this.py) < 7) range = Math.max(range, AI.see * 1.4);
+      if (d > range) return false;
+      if (d > 2.2) { const a = Math.abs(wrapAngle(Math.atan2(-dx, dy) - z.yaw)); if (a > (z.tw.mode === "chase" ? 1.9 : 1.15)) return false; }   // campo de visão (perseguindo: olha em volta)
+      return !L.segBlocked(z.x, z.y, this.px, this.py, 1.45);
+    };
+    G.towerAI = function (z, dt, base) {
+      const T = this.tw, P = T.P, AI = P.ai, W = z.tw;
+      const dx = this.px - z.x, dy = this.py - z.y, dist = Math.hypot(dx, dy) || 1e-6;
+      if (z.hp < W.hp) { W.hp = z.hp; if (T.hide === null) { W.mode = "chase"; W.trackT = Math.max(W.trackT, 3); } }   // levou tiro: vem atrás
+      const sees = this.twCanSee(z, AI);
+      if (sees) { T.seenT = 0; W.lx = this.px; W.ly = this.py; W.trackT = AI.track; if (W.mode !== "chase") { W.mode = "chase"; this.events.push(["tw_spot", z.id, dist]); } }
+      // ataque
+      const reach = L.ATTACK_RANGE * z.s;
+      if (T.hide === null && dist < reach && (W.mode === "chase" || W.mode === "ambush" || dist < 0.9)) {
+        W.mode = "chase"; z.state = "attack"; z.attackT += dt; z.attackCd -= dt; this.turnToward(z, this.px, this.py, 8, dt);
+        if (z.attackCd <= 0) { z.attackCd = 1.1; this.hurt(base * this.diff.dmg * z.dmgMul * 0.9, z); }
+        return;
+      }
+      z.state = "walk"; z.attackCd = Math.max(z.attackCd, 0.35);
+      const slow = (z.stagger > 0 ? 0.25 : 1) * (z.slowT > 0 ? 0.55 : 1);
+      // escutou algo?
+      if (W.mode !== "chase" && W.mode !== "open" && AI.hear > 0) {
+        let best = null, bd = 1e9;
+        for (const n of T.noise) { const d = Math.hypot(n.x - z.x, n.y - z.y), r = n.r * AI.hear / 10; if (d < r && d < bd) { bd = d; best = n; } }
+        if (best) {
+          if (W.mode === "ambush" && best.kind === "step" && bd > 5) { /* escondido: espera chegar mais perto */ }
+          else if (AI.search || W.mode === "ambush" || bd < 3) { W.mode = "listen"; W.tx = best.x; W.ty = best.y; W.t = 0; if (best.kind !== "step" || this.rnd() < 0.3) this.events.push(["tw_hear", z.id]); }
+        }
+      }
+      switch (W.mode) {
+        case "ambush": {                                                       // nível 5: parado no escuro esperando você chegar perto
+          z.phase += dt * 0.3;
+          if (dist < 3.2 && T.hide === null) { W.mode = "chase"; W.trackT = AI.track; this.events.push(["tw_ambush", z.id]); }
+          return;
+        }
+        case "chase": {
+          if (!sees) W.trackT -= dt;
+          const tx = sees || W.trackT > 0 ? (T.hide !== null ? W.lx : this.px) : W.lx, ty = sees || W.trackT > 0 ? (T.hide !== null ? W.ly : this.py) : W.ly;
+          if (sees || W.trackT > 0) { W.lx = tx; W.ly = ty; }
+          const d = this.twMove(z, tx, ty, (AI.run ? AI.chase : AI.chase * 0.9) * slow, dt);
+          if (!sees && d < 1.2) {                                              // chegou onde viu você por último
+            if (T.hide !== null && T.spotted === T.hide && AI.search) { W.mode = "open"; W.locker = T.hide; }   // viu você entrar no armário
+            else { W.mode = "search"; W.t = AI.search ? 6 + AI.track : 2.5; W.look = 0; W.locker = -1; }
+          }
+          return;
+        }
+        case "listen": {                                                       // vai até o barulho e olha em volta
+          const d = this.twMove(z, W.tx, W.ty, (AI.run ? 1.7 : 1.1) * slow * z.speed, dt);
+          if (d < 1.3) { W.mode = "search"; W.t = AI.search ? 4 : 2; W.look = 0; W.locker = -1; }
+          return;
+        }
+        case "search": {                                                       // olha em volta; níveis 4 e 5 abrem armários perto
+          W.t -= dt; W.look += dt; z.yaw = wrapAngle(z.yaw + Math.sin(W.look * 1.7) * dt * 1.6);
+          if (T.level >= 3 && W.locker < 0 && W.look > 1) {
+            let bi = -1, bd = 9;
+            P.lockers.forEach((l, i) => { if (T.opening.includes(i)) return; const d = Math.hypot(l.x - z.x, l.y - z.y); if (d < bd && this.rnd() < 0.7) { bd = d; bi = i; } });
+            W.locker = bi < 0 ? -2 : bi; if (bi >= 0) { W.mode = "open"; T.opening.push(bi); return; }
+          }
+          if (W.t <= 0) { W.mode = AI.hide && this.rnd() < 0.35 ? "ambush" : "wander"; W.t = this.uniform(1, 4); }
+          return;
+        }
+        case "open": {                                                         // anda até o armário e abre
+          const l = P.lockers[W.locker]; if (!l) { W.mode = "wander"; return; }
+          const f = lockerFront(l, 1.1), d = this.twMove(z, f[0], f[1], 1.3 * slow * z.speed, dt);
+          if (d < 0.5) {
+            this.turnToward(z, l.x, l.y, 8, dt); W.openT += dt; z.state = "attack"; z.attackT += dt;
+            if (W.openT > 1.1) {
+              W.openT = 0; T.opening = T.opening.filter((i) => i !== W.locker); this.events.push(["tw_open", W.locker]);
+              if (T.hide === W.locker) {                                        // achou você: puxa para fora
+                const ff = lockerFront(l, 1.0); this.events.push(["tw_locker", T.hide, 0]); T.hide = null; this.px = ff[0]; this.py = ff[1];
+                this.hurt(base * this.diff.dmg * 1.3, z); W.mode = "chase"; W.trackT = AI.track + 2; this.events.push(["tw_caught"]);
+              } else { W.mode = "search"; W.t = 2; W.look = 0; W.locker = -2; }
+            }
+          }
+          return;
+        }
+        default: {                                                             // vagando
+          W.t -= dt;
+          if (W.t <= 0) { const p = this.twWanderPoint(z); W.tx = p[0]; W.ty = p[1]; W.t = this.uniform(5, 11); }
+          const d = Math.hypot(W.tx - z.x, W.ty - z.y);
+          if (d > 0.8) this.twMove(z, W.tx, W.ty, 0.55 * z.speed * slow, dt); else z.phase += dt * 0.4;
+        }
+      }
+    };
+    return { ITEM, BAG_MAX, boxesFor, lockerFront, FACE, WALL_H };
+  })();
+  // ======================================================================
+  //  HELICÓPTERO DE RESGATE (modelo próprio, feito em código: sem direitos de terceiros)
+  //  Fuselagem por "loft" de seções superelípticas, cabine de vidro, motor, rotor de 4 pás,
+  //  cauda com rotor traseiro, esquis, porta de correr, luzes e pintura gasta desenhada em canvas.
+  //  Frente = -Z, cima = +Y; ~13 m de comprimento com o rotor.
+  // ======================================================================
+  const Helicopter = (function () {
+    const V3 = (x, y, z) => new THREE.Vector3(x, y, z);
+    // ---------- pintura: laranja resgate, faixa creme, letreiro, número, sujeira e ferrugem ----------
+    function paintTex() {
+      const W = 2048, H = 1024, cv = document.createElement("canvas"); cv.width = W; cv.height = H; const c = cv.getContext("2d");
+      let sd = 77; const rnd = () => (sd = (sd * 16807) % 2147483647) / 2147483647;
+      // v (vertical da imagem) = volta da seção: 0 = barriga, 0,5 = topo; u (horizontal) = da ponta do nariz até o fim da cauda
+      const g = c.createLinearGradient(0, 0, 0, H); g.addColorStop(0, "#2b2f33"); g.addColorStop(0.18, "#c8541f"); g.addColorStop(0.5, "#d9662a"); g.addColorStop(0.82, "#c8541f"); g.addColorStop(1, "#2b2f33");
+      c.fillStyle = g; c.fillRect(0, 0, W, H);
+      // faixa creme dos dois lados e filete escuro
+      for (const v of [0.27, 0.73]) { c.fillStyle = "#e9dcc0"; c.fillRect(0, H * v - 34, W, 68); c.fillStyle = "#1d2226"; c.fillRect(0, H * v + 34, W, 10); }
+      // linhas de painel e rebites
+      c.strokeStyle = "rgba(40,20,10,0.55)"; c.lineWidth = 3;
+      for (const u of [0.16, 0.3, 0.44, 0.56, 0.68, 0.8]) { c.beginPath(); c.moveTo(W * u, H * 0.08); c.lineTo(W * u, H * 0.92); c.stroke(); }
+      for (const v of [0.12, 0.4, 0.6, 0.88]) { c.beginPath(); c.moveTo(0, H * v); c.lineTo(W, H * v); c.stroke(); }
+      c.fillStyle = "rgba(30,15,8,0.6)";
+      for (const u of [0.16, 0.3, 0.44, 0.56, 0.68, 0.8]) for (let v = 0.1; v < 0.9; v += 0.018) { c.beginPath(); c.arc(W * u + 9, H * v, 2.6, 0, 6.3); c.fill(); }
+      // letreiro e número (nos dois lados; o lado esquerdo é espelhado na textura)
+      c.font = "700 92px 'Barlow Condensed', 'Arial Narrow', sans-serif"; c.textBaseline = "middle";
+      for (const [v, flip] of [[0.27, false], [0.73, true]]) {
+        c.save(); c.translate(W * 0.52, H * v); c.scale(flip ? -1 : 1, flip ? 1 : -1);
+        c.fillStyle = "#1d2226"; c.textAlign = "center"; c.fillText("RESGATE", 0, 4); c.restore();
+        c.save(); c.translate(W * 0.71, H * (v < 0.5 ? 0.17 : 0.83)); c.scale(flip ? -1 : 1, flip ? 1 : -1);
+        c.fillStyle = "#f3ead6"; c.font = "700 70px 'Barlow Condensed', 'Arial Narrow', sans-serif"; c.textAlign = "center"; c.fillText("AZ-07", 0, 0); c.restore();
+      }
+      // porta de correr: contorno, janela escura com reflexo (os dois lados)
+      for (const [v0, v1, w0, w1] of [[0.12, 0.43, 0.31, 0.41], [0.57, 0.88, 0.59, 0.69]]) {
+        const x0 = W * 0.42, x1 = W * 0.545;
+        c.strokeStyle = "rgba(25,12,6,0.85)"; c.lineWidth = 5; c.strokeRect(x0, H * v0, x1 - x0, H * (v1 - v0));
+        const wg = c.createLinearGradient(x0, H * w0, x1, H * w1); wg.addColorStop(0, "#1a2a33"); wg.addColorStop(0.45, "#3d5a66"); wg.addColorStop(0.5, "#7ea3ad"); wg.addColorStop(0.56, "#2c434d"); wg.addColorStop(1, "#141f26");
+        c.fillStyle = wg; c.beginPath(); if (c.roundRect) c.roundRect(x0 + 26, H * w0, x1 - x0 - 52, H * (w1 - w0), 18); else c.rect(x0 + 26, H * w0, x1 - x0 - 52, H * (w1 - w0)); c.fill();
+        c.strokeStyle = "#16191c"; c.lineWidth = 8; c.stroke();
+      }
+      // escorridos de sujeira, arranhões e ferrugem (é um helicóptero de fim do mundo)
+      for (let i = 0; i < 260; i++) {
+        const x = rnd() * W, y = rnd() * H, l = 20 + rnd() * 140;
+        const gg = c.createLinearGradient(x, y, x, y + l); gg.addColorStop(0, "rgba(35,22,12,0.35)"); gg.addColorStop(1, "rgba(35,22,12,0)");
+        c.fillStyle = gg; c.fillRect(x, y, 2 + rnd() * 5, l);
+      }
+      for (let i = 0; i < 70; i++) {
+        const x = rnd() * W, y = rnd() * H, r = 6 + rnd() * 34;
+        const rg = c.createRadialGradient(x, y, 0, x, y, r); rg.addColorStop(0, "rgba(96,48,20,0.55)"); rg.addColorStop(0.6, "rgba(120,62,28,0.25)"); rg.addColorStop(1, "rgba(120,62,28,0)");
+        c.fillStyle = rg; c.beginPath(); c.arc(x, y, r, 0, 6.3); c.fill();
+      }
+      c.strokeStyle = "rgba(240,230,210,0.35)"; c.lineWidth = 1.2;
+      for (let i = 0; i < 120; i++) { const x = rnd() * W, y = rnd() * H; c.beginPath(); c.moveTo(x, y); c.lineTo(x + (rnd() - 0.5) * 60, y + (rnd() - 0.5) * 14); c.stroke(); }
+      const t = new THREE.CanvasTexture(cv); t.anisotropy = 8; t.encoding = THREE.sRGBEncoding; return t;
+    }
+    function roughTex() {                                   // variação de brilho: sujeira fosca, partes polidas
+      const cv = document.createElement("canvas"); cv.width = cv.height = 512; const c = cv.getContext("2d");
+      c.fillStyle = "#9a9a9a"; c.fillRect(0, 0, 512, 512);
+      let sd = 5; const rnd = () => (sd = (sd * 16807) % 2147483647) / 2147483647;
+      for (let i = 0; i < 900; i++) { const v = Math.floor(120 + rnd() * 120); c.fillStyle = "rgba(" + v + "," + v + "," + v + ",0.18)"; c.beginPath(); c.arc(rnd() * 512, rnd() * 512, 2 + rnd() * 16, 0, 6.3); c.fill(); }
+      const t = new THREE.CanvasTexture(cv); t.wrapS = t.wrapT = THREE.RepeatWrapping; return t;
+    }
+    // ---------- loft: corpo liso a partir de seções (meia-largura, altura, centro) ao longo de Z ----------
+    function loft(prof, seg, ring, n, part) {
+      // prof(t) -> [z, halfW, halfH, cy]; seção superelíptica |x/a|^n + |y/b|^n = 1
+      const pos = [], uv = [], idx = [];
+      for (let i = 0; i <= seg; i++) {
+        const t = i / seg, [z, a, b, cy] = prof(t);
+        for (let j = 0; j <= ring; j++) {
+          const th = (j / ring) * Math.PI * 2 - Math.PI / 2, ct = Math.cos(th), st = Math.sin(th);
+          let x = Math.sign(ct) * Math.pow(Math.abs(ct), 2 / n) * a, y = Math.sign(st) * Math.pow(Math.abs(st), 2 / n) * b + cy;
+          if (part && !part(t, j / ring)) { x = NaN; }
+          pos.push(x, y, z); uv.push(t, j / ring);
+        }
+      }
+      for (let i = 0; i < seg; i++) for (let j = 0; j < ring; j++) {
+        const a = i * (ring + 1) + j, b = a + ring + 1;
+        if (part && (isNaN(pos[a * 3]) || isNaN(pos[b * 3]) || isNaN(pos[(a + 1) * 3]) || isNaN(pos[(b + 1) * 3]))) continue;
+        idx.push(a, a + 1, b, b, a + 1, b + 1);
+      }
+      for (let i = 0; i < pos.length; i++) if (isNaN(pos[i])) pos[i] = 0;
+      const g = new THREE.BufferGeometry();
+      g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute("uv", new THREE.Float32BufferAttribute(uv, 2));
+      g.setIndex(idx); g.computeVertexNormals(); return g;
+    }
+    const sm = (t) => t * t * (3 - 2 * t);
+    // perfil da fuselagem (z: nariz em -4,1 até o começo da cauda em 3,1)
+    function body(t) {
+      const z = -4.1 + t * 7.2;
+      const nose = sm(Math.min(1, t / 0.2)), back = 1 - sm(Math.max(0, (t - 0.62) / 0.38));
+      const a = 0.08 + 1.02 * Math.pow(nose, 0.55) * (0.32 + 0.68 * back);
+      const b = 0.1 + 1.0 * Math.pow(nose, 0.6) * (0.36 + 0.64 * back);
+      const cy = 1.55 + 0.15 * (1 - nose) - 0.05 + 0.45 * (1 - back);
+      return [z, a, b, cy];
+    }
+    function make(opts) {
+      opts = opts || {};
+      const root = new THREE.Group(); root.name = "helicoptero";
+      const paint = new THREE.MeshStandardMaterial({ map: paintTex(), roughness: 0.55, metalness: 0.25, roughnessMap: roughTex() });
+      const dark = new THREE.MeshStandardMaterial({ color: 0x23272b, roughness: 0.6, metalness: 0.5 });
+      const steel = new THREE.MeshStandardMaterial({ color: 0x9aa2aa, roughness: 0.32, metalness: 0.85 });
+      const black = new THREE.MeshStandardMaterial({ color: 0x111315, roughness: 0.75, metalness: 0.2 });
+      const cream = new THREE.MeshStandardMaterial({ color: 0xe9dcc0, roughness: 0.6, metalness: 0.1 });
+      const orange = new THREE.MeshStandardMaterial({ color: 0xb8461a, roughness: 0.5, metalness: 0.3, roughnessMap: roughTex() });
+      const glass = new THREE.MeshPhysicalMaterial({ color: 0x34606c, roughness: 0.04, metalness: 0.2, transparent: true, opacity: 0.24, envMapIntensity: 2.2, clearcoat: 1, clearcoatRoughness: 0.05, side: THREE.DoubleSide, depthWrite: false });
+      const seat = new THREE.MeshStandardMaterial({ color: 0x3a2a22, roughness: 0.9 });
+      const glow = (c, i) => new THREE.MeshStandardMaterial({ color: c, emissive: c, emissiveIntensity: i || 2, roughness: 0.3 });
+      const mats = [paint, dark, steel, black, cream, orange, glass, seat];
+      const add = (geo, m, x, y, z, p) => { const o = new THREE.Mesh(geo, m); o.position.set(x || 0, y || 0, z || 0); o.castShadow = true; o.receiveShadow = true; (p || root).add(o); return o; };
+      // ---------- fuselagem ----------
+      // a área da cabine é recortada do casco e coberta pelo vidro (o recorte é um pouco menor que o vidro para não abrir fresta)
+      const glassArea = (t, v, grow) => { const up = Math.sin(v * Math.PI * 2 - Math.PI / 2); return up > -0.12 - 0.5 * (1 - t) - grow && (t < 0.92 + grow || up > 0.25 - grow); };
+      const fus = add(loft(body, 72, 48, 2.6, (t, v) => !(t < 0.36 * 0.97 && glassArea(t / 0.36, v, -0.04))), paint);
+      add(loft((t) => { const [z, a, b, cy] = body(t * 0.4); return [z, a * 0.965, b * 0.965, cy]; }, 30, 32, 2.6), new THREE.MeshStandardMaterial({ color: 0x2a2d31, roughness: 0.85, side: THREE.BackSide }));
+      void fus;
+      { const [z, a, b, cy] = body(1), cap = add(new THREE.SphereGeometry(1, 28, 14, 0, Math.PI * 2, 0, Math.PI / 2), orange, 0, cy, z); cap.rotation.x = Math.PI / 2; cap.scale.set(a, 0.7, b); }
+      // cabine de vidro: casca um pouco maior, só na parte de cima e da frente do nariz
+      const gl = add(loft((t) => { const [z, a, b, cy] = body(t * 0.36); return [z, a * 1.012 + 0.006, b * 1.012 + 0.006, cy]; }, 40, 48, 2.6,
+        (t, v) => glassArea(t, v, 0.03)), glass);
+      gl.castShadow = false;
+      // molduras da cabine
+      const strut = (pts, r) => add(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 24, r || 0.035, 6), dark);
+      for (const s of [-1, 1]) {
+        const p = []; for (let i = 0; i <= 10; i++) { const t = 0.05 + i * 0.03, [z, a, b, cy] = body(t); p.push(V3(s * a * 0.62, cy + b * 0.82, z)); } strut(p, 0.04);
+        const q = []; for (let i = 0; i <= 8; i++) { const t = 0.33, [z, a, b, cy] = body(t), th = -0.15 + i * 0.22; q.push(V3(s * Math.cos(th) * a * 1.01, cy + Math.sin(th) * b * 1.01, z)); } strut(q, 0.045);
+      }
+      { const p = []; for (let i = 0; i <= 12; i++) { const t = 0.02 + i * 0.026, [z, a, b, cy] = body(t); p.push(V3(0, cy + b * 1.012, z)); } strut(p, 0.03); }
+      // interior: painel com mostradores, bancos estofados, manches
+      const rbox = (w, h, d, r) => { const sh = new THREE.Shape(), x = -w / 2 + r, y = -h / 2 + r, ww = w - 2 * r, hh = h - 2 * r;
+        sh.moveTo(x, y - r); sh.lineTo(x + ww, y - r); sh.quadraticCurveTo(x + ww + r, y - r, x + ww + r, y); sh.lineTo(x + ww + r, y + hh); sh.quadraticCurveTo(x + ww + r, y + hh + r, x + ww, y + hh + r);
+        sh.lineTo(x, y + hh + r); sh.quadraticCurveTo(x - r, y + hh + r, x - r, y + hh); sh.lineTo(x - r, y); sh.quadraticCurveTo(x - r, y - r, x, y - r);
+        const g = new THREE.ExtrudeGeometry(sh, { depth: Math.max(0.001, d - 2 * r), bevelEnabled: true, bevelThickness: r, bevelSize: r * 0.9, bevelSegments: 3, curveSegments: 4 }); g.translate(0, 0, -(d - 2 * r) / 2); return g; };
+      const panel = new THREE.Group(); panel.position.set(0, 1.28, -3.0); panel.rotation.x = -0.5; root.add(panel);
+      add(rbox(1.35, 0.32, 0.36, 0.06), black, 0, 0, 0, panel);
+      for (let i = 0; i < 6; i++) { const gx = -0.5 + i * 0.2; add(new THREE.CircleGeometry(0.055, 18), glow([0xffb066, 0x3ddc84, 0x8fd6ff][i % 3], 1.6), gx, 0.03, 0.19, panel); add(new THREE.TorusGeometry(0.06, 0.008, 6, 18), steel, gx, 0.03, 0.19, panel); }
+      for (const s of [-0.42, 0.42]) {
+        add(rbox(0.52, 0.14, 0.52, 0.05), seat, s, 1.0, -2.2); const back = add(rbox(0.5, 0.78, 0.13, 0.05), seat, s, 1.42, -1.92); back.rotation.x = 0.15;
+        add(rbox(0.3, 0.16, 0.1, 0.04), seat, s, 1.9, -1.86);                                                            // encosto de cabeça
+        add(new THREE.CylinderGeometry(0.022, 0.026, 0.62, 8), black, s, 1.15, -2.62).rotation.x = -0.35;                  // manche
+        add(new THREE.SphereGeometry(0.04, 10, 8), black, s, 1.44, -2.72);
+      }
+      // porta de correr (dos dois lados) com janela, trilho e degrau
+      for (const s of [-1, 1]) {
+        const [z0, a0, , cy0] = body(0.48);
+        const dg = new THREE.Group(); dg.position.set(s * (a0 + 0.012), cy0 - 0.05, z0); root.add(dg);
+        add(new THREE.BoxGeometry(0.05, 0.08, 0.3), steel, s * 0.03, -0.08, 0.55, dg);
+        add(new THREE.BoxGeometry(0.06, 0.05, 2.6), dark, s * 0.02, 0.72, 0.4, dg);
+        add(new THREE.BoxGeometry(0.35, 0.05, 0.9), steel, s * 0.25, -0.95, 0, dg);
+      }
+      // ---------- motor no teto ----------
+      const eng = add(loft((t) => { const z = -1.3 + t * 3.4, k = Math.sin(Math.PI * Math.min(1, t * 1.25 + 0.05)); return [z, 0.62 * (0.55 + 0.45 * k), 0.38 * (0.55 + 0.45 * k), 2.82]; }, 30, 32, 3.2), orange);
+      for (const s of [-1, 1]) {
+        add(new THREE.CylinderGeometry(0.17, 0.2, 0.55, 16), dark, s * 0.38, 2.92, 1.95).rotation.x = Math.PI / 2 + 0.25;          // escapamentos
+        add(new THREE.CylinderGeometry(0.12, 0.12, 0.05, 16), glow(0x2a0d05, 0.6), s * 0.38, 2.86, 2.22).rotation.x = Math.PI / 2 + 0.25;
+        for (let i = 0; i < 6; i++) add(new THREE.BoxGeometry(0.02, 0.22, 0.05), black, s * 0.6, 2.85, -0.9 + i * 0.09);               // grade de entrada de ar
+      }
+      void eng;
+      // ---------- rotor principal ----------
+      const rotor = new THREE.Group(); rotor.position.set(0, 3.32, 0.2); root.add(rotor);
+      add(new THREE.CylinderGeometry(0.11, 0.14, 0.5, 16), steel, 0, 3.12, 0.2);                       // mastro
+      add(new THREE.CylinderGeometry(0.42, 0.42, 0.08, 24), dark, 0, 3.02, 0.2);                       // prato
+      add(new THREE.CylinderGeometry(0.22, 0.3, 0.26, 20), steel, 0, 0, 0, rotor);
+      add(new THREE.SphereGeometry(0.18, 16, 10, 0, Math.PI * 2, 0, Math.PI / 2), dark, 0, 0.13, 0, rotor);
+      for (let i = 0; i < 4; i++) {
+        const arm = new THREE.Group(); arm.rotation.y = (i * Math.PI) / 2; rotor.add(arm);
+        add(new THREE.BoxGeometry(0.5, 0.09, 0.16), steel, 0.4, 0, 0, arm);
+        const sh = new THREE.Shape(); sh.moveTo(0, -0.17); sh.lineTo(5.4, -0.15); sh.lineTo(5.55, -0.05); sh.lineTo(5.5, 0.16); sh.lineTo(0, 0.17); sh.closePath();
+        const bg = new THREE.ExtrudeGeometry(sh, { depth: 0.035, bevelEnabled: true, bevelThickness: 0.012, bevelSize: 0.012, bevelSegments: 2, steps: 1 });
+        bg.rotateX(Math.PI / 2); bg.translate(0.6, 0.03, 0);
+        const bl = add(bg, black, 0, 0, 0, arm); bl.rotation.x = 0.06;                                                    // passo da pá
+        add(new THREE.BoxGeometry(0.45, 0.05, 0.33), cream, 5.85, 0.04, 0, arm);                                           // ponta pintada
+        arm.rotation.z = -0.03;
+      }
+      // disco de borrão do rotor (aparece quando as pás giram rápido)
+      const blurC = document.createElement("canvas"); blurC.width = blurC.height = 256; { const g = blurC.getContext("2d"), rg = g.createRadialGradient(128, 128, 10, 128, 128, 128);
+        rg.addColorStop(0, "rgba(20,20,22,0)"); rg.addColorStop(0.15, "rgba(20,20,22,0.25)"); rg.addColorStop(0.9, "rgba(20,20,22,0.18)"); rg.addColorStop(0.93, "rgba(230,220,200,0.35)"); rg.addColorStop(0.98, "rgba(230,220,200,0.1)"); rg.addColorStop(1, "rgba(0,0,0,0)"); g.fillStyle = rg; g.fillRect(0, 0, 256, 256); }
+      const blur = new THREE.Mesh(new THREE.CircleGeometry(6.2, 48), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(blurC), transparent: true, depthWrite: false, side: THREE.DoubleSide, opacity: 0 }));
+      blur.rotation.x = -Math.PI / 2; blur.position.set(0, 3.34, 0.2); root.add(blur);
+      // ---------- cauda ----------
+      const boom = add(new THREE.CylinderGeometry(0.16, 0.36, 5.6, 24), orange, 0, 2.22, 5.6); boom.rotation.x = Math.PI / 2 - 0.045;
+      for (const [z, r, m] of [[4.1, 0.335, cream], [4.35, 0.33, cream], [7.6, 0.2, black], [7.85, 0.19, cream]]) { const band = add(new THREE.CylinderGeometry(r + 0.008, r + 0.01, 0.16, 24, 1, true), m, 0, 2.22 + (5.6 - z) * 0.045, z); band.rotation.x = Math.PI / 2 - 0.045; }
+      const fin = new THREE.Shape(); fin.moveTo(0, 0); fin.lineTo(0.9, 0.05); fin.lineTo(1.25, 1.55); fin.lineTo(0.85, 1.6); fin.lineTo(0.2, 0.35); fin.closePath();
+      const fg = new THREE.ExtrudeGeometry(fin, { depth: 0.07, bevelEnabled: true, bevelThickness: 0.02, bevelSize: 0.02, bevelSegments: 2 }); fg.rotateY(-Math.PI / 2); fg.translate(0.035, 0, 0);
+      add(fg, orange, 0, 2.3, 7.9).rotation.y = Math.PI;
+      const stab = new THREE.Shape(); stab.moveTo(-1.2, 0); stab.lineTo(1.2, 0); stab.lineTo(1.0, 0.45); stab.lineTo(-1.0, 0.45); stab.closePath();
+      const sg = new THREE.ExtrudeGeometry(stab, { depth: 0.05, bevelEnabled: true, bevelThickness: 0.015, bevelSize: 0.015, bevelSegments: 1 }); sg.rotateX(Math.PI / 2);
+      add(sg, orange, 0, 2.38, 7.05);
+      for (const s of [-1, 1]) add(new THREE.BoxGeometry(0.04, 0.4, 0.4), cream, s * 1.2, 2.4, 7.25);
+      // rotor de cauda
+      const tail = new THREE.Group(); tail.position.set(0.22, 3.2, 8.55); root.add(tail);
+      add(new THREE.CylinderGeometry(0.08, 0.08, 0.18, 12), steel, 0, 0, 0, tail).rotation.z = Math.PI / 2;
+      for (let i = 0; i < 4; i++) { const b = add(new THREE.BoxGeometry(0.03, 0.85, 0.12), black, 0.08, 0, 0, tail); b.geometry.translate(0, 0.42, 0); b.rotation.x = (i * Math.PI) / 2; }
+      // ---------- esquis ----------
+      for (const s of [-1, 1]) {
+        const pts = [V3(s * 1.15, 0.1, 2.0), V3(s * 1.15, 0.1, 0), V3(s * 1.15, 0.1, -2.2), V3(s * 1.15, 0.2, -2.75), V3(s * 1.15, 0.5, -3.0)];
+        add(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 40, 0.07, 10), dark);
+        for (const z of [-1.4, 1.1]) add(new THREE.TubeGeometry(new THREE.CatmullRomCurve3([V3(s * 1.15, 0.12, z), V3(s * 1.05, 0.55, z), V3(s * 0.75, 0.95, z)]), 12, 0.065, 8), dark);
+      }
+      // ---------- detalhes ----------
+      add(new THREE.CylinderGeometry(0.02, 0.02, 0.7, 6), steel, 0.35, 1.3, -4.25).rotation.x = Math.PI / 2;                 // tubo de pitot
+      for (const s of [-1, 1]) add(new THREE.CylinderGeometry(0.01, 0.01, 0.9, 6), black, s * 0.3, 2.6, 2.6).rotation.z = s * 0.4;   // antenas
+      const winch = add(new THREE.BoxGeometry(0.35, 0.35, 0.6), dark, 1.15, 2.45, -0.3); void winch;                     // guincho de resgate
+      add(new THREE.CylinderGeometry(0.16, 0.16, 0.3, 14), steel, 1.3, 2.45, -0.55).rotation.z = Math.PI / 2;
+      // luzes: farol de busca, sinalizador vermelho, luzes de navegação
+      const lights = [];
+      const search = add(new THREE.CylinderGeometry(0.14, 0.18, 0.22, 16), dark, 0, 0.75, -3.0); search.rotation.x = 0.6;
+      add(new THREE.CircleGeometry(0.13, 16), glow(0xfff1d0, 3), 0, 0.68, -3.08).rotation.x = Math.PI / 2 + 0.6;
+      const beaconT = add(new THREE.SphereGeometry(0.07, 10, 8), glow(0xff2a1a, 3), 0, 3.12, 1.6);
+      const beaconB = add(new THREE.SphereGeometry(0.07, 10, 8), glow(0xff2a1a, 3), 0, 0.58, 0.4);
+      add(new THREE.SphereGeometry(0.06, 10, 8), glow(0xff3b30, 2.5), -1.25, 2.4, 7.25);
+      add(new THREE.SphereGeometry(0.06, 10, 8), glow(0x3ddc84, 2.5), 1.25, 2.4, 7.25);
+      add(new THREE.SphereGeometry(0.05, 10, 8), glow(0xffffff, 3), 0, 3.55, 8.6);
+      if (opts.lights !== false) {
+        const sp = new THREE.SpotLight(0xfff0d8, 3.5, 30, 0.42, 0.55, 1.2); sp.position.set(0, 0.7, -3.1); sp.target.position.set(0, -1, -9); root.add(sp, sp.target); lights.push(sp);
+        const red = new THREE.PointLight(0xff2a1a, 1.2, 9, 2); red.position.set(0, 3.3, 1.6); root.add(red); lights.push(red);
+        const cab = new THREE.PointLight(0xffb066, 0.8, 4, 2); cab.position.set(0, 1.6, -2.4); root.add(cab); lights.push(cab);
+      }
+      let t = 0, spin = opts.spin || 0;
+      return {
+        group: root, rotor, tail, mats,
+        setSpin(v) { spin = v; },
+        update(dt) {
+          t += dt; rotor.rotation.y += spin * dt * 30; tail.rotation.x += spin * dt * 90;
+          const k = Math.max(0, Math.min(1, (spin - 0.35) / 0.5)); blur.material.opacity = k; rotor.children.forEach((ch) => { if (ch.type === "Group") ch.visible = k < 0.85; });
+          const on = (t % 1.2) < 0.12; beaconT.material.emissiveIntensity = on ? 4 : 0.2; beaconB.material.emissiveIntensity = (t % 1.2) > 0.6 && (t % 1.2) < 0.72 ? 4 : 0.2;
+          if (lights[1]) lights[1].intensity = on ? 1.6 : 0.05;
+        },
+      };
+    }
+    return { make };
+  })();
 // ======================================================================
 //  APLICAÇÃO: 3D, som, menu, HUD e entrada
 // ======================================================================
@@ -3609,7 +4486,7 @@ const Logic = (function () {
     name: "Sobrevivente", diff: "normal", env: "night", quality: "med", fov: 90, sens: 12, adsSens: 70,
     invertY: false, bob: true, radar: true, hints: true, gore: true, vol: 80,
     crossColor: "#ffffff", crossStyle: "cross", crossSize: 10, camo: "black",
-    loadout: ["ax4", "p45"], att: {}, lang: "",
+    loadout: ["ax4", "p45"], att: {}, lang: "", mode: "arena", twLevel: 0, twUnlocked: 0,
     // som
     muted: false, volSfx: 100, volVoice: 100, volAmb: 70,
     // gráficos
@@ -3753,13 +4630,13 @@ const Logic = (function () {
   rain.frustumCulled = false; rain.visible = false; scene.add(rain);
 
   function applyEnv() {
-    env = (L.getMap() === "italia" ? ENVS.tarde : ENVS[S.env]) || ENVS.night;          // a vila da Infecção é sempre de tarde
+    env = (L.getMap() === "predio" ? TowerUI.env() : L.getMap() === "italia" ? ENVS.tarde : ENVS[S.env]) || ENVS.night;          // a vila da Infecção é sempre de tarde; o prédio é escuro
     scene.fog.color.setHex(env.fog); scene.fog.density = env.dens;
     renderer.setClearColor(env.fog);
     hemi.color.setHex(env.hemi[0]); hemi.groundColor.setHex(env.hemi[1]); hemi.intensity = env.hemi[2];
     moon.color.setHex(env.moon[0]); moon.intensity = env.moon[1];
     lampLights.forEach((l) => { l.intensity = env.lamp; });
-    rain.visible = !!env.rain && S.rainFx;
+    rain.visible = !!env.rain && S.rainFx && L.getMap() !== "predio";
     wdApplyEnv(env);
     Snd.ambient(state === "run" || state === "pause" || state === "dead", env);
   }
@@ -7520,18 +8397,410 @@ const Logic = (function () {
     finally { scene.add = realAdd; L.setMap(prev); }
   }
   function useMap(m) {
-    const it = m === "italia", big = m === "grande";
+    const it = m === "italia", big = m === "grande", pr = m === "predio";
     if (it) ensureItalia();
     if (big) ensureBig();
-    L.setMap(it ? "italia" : big ? "grande" : "arena");
+    if (!pr) L.setMap(it ? "italia" : big ? "grande" : "arena");          // prédio: o mapa de cada andar é montado pelo jogo (towerlogic.js)
     if (!arenaLights.length && lampLights.length) arenaLights.push(...lampLights);
-    if (worldArena) worldArena.visible = !it && !big;
+    if (worldArena) worldArena.visible = !it && !big && !pr;
+    TowerView.setVisible(pr);
     if (worldItaly) worldItaly.visible = it;
     if (worldBig) worldBig.visible = big;
-    lampLights.length = 0; lampLights.push(...(it ? itLights : big ? bigLights : arenaLights));
+    lampLights.length = 0; lampLights.push(...(it ? itLights : big ? bigLights : pr ? TowerView.ensureLights(arenaLights.length || 6) : arenaLights));
     if (!it) for (const v of boostViews) v.root.visible = false;
     applyEnv();
   }
+  // ======================================================================
+  //  MODO PRÉDIO: visão 3D do andar (paredes, portas, móveis, armários, escadas, elevador, terraço e helicóptero)
+  //  Escuro de propósito: luzes de emergência, máquinas acesas, placas de saída e a sua lanterna.
+  //  Usa o mesmo número de luzes da arena (trocar a quantidade de luzes recompila os shaders e trava).
+  // ======================================================================
+  const TowerView = (function () {
+    const root = new THREE.Group(); root.visible = false; scene.add(root);
+    const H = 3.0;                                                       // pé-direito
+    let floorG = null, builtKey = "", spots = [], lights = [], lockers = [], items = [], heli = null, flyers = [], flareV = [], P = null, assignT = 0, tt = 0, winCam = null;
+    const lam = (o) => new THREE.MeshLambertMaterial(o), bas = (o) => new THREE.MeshBasicMaterial(o);
+    let MT = null;
+    // ---------- texturas (desenhadas em canvas, uma vez) ----------
+    function grime(x, S, r, n, a) { for (let i = 0; i < n; i++) wdBlot(x, S, S, r() * S, r() * S, 8 + r() * S * 0.18, [20, 16, 12], a * (0.4 + r() * 0.6), true); }
+    function tilesTex(S, n, base, line, seed, a) {
+      const [c, x] = wdCv(S, S), r = wdR(seed); x.fillStyle = base; x.fillRect(0, 0, S, S);
+      const t = S / n;
+      for (let j = 0; j < n; j++) for (let i = 0; i < n; i++) { const v = (r() - 0.5) * 14; x.fillStyle = "rgba(" + (v > 0 ? "255,255,255," : "0,0,0,") + Math.abs(v) / 100 + ")"; x.fillRect(i * t, j * t, t, t); }
+      x.strokeStyle = line; x.lineWidth = 2; for (let k = 0; k <= n; k++) { x.beginPath(); x.moveTo(k * t, 0); x.lineTo(k * t, S); x.stroke(); x.beginPath(); x.moveTo(0, k * t); x.lineTo(S, k * t); x.stroke(); }
+      grime(x, S, r, 10, a || 0.18); return wdTex(c);
+    }
+    function carpetTex(seed, rgb) {
+      const S = 256, [c, x] = wdCv(S, S), r = wdR(seed); x.fillStyle = wdRgba(rgb[0], rgb[1], rgb[2], 1); x.fillRect(0, 0, S, S);
+      for (let i = 0; i < 9000; i++) { const v = (r() - 0.5) * 40; x.fillStyle = wdRgba(rgb[0] + v, rgb[1] + v, rgb[2] + v, 0.5); x.fillRect(r() * S, r() * S, 1.5, 1.5); }
+      grime(x, S, r, 8, 0.22); return wdTex(c);
+    }
+    function plasterTex(seed, rgb) {                                       // parede pintada, rodapé escuro, sujeira escorrida e algum sangue
+      const S = 256, [c, x] = wdCv(S, S), r = wdR(seed); x.fillStyle = wdRgba(rgb[0], rgb[1], rgb[2], 1); x.fillRect(0, 0, S, S);
+      for (let i = 0; i < 3000; i++) { const v = (r() - 0.5) * 18; x.fillStyle = wdRgba(rgb[0] + v, rgb[1] + v, rgb[2] + v, 0.35); x.fillRect(r() * S, r() * S, 2, 2); }
+      for (let i = 0; i < 26; i++) { const px = r() * S, l = 20 + r() * 120, g = x.createLinearGradient(0, S * 0.1, 0, S * 0.1 + l); g.addColorStop(0, "rgba(40,30,20,0.25)"); g.addColorStop(1, "rgba(40,30,20,0)"); x.fillStyle = g; x.fillRect(px, S * 0.1, 2 + r() * 4, l); }
+      if (seed % 3 === 0) for (let i = 0; i < 18; i++) { x.fillStyle = "rgba(90,8,8," + (0.3 + r() * 0.4) + ")"; x.beginPath(); x.arc(S * 0.3 + r() * 60, S * 0.55 + r() * 50, 1 + r() * 7, 0, 6.3); x.fill(); }
+      x.fillStyle = "#1d1b19"; x.fillRect(0, S - 10, S, 10);                 // rodapé (a textura vai de 0 a 3 m na altura)
+      return wdTex(c);
+    }
+    function ceilTex() {
+      const S = 256, [c, x] = wdCv(S, S), r = wdR(41); x.fillStyle = "#7c7b76"; x.fillRect(0, 0, S, S);
+      const n = 4, t = S / n;
+      for (let j = 0; j < n; j++) for (let i = 0; i < n; i++) { const miss = r() < 0.08; x.fillStyle = miss ? "#0b0b0d" : wdRgba(118 + r() * 16, 117 + r() * 14, 110 + r() * 12, 1); x.fillRect(i * t + 2, j * t + 2, t - 4, t - 4); if (!miss) for (let k = 0; k < 40; k++) { x.fillStyle = "rgba(40,40,40,0.25)"; x.fillRect(i * t + r() * t, j * t + r() * t, 1.5, 1.5); } }
+      grime(x, S, r, 6, 0.25); return wdTex(c);
+    }
+    function windowTex() {                                                  // janela de fora: cidade à noite (prédios com luzes acesas)
+      const W = 512, Hh = 256, [c, x] = wdCv(W, Hh), r = wdR(77);
+      const g = x.createLinearGradient(0, 0, 0, Hh); g.addColorStop(0, "#070b16"); g.addColorStop(0.6, "#1a1a2e"); g.addColorStop(1, "#3a2433"); x.fillStyle = g; x.fillRect(0, 0, W, Hh);
+      for (let i = 0; i < 22; i++) { const bx = r() * W, bw = 20 + r() * 60, bh = 60 + r() * 170; x.fillStyle = "#06070b"; x.fillRect(bx, Hh - bh, bw, bh); for (let yy = Hh - bh + 6; yy < Hh - 4; yy += 9) for (let xx = bx + 4; xx < bx + bw - 4; xx += 8) if (r() < 0.16) { x.fillStyle = r() < 0.7 ? "rgba(255,200,130,0.85)" : "rgba(150,200,255,0.8)"; x.fillRect(xx, yy, 3, 4); } }
+      x.fillStyle = "#1b1d22"; for (let i = 0; i <= 4; i++) x.fillRect(i * W / 4 - 6, 0, 12, Hh); x.fillRect(0, 0, W, 14); x.fillRect(0, Hh * 0.55, W, 8); x.fillRect(0, Hh - 14, W, 14);
+      x.fillStyle = "rgba(160,190,230,0.06)"; for (let i = 0; i < 4; i++) { x.beginPath(); x.moveTo(i * W / 4 + 20, 14); x.lineTo(i * W / 4 + 60, 14); x.lineTo(i * W / 4 + 10, Hh - 14); x.lineTo(i * W / 4 - 10, Hh - 14); x.fill(); }   // reflexo no vidro
+      const t = wdTex(c); t.wrapT = THREE.ClampToEdgeWrapping; return t;
+    }
+    function lockerTex() {                                                  // porta do armário: chapa pintada com frestas de ventilação
+      const W = 128, Hh = 256, [c, x] = wdCv(W, Hh), r = wdR(9); x.fillStyle = "#4f5f58"; x.fillRect(0, 0, W, Hh);
+      for (let i = 0; i < 1500; i++) { const v = (r() - 0.5) * 24; x.fillStyle = wdRgba(79 + v, 95 + v, 88 + v, 0.4); x.fillRect(r() * W, r() * Hh, 2, 2); }
+      for (const y0 of [20, 200]) for (let k = 0; k < 5; k++) { x.fillStyle = "#0c0e0e"; x.fillRect(30, y0 + k * 7, 68, 3); }
+      x.fillStyle = "#8d9594"; x.fillRect(96, 118, 8, 26);
+      for (let i = 0; i < 20; i++) wdBlot(x, W, Hh, r() * W, r() * Hh, 4 + r() * 12, [110, 60, 25], 0.35, false);
+      return wdTex(c);
+    }
+    function signTex(txt, col, bg) {
+      const [c, x] = wdCv(256, 96); x.fillStyle = bg; x.fillRect(0, 0, 256, 96); x.strokeStyle = col; x.lineWidth = 6; x.strokeRect(5, 5, 246, 86);
+      x.fillStyle = col; x.font = "700 52px 'Barlow Condensed','Arial Narrow',sans-serif"; x.textAlign = "center"; x.textBaseline = "middle"; x.fillText(txt, 128, 52);
+      const t = new THREE.CanvasTexture(c); return t;
+    }
+    function glowTex(rgb) { const [c, x] = wdCv(64, 64), g = x.createRadialGradient(32, 32, 0, 32, 32, 32); g.addColorStop(0, wdRgba(rgb[0], rgb[1], rgb[2], 1)); g.addColorStop(0.35, wdRgba(rgb[0], rgb[1], rgb[2], 0.35)); g.addColorStop(1, wdRgba(rgb[0], rgb[1], rgb[2], 0)); x.fillStyle = g; x.fillRect(0, 0, 64, 64); return new THREE.CanvasTexture(c); }
+    function mats() {
+      if (MT) return MT;
+      const glow = (rgb, op) => new THREE.SpriteMaterial({ map: glowTex(rgb), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: op || 0.8 });
+      MT = {
+        vinyl: lam({ map: tilesTex(256, 4, "#5b5d58", "#2e302d", 3, 0.2) }), carpet: lam({ map: carpetTex(5, [62, 70, 82]) }), carpetR: lam({ map: carpetTex(6, [86, 58, 54]) }),
+        white: lam({ map: tilesTex(256, 8, "#a9aca8", "#6d706c", 4, 0.25) }), conc: lam({ map: wdConcreteTex(31, 104) }), roof: lam({ map: wdConcreteTex(32, 92) }),
+        wall: [lam({ map: plasterTex(1, [150, 152, 138]) }), lam({ map: plasterTex(2, [128, 140, 136]) }), lam({ map: plasterTex(3, [152, 138, 118]) })],
+        ceil: lam({ map: ceilTex(), side: THREE.DoubleSide }), win: bas({ map: windowTex(), color: 0x9aa4b8 }),
+        wood: lam({ map: wdWoodTex(91, 0), color: 0xb08a62 }), woodD: lam({ map: wdWoodTex(92, 1), color: 0x6a4a32 }), frame: lam({ color: 0x2a2622 }), doorM: lam({ map: wdWoodTex(93, 1), color: 0x8a6a4a }),
+        metal: lam({ color: 0x6d7378 }), metalD: lam({ color: 0x32363a }), chrome: lam({ color: 0x9aa0a6 }), black: lam({ color: 0x141518 }), fabric: lam({ color: 0x3c4352 }), fabricR: lam({ color: 0x5a3a40 }),
+        sofa: lam({ color: 0x4a3a5a }), white2: lam({ color: 0xc9ccd0 }), fridge: lam({ color: 0xd8dade }), pot: lam({ color: 0x5a3a2a }), leaf: lam({ color: 0x2f5a2c }), leafD: lam({ color: 0x1f3d1e }),
+        boxC: lam({ map: wdWoodTex(94, 1), color: 0xc49a62 }), paper: lam({ color: 0xd8d2c0 }), rack: lam({ color: 0x1a1f2a }), board: lam({ color: 0xe6e8ea }), glassT: lam({ color: 0x1c2a30, transparent: true, opacity: 0.55 }),
+        locker: lam({ map: lockerTex() }), lockerB: lam({ color: 0x3f4c46 }), stall: lam({ color: 0x7d8f9a }), concD: lam({ map: wdConcreteTex(33, 70) }), rail: lam({ color: 0x8a8f94 }),
+        screen: bas({ color: 0x5aa8ff }), screenOff: lam({ color: 0x0b0d10 }), vend: bas({ color: 0x8fd0ff }), vendR: bas({ color: 0xff5a4a }), led: bas({ color: 0x3dff8a }), ledR: bas({ color: 0xff3b30 }),
+        lamp: bas({ color: 0xe8f0ff }), lampOff: lam({ color: 0x3a3c40 }), tv: bas({ color: 0x223040 }),
+        exit: bas({ map: signTex("ESCADA ↑", "#3dff8a", "#06200f") }), elevS: bas({ map: signTex("ELEVADOR", "#ffd27a", "#201806") }), downS: bas({ map: signTex("↓ DESCE", "#ff6a5a", "#200806") }), inS: bas({ map: signTex("ENTRADA", "#9fd0ff", "#061420") }),
+        solar: lam({ color: 0x1d3458 }), solarF: lam({ color: 0x9aa0a6 }), water: lam({ color: 0x3f6a80 }), sky: bas({ color: 0xa8d0e8, transparent: true, opacity: 0.5 }), plant: lam({ color: 0x3a6a34 }), soil: lam({ color: 0x3a2a1a }),
+        steel: lam({ color: 0xa7adb3 }), hut: lam({ map: wdConcreteTex(34, 120) }), pad: lam({ color: 0xb8952e }), padW: lam({ color: 0x7c7a74 }),
+        gl: { white: glow([220, 235, 255], 0.6), green: glow([60, 255, 140], 0.7), red: glow([255, 60, 40], 0.8), blue: glow([120, 190, 255], 0.6), amber: glow([255, 200, 110], 0.7), item: glow([255, 230, 150], 0.55) },
+      };
+      return MT;
+    }
+    // ---------- peças ----------
+    const bx = (B, m, x, y, w, d, h, z0, cu) => B.add(m, wdBoxG(w, h, d, cu || 1), wdT(x, (z0 || 0) + h / 2, -y));
+    const cyl = (B, m, x, y, r1, r2, h, z0, n) => B.add(m, new THREE.CylinderGeometry(r1, r2, h, n || 12), wdT(x, (z0 || 0) + h / 2, -y));
+    function furniture(B, f, rr, deco) {
+      const m = mats(), k = f.k, x = f.x, y = f.y, w = f.w, d = f.d, h = f.h;
+      switch (k) {
+        case "mesa": case "mesa_longa": case "mesinha":
+          bx(B, k === "mesinha" ? m.woodD : m.wood, x, y, w, d, 0.05, h - 0.05);
+          for (const sx of [-1, 1]) for (const sy of [-1, 1]) bx(B, m.metalD, x + sx * (w / 2 - 0.06), y + sy * (d / 2 - 0.06), 0.05, 0.05, h - 0.05, 0);
+          if (k === "mesa" && rr() < 0.5) bx(B, m.paper, x + (rr() - 0.5) * w * 0.5, y + (rr() - 0.5) * d * 0.4, 0.3, 0.22, 0.02, h);
+          break;
+        case "mesa_redonda": cyl(B, m.wood, x, y, w / 2, w / 2, 0.05, h - 0.05, 18); cyl(B, m.metalD, x, y, 0.05, 0.05, h - 0.05, 0, 8); cyl(B, m.metalD, x, y, 0.3, 0.3, 0.03, 0, 12); break;
+        case "cadeira": {
+          bx(B, m.fabric, x, y, 0.48, 0.48, 0.08, 0.45); cyl(B, m.metalD, x, y, 0.03, 0.03, 0.45, 0, 6); cyl(B, m.black, x, y, 0.25, 0.25, 0.04, 0, 10);
+          const dir = rr() < 0.5 ? 1 : -1; bx(B, m.fabric, x, y + dir * 0.22, 0.46, 0.06, 0.5, 0.53);
+          break;
+        }
+        case "monitor": { const on = rr() < 0.3; bx(B, m.black, x, y, w, 0.05, 0.36, 0.86); bx(B, on ? m.screen : m.screenOff, x, y - 0.03, w * 0.9, 0.01, 0.3, 0.89); bx(B, m.black, x, y + 0.08, 0.06, 0.06, 0.12, 0.76); if (on) deco.push(["blue", x, y - 0.3, 1.05, 0.7]); break; }
+        case "gaveteiro": case "arquivo": bx(B, k === "arquivo" ? m.metal : m.metalD, x, y, w, d, h, 0); for (let i = 1; i < 4; i++) bx(B, m.chrome, x, y, w * 0.3, d + 0.02, 0.03, (h * i) / 4); break;
+        case "estante": {
+          bx(B, m.metalD, x, y, w, d, 0.04, h - 0.04); for (let i = 0; i < 4; i++) bx(B, m.metal, x, y, w, d, 0.03, 0.15 + i * (h - 0.2) / 4);
+          for (const sx of [-1, 1]) for (const sy of [-1, 1]) bx(B, m.metalD, x + sx * (w / 2 - 0.03), y + sy * (d / 2 - 0.03), 0.04, 0.04, h, 0);
+          for (let i = 0; i < 4; i++) for (let j = 0; j < 3; j++) if (rr() < 0.6) { const ww = 0.25 + rr() * 0.3; const along = w > d; bx(B, rr() < 0.5 ? m.boxC : m.paper, x + (along ? (j - 1) * w / 3 : 0), y + (along ? 0 : (j - 1) * d / 3), along ? ww : d * 0.8, along ? d * 0.8 : ww, 0.25, 0.18 + i * (h - 0.2) / 4); }
+          break;
+        }
+        case "rack": bx(B, m.rack, x, y, w, d, h, 0); for (let i = 0; i < 10; i++) { const sx = w > d ? (rr() - 0.5) * w * 0.8 : (d > w ? 0 : 0), sy = w > d ? 0 : (rr() - 0.5) * d * 0.8; bx(B, rr() < 0.75 ? m.led : m.ledR, x + sx + (w > d ? 0 : (rr() < 0.5 ? -1 : 1) * (w / 2 + 0.005)), y + sy + (w > d ? (rr() < 0.5 ? -1 : 1) * (d / 2 + 0.005) : 0), 0.03, 0.03, 0.02, 0.3 + rr() * 1.6); } deco.push(["green", x, y, 1.0, 0.25]); break;
+        case "caixas": bx(B, m.boxC, x, y, w, d, h * 0.55, 0); if (rr() < 0.6) bx(B, m.boxC, x + 0.05, y - 0.04, w * 0.75, d * 0.75, h * 0.45, h * 0.55); break;
+        case "sofa": { bx(B, m.sofa, x, y, w, d, 0.42, 0); const along = w > d; bx(B, m.sofa, along ? x : x + (rr() < 0.5 ? -1 : 1) * (w / 2 - 0.1), along ? y + (rr() < 0.5 ? -1 : 1) * (d / 2 - 0.1) : y, along ? w : 0.2, along ? 0.2 : d, 0.45, 0.42); break; }
+        case "tv": bx(B, m.black, x, y, w, d, 0.85, 0.55); bx(B, m.tv, x, y, w * 0.92, d + 0.01, 0.75, 0.6); break;
+        case "balcao": bx(B, m.white2, x, y, w, d, h - 0.04, 0); bx(B, m.metalD, x, y, w, d, 0.04, h - 0.04); break;
+        case "geladeira": bx(B, m.fridge, x, y, w, d, h, 0); bx(B, m.chrome, x + w * 0.35, y, 0.03, d + 0.03, 0.5, 1.0); break;
+        case "box": bx(B, m.stall, x, y, w, d, h, 0.15, 2); break;
+        case "pia": bx(B, m.white2, x, y, w, d, 0.15, 0.75); cyl(B, m.white2, x, y, 0.08, 0.1, 0.75, 0, 8); bx(B, m.chrome, x, y, 0.04, 0.04, 0.2, 0.9); break;
+        case "planta": cyl(B, m.pot, x, y, 0.25, 0.2, 0.45, 0, 10); for (let i = 0; i < 5; i++) B.add(i % 2 ? m.leaf : m.leafD, new THREE.IcosahedronGeometry(0.22 + rr() * 0.1, 0), wdT(x + (rr() - 0.5) * 0.3, 0.6 + rr() * 0.6, -(y + (rr() - 0.5) * 0.3), rr() * 3, rr() * 3, 0)); break;
+        case "banco": bx(B, m.wood, x, y, w, d, 0.06, 0.4); for (const s of [-1, 1]) { const along = w > d; bx(B, m.metalD, along ? x + s * (w / 2 - 0.15) : x, along ? y : y + s * (d / 2 - 0.15), along ? 0.05 : d, along ? d : 0.05, 0.4, 0); } break;
+        case "maquina": bx(B, m.vendR, x, y, w, d, h, 0); { const along = w > d, s = rr() < 0.5 ? -1 : 1; bx(B, m.vend, along ? x : x + s * (w / 2 + 0.005), along ? y + s * (d / 2 + 0.005) : y, along ? w * 0.7 : 0.01, along ? 0.01 : d * 0.7, h * 0.65, h * 0.25); } deco.push(["blue", x, y, 1.5, 0.9]); break;
+        case "lixeira": cyl(B, m.metalD, x, y, 0.22, 0.18, h, 0, 10); break;
+        case "quadro": bx(B, m.board, x, y, w, Math.max(0.03, d * 0.3), 1.0, 0.9); break;
+        case "ar": bx(B, m.steel, x, y, w, d, h, 0); cyl(B, m.metalD, x, y, w * 0.38, w * 0.38, 0.02, h, 16); break;
+        case "caixa_dagua": cyl(B, m.water, x, y, w / 2, w / 2, h - 0.6, 0.6, 20); for (const [a, b] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) bx(B, m.metalD, x + a * w * 0.3, y + b * w * 0.3, 0.1, 0.1, 0.6, 0); break;
+        case "claraboia": bx(B, m.metalD, x, y, w, d, 0.3, 0); B.add(m.sky, new THREE.CylinderGeometry(0.01, Math.min(w, d) * 0.7, 0.35, 4, 1), wdT(x, 0.47, -y, 0, Math.PI / 4, 0, w / Math.min(w, d), 1, d / Math.min(w, d))); break;
+        case "antena": cyl(B, m.steel, x, y, 0.06, 0.12, h, 0, 8); for (let i = 1; i < 4; i++) bx(B, m.steel, x, y, 1.2 - i * 0.25, 0.04, 0.04, h * i / 4); deco.push(["red", x, y, h + 0.1, 0.9, "blink"]); break;
+        case "jardineira": bx(B, m.hut, x, y, w, d, 0.55, 0); bx(B, m.soil, x, y, w - 0.1, d - 0.1, 0.02, 0.55); for (let i = 0; i < 3; i++) B.add(m.plant, new THREE.IcosahedronGeometry(0.28, 0), wdT(x + (w > d ? (i - 1) * w / 3 : 0), 0.75, -(y + (w > d ? 0 : (i - 1) * d / 3)), rr() * 3, rr() * 3, 0)); break;
+        case "solar": { const g = new THREE.BoxGeometry(w, 0.06, d); B.add(m.solar, g, wdT(x, 0.7, -y, -0.35, 0, 0)); bx(B, m.solarF, x, y + d * 0.35, 0.06, 0.06, 0.5, 0); bx(B, m.solarF, x, y - d * 0.35, 0.06, 0.06, 0.9, 0); break; }
+        default: bx(B, m.metalD, x, y, w, d, h, 0);
+      }
+    }
+    // ---------- armário grande (dá para entrar) ----------
+    function lockerView(g, l, f) {
+      const m = mats(), grp = new THREE.Group(); grp.position.set(l.x, 0, -l.y); grp.rotation.y = [0, -Math.PI / 2, Math.PI, Math.PI / 2][l.face] + Math.PI; g.add(grp);
+      // no grupo: frente para +z local (depois da rotação, aponta para FACE[l.face])
+      const W = 1.4, D = 0.7, Hh = 2.1;
+      const body = new THREE.Mesh(new THREE.BoxGeometry(W, Hh, D), m.lockerB); body.position.y = Hh / 2; grp.add(body);
+      const doors = [];
+      for (const s of [-1, 1]) {
+        const piv = new THREE.Group(); piv.position.set(s * W / 2, 0, D / 2 + 0.01); grp.add(piv);
+        const door = new THREE.Mesh(new THREE.BoxGeometry(W / 2 - 0.02, Hh - 0.08, 0.03), m.locker); door.position.set(-s * (W / 4), Hh / 2, 0.015); if (s > 0) door.scale.x = -1; piv.add(door);
+        doors.push({ piv, s });
+      }
+      void f;
+      return { grp, doors, open: 0, want: 0, shut: 0 };
+    }
+    // ---------- monta o andar ----------
+    function build(Pl) {
+      if (floorG) { root.remove(floorG); floorG.traverse((o) => { if (o.geometry) o.geometry.dispose(); }); }
+      P = Pl; floorG = new THREE.Group(); root.add(floorG); spots = []; lockers = []; items = []; flyers.forEach((f) => root.remove(f.m)); flyers = []; flareV.forEach((f) => root.remove(f.g)); flareV = []; heli = null; winCam = null;
+      const m = mats(), B = new WdBatch(), rr = wdR(P.level * 1000 + P.floor * 17 + 5), deco = [], A = P.A;
+      // chão por sala
+      const floorMat = (g) => g.kind === "terrace" ? m.roof : g.kind === "hall" ? m.vinyl : g.type === "acesso" ? m.conc : ({ escritorio: m.carpet, reuniao: m.carpetR, estar: m.carpetR, copa: m.white, banheiro: m.white, deposito: m.conc, servidores: m.conc, arquivo: m.vinyl })[g.type] || m.vinyl;
+      for (const g of P.regs) { if (P.roof && g.kind !== "terrace") continue; const w = g.x1 - g.x0, d = g.y1 - g.y0, cu = floorMat(g) === m.white ? 2 : floorMat(g) === m.vinyl ? 2 : 3; B.add(floorMat(g), wdPlaneG(w, d, w / cu, d / cu), wdT((g.x0 + g.x1) / 2, 0.001, -(g.y0 + g.y1) / 2, -Math.PI / 2, 0, 0)); }
+      if (!P.roof) {
+        B.add(m.ceil, wdPlaneG(2 * A, 2 * A, A / 1.2, A / 1.2), wdT(0, H, 0, Math.PI / 2, 0, 0));
+        // janelas em toda a volta (a cidade lá fora)
+        for (const [x, y, ry] of [[0, A - 0.02, 0], [0, -A + 0.02, Math.PI], [A - 0.02, 0, -Math.PI / 2], [-A + 0.02, 0, Math.PI / 2]]) B.add(m.win, wdPlaneG(2 * A, H, (2 * A) / 6, 1), wdT(x, H / 2, -y, 0, ry + Math.PI, 0));
+      } else {
+        // terraço: piso da casinha, mureta, heliponto
+        const hut = P.regs.find((g) => g.type === "acesso");
+        B.add(m.conc, wdPlaneG(hut.x1 - hut.x0, hut.y1 - hut.y0, 2, 2), wdT((hut.x0 + hut.x1) / 2, 0.003, -(hut.y0 + hut.y1) / 2, -Math.PI / 2, 0, 0));
+        bx(B, m.hut, (hut.x0 + hut.x1) / 2, (hut.y0 + hut.y1) / 2, hut.x1 - hut.x0 + 0.3, hut.y1 - hut.y0 + 0.3, 0.25, 3.2, 3);
+        for (const w of P.parapet) { const x0 = Math.min(w[0], w[2]), x1 = Math.max(w[0], w[2]), y0 = Math.min(w[1], w[3]), y1 = Math.max(w[1], w[3]); bx(B, m.hut, (x0 + x1) / 2, (y0 + y1) / 2, Math.max(0.35, x1 - x0 + 0.35), Math.max(0.35, y1 - y0 + 0.35), 1.1, 0, 3); }
+        const e = P.exit;
+        B.add(m.padW, new THREE.CircleGeometry(e.r + 0.4, 40), wdT(e.x, 0.006, -e.y, -Math.PI / 2, 0, 0));
+        B.add(m.pad, new THREE.RingGeometry(e.r * 0.78, e.r * 0.86, 48), wdT(e.x, 0.01, -e.y, -Math.PI / 2, 0, 0));
+        const Hs = [[-1.3, 0, 0.6, 3.6], [1.3, 0, 0.6, 3.6], [0, 0, 2.0, 0.6]];
+        for (const q of Hs) B.add(m.padW, wdPlaneG(q[2], q[3], 1, 1), wdT(e.x + q[0], 0.012, -(e.y + q[1]), -Math.PI / 2, 0, 0));
+        for (let i = 0; i < 12; i++) { const a = (i / 12) * Math.PI * 2; cyl(B, m.vend, e.x + Math.cos(a) * (e.r + 0.15), e.y + Math.sin(a) * (e.r + 0.15), 0.08, 0.1, 0.06, 0, 8); if (i % 3 === 0) deco.push(["amber", e.x + Math.cos(a) * (e.r + 0.15), e.y + Math.sin(a) * (e.r + 0.15), 0.25, 0.45]); }
+        spots.push({ x: e.x, y: e.y, h: 2.5, c: 0xffc070, i: 0.9, r: 14 });
+        const dd = P.doors[0]; spots.push({ x: dd.x, y: dd.y, h: 2.6, c: 0xffb060, i: 1.4, r: 9 });
+        // helicóptero de resgate
+        if (typeof Helicopter !== "undefined") { heli = Helicopter.make({ lights: false }); heli.group.position.set(P.heli.x, 0, -P.heli.y); heli.group.rotation.y = -P.heli.yaw; heli.group.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } }); floorG.add(heli.group); }
+        // cidade em volta (prédios baixos lá embaixo, com janelas acesas)
+        const cr = wdR(900 + P.level);
+        for (let i = 0; i < 46; i++) { const a = cr() * 6.283, dist = 62 + cr() * 46, hh = 8 + cr() * 34, ww = 8 + cr() * 14; B.add(cr() < 0.5 ? WD.bldgDark || m.metalD : WD.bldgDark2 || m.metalD, wdBoxG(ww, hh, ww, 6), wdT(Math.cos(a) * dist, -P.floor * 3.2 - 6 + hh, -Math.sin(a) * dist)); }
+      }
+      // paredes (e o pedaço acima das portas)
+      const wallM = P.roof ? m.hut : m.wall[(P.floor + P.level) % 3], WH = P.roof ? 3.2 : H;
+      for (const w of P.walls) {
+        const x0 = Math.min(w[0], w[2]), x1 = Math.max(w[0], w[2]), y0 = Math.min(w[1], w[3]), y1 = Math.max(w[1], w[3]), vert = x0 === x1;
+        B.add(wallM, wdBoxG(vert ? 0.2 : x1 - x0 + 0.2, WH, vert ? y1 - y0 + 0.2 : 0.2, 3, WH), wdT((x0 + x1) / 2, WH / 2, -(y0 + y1) / 2));
+      }
+      for (const d of P.doors) {
+        const vert = d.axis === "x", hd = d.w / 2;
+        B.add(wallM, wdBoxG(vert ? 0.2 : d.w, WH - 2.2, vert ? d.w : 0.2, 3, WH), wdT(d.x, 2.2 + (WH - 2.2) / 2, -d.y));          // verga
+        for (const s of [-1, 1]) bx(B, m.frame, vert ? d.x : d.x + s * hd, vert ? d.y + s * hd : d.y, vert ? 0.24 : 0.06, vert ? 0.06 : 0.24, 2.2, 0);
+        bx(B, m.frame, d.x, d.y, vert ? 0.24 : d.w, vert ? d.w : 0.24, 0.06, 2.17);
+        // folha aberta, encostada na parede (para o lado da sala "b")
+        const leaf = Math.min(1.2, d.w - 0.1), side = rr() < 0.5 ? -1 : 1;
+        if (vert) bx(B, m.doorM, d.x + side * leaf / 2 * 0.98, d.y - hd + 0.05, leaf, 0.04, 2.12, 0.02); else bx(B, m.doorM, d.x - hd + 0.05, d.y + side * leaf / 2 * 0.98, 0.04, leaf, 2.12, 0.02);
+      }
+      // móveis
+      for (const f of P.furn) if (!f.locker) furniture(B, f, rr, deco);
+      // luzes do teto: algumas funcionando (piscando), a maioria apagada
+      if (!P.roof) for (const g of P.regs) {
+        if (g.area < 10) continue;
+        const n = g.kind === "hall" ? Math.max(1, Math.floor(Math.max(g.x1 - g.x0, g.y1 - g.y0) / 8)) : g.area > 90 ? 2 : 1;
+        for (let i = 0; i < n; i++) {
+          const along = g.x1 - g.x0 > g.y1 - g.y0, u = (i + 0.5) / n, x = along ? g.x0 + (g.x1 - g.x0) * u : g.cx, y = along ? g.cy : g.y0 + (g.y1 - g.y0) * u;
+          const on = rr() < (g.kind === "hall" ? 0.45 : 0.3);
+          bx(B, on ? m.lamp : m.lampOff, x, y, along ? 1.2 : 0.3, along ? 0.3 : 1.2, 0.04, H - 0.05);
+          if (on) spots.push({ x, y, h: H - 0.25, c: 0xcfdcff, i: 0.85, r: 8.5, flick: rr() < 0.4 ? rr() * 10 : -1 }), deco.push(["white", x, y, H - 0.12, 1.4]);
+        }
+        if (g.kind === "hall" && rr() < 0.6) spots.push({ x: g.cx, y: g.cy, h: 2.6, c: 0xff3a24, i: 0.5, r: 8, pulse: rr() * 6 }), deco.push(["red", g.cx, g.cy, 2.75, 0.5]);
+      }
+      // escada para cima: lance de degraus subindo até um vão no teto + placa verde
+      const flight = (p, up) => {
+        const g = P.regs.find((q) => p.x >= q.x0 && p.x <= q.x1 && p.y >= q.y0 && p.y <= q.y1) || P.regs[0];
+        const sx = p.x - g.x0 < g.x1 - p.x ? -1 : 1;                           // o topo fica do lado da parede mais perto (em x)
+        const n = 10, L = 3.0, W = 1.2;
+        for (let i = 0; i < n; i++) {
+          const u = (i + 0.5) / n, x = p.x - sx * L / 2 + sx * L * u, top = up ? (H * (i + 1)) / n : -(H * i) / n;
+          if (up) bx(B, m.concD, x, p.y, L / n + 0.01, W, top, 0); else bx(B, m.black, x, p.y, L / n + 0.01, W, 0.02, 0.005 + 0.0005 * i);
+        }
+        for (const s of [-1, 1]) {
+          if (up) { const len = Math.hypot(L, H), ang = Math.atan2(H, L) * sx; B.add(m.rail, new THREE.BoxGeometry(len, 0.05, 0.05), wdT(p.x, H / 2 + 0.95, -(p.y + s * (W / 2 + 0.05)), 0, 0, ang)); for (let i = 0; i <= 3; i++) bx(B, m.rail, p.x - sx * L / 2 + sx * (L * i) / 3, p.y + s * (W / 2 + 0.05), 0.04, 0.04, 0.95, (H * i) / 3); }
+          else { bx(B, m.rail, p.x, p.y + s * (W / 2 + 0.05), L, 0.05, 0.05, 1.0); for (let i = 0; i <= 3; i++) bx(B, m.rail, p.x - sx * L / 2 + sx * (L * i) / 3, p.y + s * (W / 2 + 0.05), 0.04, 0.04, 1.0, 0); }
+        }
+        if (!up) bx(B, m.rail, p.x - sx * (L / 2 + 0.05), p.y, 0.05, W + 0.1, 0.05, 1.0);
+        if (up) B.add(m.black, wdPlaneG(L, W, 1, 1), wdT(p.x, H - 0.01, -p.y, Math.PI / 2, 0, 0));
+        const sign = up ? m.exit : m.downS;
+        B.add(sign, new THREE.PlaneGeometry(0.9, 0.34), wdT(p.x - sx * (L / 2 + 0.1), 2.35, -p.y, 0, sx > 0 ? Math.PI / 2 : -Math.PI / 2, 0));
+        B.add(sign, new THREE.PlaneGeometry(0.9, 0.34), wdT(p.x - sx * (L / 2 + 0.1), 2.35, -p.y, 0, sx > 0 ? -Math.PI / 2 : Math.PI / 2, 0));
+        spots.push({ x: p.x - sx * (L / 2 + 0.3), y: p.y, h: 2.4, c: up ? 0x3dff8a : 0xff5a4a, i: up ? 1.3 : 0.7, r: up ? 9 : 6, key: up });
+        deco.push([up ? "green" : "red", p.x - sx * (L / 2 + 0.12), p.y, 2.35, 1.1]);
+      };
+      if (P.up) flight(P.up, true);
+      if (P.floor > 0 && !P.roof) flight(P.arrive, false);
+      if (P.floor === 0) { const a = P.arrive; B.add(m.inS, new THREE.PlaneGeometry(1.4, 0.5), wdT(a.x, 2.5, -(a.y - 1.9), 0, 0, 0)); spots.push({ x: a.x, y: a.y, h: 2.4, c: 0x9fd0ff, i: 0.9, r: 8 }); }
+      // elevador: portas de aço na parede mais perto, painel aceso
+      if (P.elev) {
+        const e = P.elev, g = P.regs.find((q) => e.x >= q.x0 && e.x <= q.x1 && e.y >= q.y0 && e.y <= q.y1) || P.regs[0];
+        const dl = [[e.x - g.x0, -1, 0], [g.x1 - e.x, 1, 0], [e.y - g.y0, 0, -1], [g.y1 - e.y, 0, 1]].sort((a, b) => a[0] - b[0])[0];
+        const wx = dl[1] ? (dl[1] < 0 ? g.x0 + 0.12 : g.x1 - 0.12) : e.x, wy = dl[2] ? (dl[2] < 0 ? g.y0 + 0.12 : g.y1 - 0.12) : e.y, ry = Math.atan2(-dl[1], dl[2]);   // virado para dentro da sala
+        B.add(m.steel, new THREE.BoxGeometry(1.6, 2.2, 0.06), wdT(wx, 1.1, -wy, 0, ry, 0));
+        B.add(m.metalD, new THREE.BoxGeometry(0.02, 2.2, 0.08), wdT(wx, 1.1, -wy, 0, ry, 0));
+        B.add(m.elevS, new THREE.PlaneGeometry(1.2, 0.42), wdT(wx - (dl[1] || 0) * 0.05, 2.55, -(wy - (dl[2] || 0) * 0.05), 0, ry, 0));
+        spots.push({ x: wx - (dl[1] || 0) * 1, y: wy - (dl[2] || 0) * 1, h: 2.5, c: 0xffd27a, i: 1.0, r: 7, key: true });
+        deco.push(["amber", wx - (dl[1] || 0) * 0.12, wy - (dl[2] || 0) * 0.12, 1.25, 0.35]);
+      }
+      B.build(floorG, true, true);
+      // brilhos (sprites) e pontos de luz das máquinas e telas
+      for (const q of deco) {
+        const sp = new THREE.Sprite(m.gl[q[0]]); sp.position.set(q[1], q[3], -q[2]); sp.scale.setScalar(q[4]); floorG.add(sp);
+        if (q[5] === "blink") sp.userData.blink = true;
+        if (q[0] === "blue" && q[4] > 1.2) spots.push({ x: q[1], y: q[2], h: 1.4, c: 0x7ab8ff, i: 0.6, r: 5 });
+      }
+      // armários
+      for (const l of P.lockers) lockers.push(lockerView(floorG, l));
+      // itens
+      for (const it of (game.tw ? game.tw.items : [])) items.push(itemView(it));
+      builtKey = P.level + ":" + P.floor;
+    }
+    function itemView(it) {
+      const m = mats(), g = new THREE.Group(); g.position.set(it.x, 0.12, -it.y); floorG.add(g);
+      const k = it.kind;
+      const add = (geo, mm, x, y, z, rx) => { const o = new THREE.Mesh(geo, mm); o.position.set(x || 0, y || 0, z || 0); if (rx) o.rotation.x = rx; g.add(o); return o; };
+      if (k === "bateria") { add(new THREE.CylinderGeometry(0.06, 0.06, 0.2, 12), lam({ color: 0xffc81a, emissive: 0x332200 }), 0, 0, 0, Math.PI / 2); add(new THREE.CylinderGeometry(0.03, 0.03, 0.03, 8), m.chrome, 0, 0, -0.11, Math.PI / 2); }
+      else if (k === "bandagem") add(new THREE.CylinderGeometry(0.07, 0.07, 0.1, 14), lam({ color: 0xf0ece0, emissive: 0x222018 }));
+      else if (k === "kit") { add(new THREE.BoxGeometry(0.34, 0.16, 0.24), lam({ color: 0xd8302a, emissive: 0x200404 })); add(new THREE.BoxGeometry(0.12, 0.17, 0.04), lam({ color: 0xffffff, emissive: 0x333333 })); add(new THREE.BoxGeometry(0.04, 0.17, 0.12), lam({ color: 0xffffff, emissive: 0x333333 })); }
+      else if (k === "garrafa") { add(new THREE.CylinderGeometry(0.05, 0.06, 0.24, 10), lam({ color: 0x2f6a3a, transparent: true, opacity: 0.85, emissive: 0x061208 }), 0, 0.04); add(new THREE.CylinderGeometry(0.02, 0.03, 0.08, 8), lam({ color: 0x2f6a3a }), 0, 0.2); }
+      else add(new THREE.CylinderGeometry(0.035, 0.035, 0.3, 10), lam({ color: 0xd8302a, emissive: 0x300404 }), 0, 0, 0, Math.PI / 2);
+      const sp = new THREE.Sprite(m.gl.item); sp.scale.setScalar(0.9); g.add(sp);
+      return { it, g };
+    }
+    // ---------- luzes: as N fontes vão para os pontos mais perto do jogador ----------
+    function ensureLights(n) { while (lights.length < n) { const l = new THREE.PointLight(0xffffff, 0, 10, 2); l.castShadow = false; root.add(l); lights.push(l); } return lights; }
+    function assign(px, py) {
+      const T = game.tw, dyn = (T ? T.flares : []).map((f) => ({ x: f.x, y: f.y, h: 0.4, c: 0xff4422, i: 2.6, r: 15, flare: true }));
+      const all = dyn.concat(spots).map((s) => ({ s, k: Math.hypot(s.x - px, s.y - py) / (s.key || s.flare ? 2 : 1) - s.r * 0.3 })).sort((a, b) => a.k - b.k);
+      lights.forEach((l, i) => { const q = all[i]; l.userData.s = q ? q.s : null; if (q) { l.position.set(q.s.x, q.s.h, -q.s.y); l.color.setHex(q.s.c); l.distance = q.s.r; } });
+    }
+    // ---------- por quadro ----------
+    function frame(dt) {
+      if (!root.visible || !game || !game.tw) return;
+      const T = game.tw; tt += dt;
+      if (!T.P) return;
+      if (builtKey !== T.P.level + ":" + T.P.floor) build(T.P);
+      assignT -= dt; if (assignT <= 0) { assignT = 0.3; assign(game.px, game.py); }
+      for (const l of lights) {
+        const s = l.userData.s; let want = 0;
+        if (s) { want = s.i; if (s.flick >= 0 && s.flick !== undefined) want *= Math.sin(tt * 13 + s.flick) > 0.92 || Math.sin(tt * 2.3 + s.flick) > 0.97 ? 0.1 : 1; if (s.pulse !== undefined) want *= 0.55 + 0.45 * Math.sin(tt * 3 + s.pulse); if (s.flare) want *= 0.8 + Math.random() * 0.4; }
+        l.intensity += (want - l.intensity) * Math.min(1, dt * 8);
+      }
+      floorG.children.forEach((o) => { if (o.userData.blink) o.visible = tt % 1.4 < 0.15; });
+      for (const v of items) { v.g.visible = v.it.on; if (v.it.on) { v.g.rotation.y += dt * 1.5; v.g.position.y = 0.14 + Math.sin(tt * 2 + v.it.id) * 0.03; } }
+      for (const L of lockers) { L.open += (L.want - L.open) * Math.min(1, dt * 7); if (L.shut > 0) { L.shut -= dt; if (L.shut <= 0) L.want = 0; } for (const d of L.doors) d.piv.rotation.y = d.s * L.open * 1.6; }
+      // garrafas/sinalizadores voando e sinalizadores no chão
+      const m = mats();
+      for (const o of T.throws) { let f = flyers.find((q) => q.o === o); if (!f) { const mm = new THREE.Mesh(o.kind === "garrafa" ? new THREE.CylinderGeometry(0.05, 0.06, 0.26, 8) : new THREE.CylinderGeometry(0.035, 0.035, 0.3, 8), o.kind === "garrafa" ? lam({ color: 0x2f6a3a }) : m.vendR); root.add(mm); f = { o, m: mm }; flyers.push(f); } f.m.position.set(o.x, o.h, -o.y); f.m.rotation.x += dt * 12; }
+      flyers = flyers.filter((f) => { if (T.throws.includes(f.o)) return true; root.remove(f.m); return false; });
+      for (const fl of T.flares) { let v = flareV.find((q) => q.f === fl); if (!v) { const g = new THREE.Group(); g.position.set(fl.x, 0.05, -fl.y); const stick = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 0.3, 8), m.vendR); stick.rotation.z = Math.PI / 2; g.add(stick); const sp = new THREE.Sprite(m.gl.red); sp.scale.setScalar(2.2); g.add(sp); root.add(g); v = { f: fl, g, sp }; flareV.push(v); } v.sp.scale.setScalar(1.8 + Math.random() * 0.8); }
+      flareV = flareV.filter((v) => { if (T.flares.includes(v.f)) return true; root.remove(v.g); return false; });
+      // helicóptero: rotor parado; na fuga ele gira, sobe e a câmera acompanha de fora
+      if (heli) {
+        if (T.won) {
+          const k = T.winT || 0; heli.setSpin(Math.min(1.6, k * 0.5)); heli.update(dt);
+          const up = Math.max(0, k - 2.6); heli.group.position.y = up * up * 0.9; heli.group.rotation.z = Math.sin(k * 1.3) * 0.03 * Math.min(1, up);
+          const hx = P.heli.x, hy = P.heli.y, a = -P.heli.yaw + 0.9 + k * 0.08, r = 14 + k * 1.2;
+          camera.position.set(hx + Math.sin(a) * r, 3 + k * 0.9, -hy + Math.cos(a) * r); camera.lookAt(hx, 1.8 + heli.group.position.y * 0.8, -hy);
+        } else { heli.setSpin(0); heli.update(dt); }
+      }
+    }
+    function lockerEv(i, open) { const L = lockers[i]; if (!L) return; L.want = 1; L.shut = open ? 0.6 : 0.45; }
+    function setVisible(v) { root.visible = v; }
+    return { build, frame, setVisible, ensureLights, lockerEv, get root() { return root; }, get lights() { return lights; } };
+  })();
+
+  // ======================================================================
+  //  MODO PRÉDIO: HUD, sons, menu (escolha do nível) e tela de vitória
+  // ======================================================================
+  const TowerUI = (function () {
+    const ENV_IN = { fog: 0x040508, dens: 0.085, hemi: [0x46506a, 0x0c0a08, 0.32], moon: [0x8fa4d8, 0.0], lamp: 1 };
+    const ENV_TOP = { fog: 0x0b1222, dens: 0.016, hemi: [0x5a6aa0, 0x15110e, 0.55], moon: [0xa8b8e8, 0.55], lamp: 1 };
+    const KN = { bateria: "BATERIA", bandagem: "BANDAGEM", kit: "KIT MÉDICO", garrafa: "GARRAFA", sinalizador: "SINALIZADOR" };
+    let last = "", lockEl = null;
+    const on = () => !!(game && game.gm === "predio" && game.tw);
+    function env() { return game && game.tw && game.tw.P && game.tw.P.roof ? ENV_TOP : ENV_IN; }
+    function start() {
+      if (!on()) return;
+      TowerView.setVisible(true); applyEnv(); last = "";
+      torchEnabled = true;
+    }
+    // HUD: andar, bateria da lanterna, mochila, o que dá para fazer aqui
+    function hud(g) {
+      const T = g.tw, P = T.P, n = TOWER.LEVELS[T.level].floors;
+      setText(el.wave, "wave", P.roof ? "TERRAÇO" : "ANDAR " + (T.floor + 1) + "/" + n);
+      const box = $("twHud"); if (box.hidden) box.hidden = false;
+      const bat = Math.round(T.bat), torchK = torchEnabled && T.bat > 0;
+      const act = T.act ? (T.act.k === "hide" ? "ESCONDER NO ARMÁRIO" : T.act.k === "leave" ? "SAIR DO ARMÁRIO" : T.act.k === "stairs" ? "SUBIR A ESCADA" : "PEGAR O ELEVADOR") : "";
+      const key = bat + "|" + JSON.stringify(T.bag) + "|" + T.throwK + "|" + act + "|" + torchK + "|" + KB.use;
+      if (key !== last) {
+        last = key;
+        $("twBat").style.transform = "scaleX(" + (bat / 100).toFixed(3) + ")"; $("twBat").style.background = bat > 30 ? "#ffd23a" : bat > 10 ? "#ff9f43" : "#ff3b30";
+        $("twBatN").textContent = bat + "%" + (T.bag.bateria ? " · +" + T.bag.bateria : "");
+        $("twBag").innerHTML = ["bandagem", "kit", "garrafa", "sinalizador"].map((k) => '<span class="' + (T.bag[k] ? "" : "z") + (T.throwK === k ? " sel" : "") + '">' + KN[k] + " ×" + T.bag[k] + "</span>").join("");
+        $("twKeys").textContent = keyName(KB.potHeal) + " CURA · " + keyName(KB.potFire) + " JOGA · " + keyName(KB.potCycle) + " TROCA";
+        const pr = $("twAct"); pr.hidden = !act; if (act) pr.textContent = (touchOn() ? "" : "[" + keyName(KB.use) + "] ") + act;
+        const ub = touchEl.querySelector('[data-act="use"]'); if (ub) ub.hidden = !act;
+        const pf = touchEl.querySelector('[data-act="potfire"]'), ph = touchEl.querySelector('[data-act="potheal"]');
+        if (pf) { pf.hidden = false; pf.firstChild.nodeValue = "JOGAR"; pf.querySelector("i").textContent = String(T.bag[T.throwK] || 0); }
+        if (ph) { ph.hidden = false; ph.firstChild.nodeValue = "CURA"; ph.querySelector("i").textContent = String(T.bag.bandagem + T.bag.kit); }
+      }
+      $("hud").classList.toggle("twcine", !!T.won);
+      if (!lockEl) lockEl = $("twLocker");
+      lockEl.hidden = T.hide === null;
+    }
+    function off() { $("hud").classList.remove("twcine"); $("twHud").hidden = true; $("twLocker").hidden = true; const ub = touchEl.querySelector('[data-act="use"]'); if (ub) ub.hidden = true; const pf = touchEl.querySelector('[data-act="potfire"]'), ph = touchEl.querySelector('[data-act="potheal"]'); if (pf) { pf.firstChild.nodeValue = "FOGO"; pf.hidden = true; } if (ph) { ph.firstChild.nodeValue = "CURA"; ph.hidden = true; } hudLast.pots = "x"; last = ""; }
+    // eventos do jogo -> sons e avisos
+    function event(ev) {
+      const g = game;
+      switch (ev[0]) {
+        case "tw_floor": last = ""; applyEnv(); TowerView.build(g.tw.P); Snd.play("step", 0.6, 0.7, 0, 0.3); break;
+        case "tw_stairs": Snd.play("step", 0.9, 0.8, 0, 0.4); setTimeout(() => Snd.play("step", 0.8, 0.85, 0, 0.4), 160); break;
+        case "tw_elev": Snd.play("buy", 0.6, 0.6, 0, 0.5); feedLine("ELEVADOR: SUBIU 1 ANDAR", false); break;
+        case "tw_pick": Snd.play("pickup", 0.7, ev[1] === "bateria" ? 1.3 : 1, 0, 0.1); feedLine("+1 " + KN[ev[1]], false); break;
+        case "tw_full": Snd.play("deny", 0.5); feedLine("MOCHILA CHEIA", false); break;
+        case "tw_battery": Snd.play("switch", 0.7, 1.3, 0, 0.1); feedLine("BATERIA TROCADA", false); break;
+        case "tw_heal": Snd.play("revive", 0.5, 1.4, 0, 0.1); feedLine(ev[1] === "kit" ? "KIT MÉDICO +60" : "BANDAGEM +25", false); break;
+        case "tw_cycle": Snd.play("switch", 0.5, 1.1, 0, 0.05); feedLine("JOGAR: " + KN[ev[1]], false); break;
+        case "tw_throw": Snd.play("melee", 0.5, 1.3, 0, 0.05); break;
+        case "tw_glass": spatial("hit", ev[1], ev[2], 1, 1.8, 0.4, 40); spatial("casing", ev[1], ev[2], 1, 0.7, 0.4, 40); break;
+        case "tw_flare": spatial("burn", ev[1], ev[2], 0.7, 1.2, 0.3, 30); break;
+        case "tw_locker": TowerView.lockerEv(ev[1], ev[2]); Snd.play("bolt", 0.5, 0.6, 0, 0.2); break;
+        case "tw_open": { TowerView.lockerEv(ev[1], 1); const l = g.tw.P.lockers[ev[1]]; if (l) spatial("bolt", l.x, l.y, 0.8, 0.55, 0.3, 25); break; }
+        case "tw_caught": Snd.play("scream", 0.8, 1, 0, 0.2); feedLine("ACHARAM VOCÊ!", true); break;
+        case "tw_spot": { const z = g.zombies.find((q) => q.id === ev[1]); if (z) spatial("groan", z.x, z.y, 0.9, 1.25, 0.3, 26); break; }
+        case "tw_ambush": { const z = g.zombies.find((q) => q.id === ev[1]); if (z) spatial("roar", z.x, z.y, 1, 1.2, 0.2, 20); buzz(60); break; }
+        case "tw_hear": break;
+        case "tw_win": Snd.play("horn", 0.7, 1, 0, 0.4); try { document.exitPointerLock(); } catch (e) {} break;
+        case "tw_end": break;
+      }
+    }
+    // menu: modo de jogo e nível do prédio
+    function renderMenu() {
+      const lv = Math.min(S.twLevel | 0, S.twUnlocked | 0);
+      $("optMode").innerHTML = optBtn("mode", "arena", "Arena", "Ondas de zumbis, chefes e recordes.", S.mode !== "predio") + optBtn("mode", "predio", "Prédio", "Suba andar por andar no escuro, só com a lanterna, até o helicóptero no terraço.", S.mode === "predio");
+      const box = $("optTw"); box.parentNode.hidden = S.mode !== "predio";
+      box.innerHTML = TOWER.LEVELS.map((L, i) => {
+        const lock = i > (S.twUnlocked | 0), sub = lock ? "Bloqueado · vença o nível " + i : L.floors + " andares · " + TOWER.AI[L.ai].name;
+        return lock ? '<button type="button" class="opt" disabled><b>' + L.name + "</b><span>" + sub + "</span></button>" : optBtn("twLevel", String(i), L.name, sub, lv === i);
+      }).join("");
+    }
+    function won() { return on() && game.tw.won; }
+    function finish(g) {                                                   // fim da partida: libera o próximo nível
+      if (!g.tw) return;
+      if (g.tw.won) { S.twUnlocked = Math.max(S.twUnlocked | 0, Math.min(4, g.tw.level + 1)); saveSettings(); }
+    }
+    return { start, hud, off, event, renderMenu, env, won, finish, on };
+  })();
   // ======================================================================
   //  ZUMBI (visual): corpo + rosto + cabelo + ferimentos. Tudo sorteado quando o zumbi nasce:
   //  cada um pode ou não ter partes faltando, sangue, ossos à mostra e feridas — nunca o mesmo padrão.
@@ -9559,6 +10828,7 @@ const Logic = (function () {
     $("pname").value = S.name;
     $("optDiff").innerHTML = Object.keys(DIFF).map((k) => optBtn("diff", k, DIFF[k].name, DIFF[k].sub, S.diff === k)).join("");
     $("optEnv").innerHTML = Object.keys(ENVS).map((k) => optBtn("env", k, ENVS[k].n, ENVS[k].sub, S.env === k)).join("");
+    TowerUI.renderMenu();
   }
   // gráfico: dano de um tiro (todos os projéteis acertando) conforme a distância
   function renderWeaponRange(c, st) {
@@ -9710,7 +10980,7 @@ const Logic = (function () {
       const k = t.getAttribute("data-set"), v = t.getAttribute("data-val");
       S[k] = v;
       applySetting(k);
-      if (k === "env" || k === "diff") renderMission();
+      if (k === "env" || k === "diff" || k === "mode" || k === "twLevel") renderMission();
       else if (k === "camo" || k === "crossStyle" || k === "crossColor") renderCustom();
       else renderSettings();
     }
@@ -11058,7 +12328,7 @@ const Logic = (function () {
   }
   document.addEventListener("pointerlockchange", () => {
     if (document.pointerLockElement === canvas) lockHeld = true;
-    else if (lockHeld) { lockHeld = false; if (state === "run" && !Rev.open() && !Gore.busy()) pause(); }
+    else if (lockHeld) { lockHeld = false; if (state === "run" && !Rev.open() && !Gore.busy() && !TowerUI.won()) pause(); }
   });
   let runId = 0;
   function startGame() {
@@ -11074,13 +12344,15 @@ const Logic = (function () {
     const ro = runOpts(); runUsed = ro.used; burnFlash = 0;
     game = new Game({ loadout: loadoutSel(), diff: Coop.inRoom() && !Coop.isHost() ? Coop.st.diff : S.diff, perks: ro.perks, melee: ro.melee });
     clearAllies(); Coop.attach(game); Coop.sendInfo(ro);
-    useMap(game.gm === "infect" ? "italia" : game.diff.big ? "grande" : "arena");   // Infecção: vila italiana; Extremo/Apocalipse: mapa grande; resto: arena
+    const twMode = S.mode === "predio" && !Coop.inRoom() && game.gm !== "infect";
+    useMap(game.gm === "infect" ? "italia" : twMode ? "predio" : game.diff.big ? "grande" : "arena");   // Infecção: vila italiana; Prédio: andares; Extremo/Apocalipse: mapa grande; resto: arena
+    if (twMode) { game.towerStart(Math.min(S.twLevel | 0, S.twUnlocked | 0), 0); TowerUI.start(); } else TowerUI.off();
     setMeleeModel(wallet.melee); updateWho();
     vmKey = ""; setViewGun(game.w());
     adsT = 0; sprintBlend = 0; hfov = S.fov; dmgT = 0; $("feed").innerHTML = "";
     for (const k of ro.used) feedLine(k === "revive" ? "SEGUNDA CHANCE ATIVA" : k === "ammoPack" ? "MOCHILA DUPLA ATIVA" : "COLETE EXTRA ATIVO", false);
     $("menu").hidden = true; $("hud").hidden = false; $("pause").hidden = true; $("dead").hidden = true;
-    $("hud").querySelector(".radar-box").hidden = !S.radar;
+    $("hud").querySelector(".radar-box").hidden = !S.radar || twMode;          // prédio: sem radar (o susto é parte do jogo)
     applyCrosshair();
     state = "run"; applyEnv();
     warmVM(game.gm);                                                // faca/poções prontas: não trava na 1ª vez que puxa
@@ -11103,7 +12375,7 @@ const Logic = (function () {
   }
   function toMenu() {
     try { document.exitPointerLock(); } catch (e) {}
-    canvas.style.cursor = ""; state = "menu"; Coop.onToMenu(); payRun(game, runUsed); useMap("arena"); clearViews(); resetFx(); menuGame = makeMenuGame(); hfov = 70;
+    canvas.style.cursor = ""; state = "menu"; Coop.onToMenu(); payRun(game, runUsed); TowerUI.off(); useMap("arena"); clearViews(); resetFx(); menuGame = makeMenuGame(); hfov = 70;
     $("menu").hidden = false; $("hud").hidden = true; $("pause").hidden = true; $("dead").hidden = true; $("scope").style.opacity = "0";
     $("view").classList.remove("low"); $("fx-low").style.opacity = "0"; $("fx-hurt").style.opacity = "0";
     applyEnv(); renderAll(); showTab(ui.tab); resetTouch(); applyTouchUI();
@@ -11114,10 +12386,11 @@ const Logic = (function () {
     try { document.exitPointerLock(); } catch (e) {}
     const g = game, acc = g.shots ? Math.round((100 * g.hits) / g.shots) : 0;
     {                                                            // Infecção: o título mostra quem venceu
-      const inf = g.gm === "infect" && !!g.inf, w = inf ? g.inf.win : "", hw = w === "h";
-      $("deadKick").textContent = inf ? "Fim da Infecção" : "Fim de jogo";
-      $("deadTitle").textContent = inf ? (w === "h" ? "HUMANOS VENCERAM" : w === "z" ? "ZUMBIS VENCERAM" : "PARTIDA ENCERRADA") : "Você morreu";
+      const inf = g.gm === "infect" && !!g.inf, w = inf ? g.inf.win : "", tw = g.gm === "predio" && g.tw, hw = w === "h" || (tw && tw.won);
+      $("deadKick").textContent = inf ? "Fim da Infecção" : tw ? "Modo Prédio · " + TOWER.LEVELS[tw.level].name : "Fim de jogo";
+      $("deadTitle").textContent = inf ? (w === "h" ? "HUMANOS VENCERAM" : w === "z" ? "ZUMBIS VENCERAM" : "PARTIDA ENCERRADA") : tw && tw.won ? "VOCÊ ESCAPOU!" : "Você morreu";
       $("deadTitle").classList.toggle("hwin", !!hw);
+      if (tw) TowerUI.finish(g);
     }
     $("fWave").textContent = g.wave; $("fScore").textContent = g.score; $("fKills").textContent = g.kills;
     $("fHead").textContent = g.headshots; $("fAcc").textContent = acc + "%"; $("fTime").textContent = fmtTime(g.time);
@@ -11135,8 +12408,8 @@ const Logic = (function () {
   $("btnToMenu2").addEventListener("click", toMenu);
 
   // ---------------- teclas configuráveis (Controles > Teclado) ----------------
-  const BIND_DEF = { fwd: "KeyW", back: "KeyS", left: "KeyA", right: "KeyD", sprint: "ShiftLeft", crouch: "KeyC", reload: "KeyR", slot1: "Digit1", slot2: "Digit2", swap: "KeyQ", melee: "Digit3", mode: "KeyB", torch: "KeyF", mute: "KeyM", pause: "KeyP", potFire: "KeyG", potHeal: "KeyH", potCycle: "Digit4" };
-  const BIND_LABEL = { fwd: "Andar para frente", back: "Andar para trás", left: "Andar para a esquerda", right: "Andar para a direita", sprint: "Correr / prender a respiração", crouch: "Agachar",
+  const BIND_DEF = { use: "KeyE", fwd: "KeyW", back: "KeyS", left: "KeyA", right: "KeyD", sprint: "ShiftLeft", crouch: "KeyC", reload: "KeyR", slot1: "Digit1", slot2: "Digit2", swap: "KeyQ", melee: "Digit3", mode: "KeyB", torch: "KeyF", mute: "KeyM", pause: "KeyP", potFire: "KeyG", potHeal: "KeyH", potCycle: "Digit4" };
+  const BIND_LABEL = { use: "Usar (armário, escada, elevador · Prédio)", fwd: "Andar para frente", back: "Andar para trás", left: "Andar para a esquerda", right: "Andar para a direita", sprint: "Correr / prender a respiração", crouch: "Agachar",
     reload: "Recarregar", slot1: "Arma 1", slot2: "Arma 2", swap: "Trocar de arma", melee: "Pegar / guardar a faca", mode: "Modo de tiro (auto / semi / rajada)", torch: "Lanterna", mute: "Som liga/desliga", pause: "Pausar (Esc sempre pausa)", potFire: "Poção de fogo (Infecção)", potHeal: "Poção de cura (Infecção)", potCycle: "Alternar poções (Infecção)" };
   function loadBinds() { let b = {}; try { b = JSON.parse(S.binds || "{}") || {}; } catch (e) {} const o = Object.assign({}, BIND_DEF); for (const k in o) if (typeof b[k] === "string" && b[k]) o[k] = b[k]; return o; }
   let KB = loadBinds(), bindWait = null;
@@ -11194,6 +12467,10 @@ const Logic = (function () {
       else if (c === KB.melee) { if (PotVM.busy()) PotVM.stop(); game.toggleKnife(); }
       else if (c === KB.mode) game.toggleFireMode();
       else if (c === KB.torch) { torchEnabled = !torchEnabled; }
+      else if (game.gm === "predio" && c === KB.use) game.towerUse();
+      else if (game.gm === "predio" && c === KB.potCycle) game.towerCycle();
+      else if (game.gm === "predio" && c === KB.potFire) { if (!game.towerThrow()) { feedLine("NADA PARA JOGAR", false); Snd.play("deny", 0.5); } }
+      else if (game.gm === "predio" && c === KB.potHeal) { if (!game.towerHeal()) { feedLine(game.hp >= game.maxHp ? "VIDA CHEIA" : "SEM CURATIVOS NA MOCHILA", false); Snd.play("deny", 0.5); } }
       else if (c === KB.potCycle) cyclePot();
       else if (c === KB.potFire) throwPot("fire");
       else if (c === KB.potHeal) throwPot("heal");
@@ -11346,6 +12623,9 @@ const Logic = (function () {
     else if (act === "crouch") TS.crouch = !TS.crouch;
     else if (act === "mode") game.toggleFireMode();
     else if (act === "torch") torchEnabled = !torchEnabled;
+    else if (act === "use" && game.gm === "predio") game.towerUse();
+    else if (act === "potfire" && game.gm === "predio") { if (!game.towerThrow()) Snd.play("deny", 0.5); }
+    else if (act === "potheal" && game.gm === "predio") { if (!game.towerHeal()) Snd.play("deny", 0.5); }
     else if (act === "potfire") throwPot("fire");
     else if (act === "potheal") throwPot("heal");
     else if (act === "autofire") { S.autoFire = !S.autoFire; saveSettings(); feedLine(S.autoFire ? "TIRO AUTOMÁTICO LIGADO" : "TIRO AUTOMÁTICO DESLIGADO", false); }   // só existe no HUD de toque
@@ -11543,7 +12823,9 @@ const Logic = (function () {
     const g = game, c = g.w().cfg;
     setViewGun(g.w());
     const zm = g.team === "z";
-    gunRoot.visible = !zm && !PotVM.busy() && !g.knifeOut; torch.visible = torchEnabled;
+    const twK = g.gm === "predio" && g.tw;
+    if (twK) { g.tw.torch = torchEnabled && g.tw.bat > 0; if (g.tw.bat <= 0) torchEnabled = false; }
+    gunRoot.visible = !zm && !PotVM.busy() && !g.knifeOut && !(twK && (g.tw.hide !== null || g.tw.won)); torch.visible = twK ? g.tw.torch && !g.tw.won : torchEnabled;
     $("view").classList.toggle("zmode", zm); $("hud").classList.toggle("zhud", zm);
     const bobh = S.bob && g.moving ? Math.abs(Math.sin(g.bob)) * (g.sprinting ? 0.05 : g.runShoot ? 0.04 : 0.03) : 0;
     const sh = g.hurtT * 0.05 + g.shake * 0.03, sway = g.aimSway();
@@ -11559,6 +12841,7 @@ const Logic = (function () {
     syncZombies(g); Gore.update(dt); if (Gore.busy()) Gore.camera(camera, dt);
     syncPickups(g); syncCracks(g); updateShocks(dt); syncAllies(g, dt); syncBoosts(g); PotFX.sync(g, g.time);
     fxBlood.update(dt); fxSpark.update(dt); fxBrass.update(dt); fxShell.update(dt); fxSmoke.update(dt); fxTrace.update(dt); updatePools(dt); updateDropped(dt);
+    if (twK) TowerView.frame(dt);
   }
 
   // ---------------- eventos do jogo -> som e efeitos ----------------
@@ -11585,6 +12868,7 @@ const Logic = (function () {
   function processEvents() {
     for (const ev of game.popEvents()) {
       if (ev.drop) continue;
+      if (typeof ev[0] === "string" && ev[0].indexOf("tw_") === 0) { TowerUI.event(ev); continue; }
       switch (ev[0]) {
         case "rshot": {
           const wid = ev[2], o = game.others.find((q) => q.id === ev[1]);
@@ -11803,8 +13087,8 @@ const Logic = (function () {
   const setText = (node, key, val) => { if (hudLast[key] !== val) { hudLast[key] = val; node.textContent = val; } };
   function updateHud(dt) {
     const g = game, s = g.w(), c = s.cfg;
-    Coop.hud(g); potsHud(g);
-    setText(el.wave, "wave", "ONDA " + Math.max(1, g.wave));
+    Coop.hud(g); if (g.gm === "predio" && g.tw) TowerUI.hud(g); else potsHud(g);
+    if (!(g.gm === "predio" && g.tw)) setText(el.wave, "wave", "ONDA " + Math.max(1, g.wave));
     setText(el.zleft, "zleft", String(g.aliveZombies().length + g.toSpawn));
     setText(el.score, "score", String(g.score)); setText(el.kills, "kills", String(g.kills));
     const [hpV, hpM] = g.coop ? g.lifeOf(g.coop.id, g) : [g.hp, g.maxHp];     // infectado: mostra a vida do zumbi
@@ -11906,6 +13190,7 @@ const Logic = (function () {
       else { game.update(dt, lastInp); Coop.afterUpdate(game, dt); processEvents(); syncGame(dt); updateHud(dt); updateWeather(dt); if (Rev.open()) Rev.draw(); }
       if (Gore.busy() || game.reviveWait) { /* finalização ou escolha no mapa: a tela de morte espera */ }
       else if (!game.alive && Coop.ended()) onDeath();
+      else if (game.gm === "predio" && game.over) onDeath();
       else if (Coop.active() && Coop.ended()) onDeath();
     } else if (state === "pause" && Coop.active()) {
       game.update(dt, {}); Coop.afterUpdate(game, dt); processEvents(); syncGame(dt); updateHud(dt); updateWeather(dt);

@@ -1,5 +1,13 @@
 # Novedades — Arena Zumbi
 
+## Nuevo modo Edificio (16/11/2026)
+- Nuevo modo de juego: Edificio. Elígelo en Misión > Modo de juego. Son 5 niveles, con edificios de 7, 9, 13, 18 y 20 pisos de 72 × 72 m, llenos de salas, pasillos y puertas.
+- Oscuridad total: solo tu linterna ilumina. La batería se acaba; encuentra baterías por el camino (el cambio es automático).
+- Mochila con vendas, botiquines, botellas y bengalas. H cura, G lanza la botella o la bengala para distraer a los zombis, 4 cambia lo que lanzas.
+- Armarios grandes: pulsa E para esconderte. Agachado casi no haces ruido; corriendo y disparando, todos te oyen.
+- Zombis más pequeños y más listos en cada nivel: deambulan, luego oyen ruido, te persiguen, buscan en los armarios y, en el último nivel, se esconden y te cazan.
+- Encuentra la escalera de cada piso (a veces hay un ascensor que sube 1 piso). En la azotea, corre hasta el helicóptero de rescate para escapar. Ganar un nivel desbloquea el siguiente.
+
 ## Mapa grande, zombis más listos y jefes por dificultad (15/11/2026)
 - Extremo y Apocalipsis ahora usan un mapa grande, con unas 3 veces el área de la arena, edificios en el medio y más contenedores, coches y cajas. Los zombis aparecen a 18–30 m de ti, no junto al muro.
 - Zombis más listos en cada dificultad: rodean contenedores, coches y edificios en lugar de quedarse atascados. En Soldado solo algunos lo hacen; desde Pesadilla, todos. En Extremo y Apocalipsis además te rodean por distintos lados.

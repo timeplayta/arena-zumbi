@@ -1,5 +1,13 @@
 # Novidades — Arena Zumbi
 
+## Novo Modo Prédio (16/11/2026)
+- Novo modo de jogo: Prédio. Escolha em Missão > Modo de jogo. São 5 níveis, com prédios de 7, 9, 13, 18 e 20 andares de 72 × 72 m, cheios de salas, corredores e portas.
+- Escuro total: só a sua lanterna ilumina. A bateria acaba; ache baterias pelo caminho (a troca é automática).
+- Mochila com bandagens, kits médicos, garrafas e sinalizadores. H cura, G joga a garrafa ou o sinalizador para distrair os zumbis, 4 troca o que jogar.
+- Armários grandes: aperte E para se esconder. Agachado você quase não faz barulho; correndo e atirando, todo mundo escuta.
+- Zumbis menores e mais espertos a cada nível: andam à toa, depois escutam barulho, correm atrás de você, procuram nos armários e, no último nível, se escondem e caçam você.
+- Ache a escada de cada andar (às vezes há um elevador que sobe 1 andar). No terraço, corra até o helicóptero de resgate para escapar. Vencer um nível libera o próximo.
+
 ## Mapa grande, zumbis mais espertos e chefes por dificuldade (15/11/2026)
 - Extremo e Apocalipse agora usam um mapa grande, com cerca de 3 vezes a área da arena, prédios no meio, mais containers, carros e caixotes. Os zumbis nascem a 18–30 m de você, não lá no muro.
 - Zumbis mais espertos a cada dificuldade: eles contornam containers, carros e prédios em vez de travar. No Soldado só alguns fazem isso; do Pesadelo em diante, todos. No Extremo e no Apocalipse eles também cercam você por lados diferentes.
