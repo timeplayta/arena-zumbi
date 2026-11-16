@@ -1001,7 +1001,7 @@
   function updateHud(dt) {
     const g = game, s = g.w(), c = s.cfg;
     Coop.hud(g); if (g.gm === "predio" && g.tw) TowerUI.hud(g); else potsHud(g);
-    setText(el.wave, "wave", "ONDA " + Math.max(1, g.wave));
+    if (!(g.gm === "predio" && g.tw)) setText(el.wave, "wave", "ONDA " + Math.max(1, g.wave));
     setText(el.zleft, "zleft", String(g.aliveZombies().length + g.toSpawn));
     setText(el.score, "score", String(g.score)); setText(el.kills, "kills", String(g.kills));
     const [hpV, hpM] = g.coop ? g.lifeOf(g.coop.id, g) : [g.hp, g.maxHp];     // infectado: mostra a vida do zumbi
