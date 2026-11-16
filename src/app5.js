@@ -257,7 +257,7 @@
     const ro = runOpts(); runUsed = ro.used; burnFlash = 0;
     game = new Game({ loadout: loadoutSel(), diff: Coop.inRoom() && !Coop.isHost() ? Coop.st.diff : S.diff, perks: ro.perks, melee: ro.melee });
     clearAllies(); Coop.attach(game); Coop.sendInfo(ro);
-    useMap(game.gm === "infect" ? "italia" : "arena");                            // Infecção: vila italiana; resto: arena
+    useMap(game.gm === "infect" ? "italia" : game.diff.big ? "grande" : "arena");   // Infecção: vila italiana; Extremo/Apocalipse: mapa grande; resto: arena
     setMeleeModel(wallet.melee); updateWho();
     vmKey = ""; setViewGun(game.w());
     adsT = 0; sprintBlend = 0; hfov = S.fov; dmgT = 0; $("feed").innerHTML = "";
@@ -1181,6 +1181,7 @@
       ["Preparando a faca e as poções", () => { PotFX.ensureLights(); KnifeVM.prebuild(); PotVM.prebuild(); }],
       ["Montando a vila italiana", () => { ensureItalia(); }],
       ["Compilando os gráficos", () => { useMap("italia"); warmVM("infect"); renderer.render(scene, camera); }],
+      ["Montando o mapa grande", () => { useMap("grande"); renderer.render(scene, camera); }],
       ["Compilando os gráficos", () => { useMap("arena"); warmVM("arena"); renderer.render(scene, camera); }],
     ];
     const wait = () => new Promise((r) => setTimeout(r, 40));

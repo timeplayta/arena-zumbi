@@ -819,7 +819,7 @@ table.sc td:first-child { font-family: var(--font-display); font-size: 22px; col
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
-const GAME_VERSION = 202611150231, GAME_NOTES = {"t": "Lenhador gigante e machado enorme (14/11/2026)", "b": ["O Lenhador ficou muito maior: mais de 5,5 m de altura e bem mais largo.", "O machado agora é gigante: cabo longo e grosso, lâmina enorme. O alcance dos golpes cresceu junto.", "As mãos fecham no cabo e seguram o machado de verdade, inclusive com ele cravado no chão.", "Quando erra o golpe de cima, a lâmina afunda até a metade no chão.", "Finalizações com a câmera ajustada para mostrar o gigante e a vítima."], "en": {"t": "Giant Lumberjack and huge axe (11/14/2026)", "b": ["The Lumberjack is much bigger: over 5.5 m tall and much wider.", "The axe is now giant: a long, thick handle and a huge blade. The reach of his blows grew too.", "His hands close around the handle and really hold the axe, even when it is stuck in the ground.", "When he misses the overhead chop, the blade sinks halfway into the ground.", "Finishers with the camera adjusted to show the giant and the victim."]}, "es": {"t": "Leñador gigante y hacha enorme (14/11/2026)", "b": ["El Leñador es mucho más grande: más de 5,5 m de alto y mucho más ancho.", "El hacha ahora es gigante: mango largo y grueso, hoja enorme. El alcance de sus golpes también creció.", "Sus manos se cierran en el mango y sujetan el hacha de verdad, incluso clavada en el suelo.", "Cuando falla el golpe desde arriba, la hoja se hunde hasta la mitad en el suelo.", "Remates con la cámara ajustada para mostrar al gigante y a la víctima."]}};
+const GAME_VERSION = 202611160030, GAME_NOTES = {"t": "Mapa grande, zumbis mais espertos e chefes por dificuldade (15/11/2026)", "b": ["Extremo e Apocalipse agora usam um mapa grande, com cerca de 3 vezes a área da arena, prédios no meio, mais containers, carros e caixotes. Os zumbis nascem a 18–30 m de você, não lá no muro.", "Zumbis mais espertos a cada dificuldade: eles contornam containers, carros e prédios em vez de travar. No Soldado só alguns fazem isso; do Pesadelo em diante, todos. No Extremo e no Apocalipse eles também cercam você por lados diferentes.", "Mais variedade de zumbis: corredores e brutamontes aparecem mais cedo e em maior número conforme a dificuldade, e o Pesadelo ficou com menos zumbis fáceis.", "Chefes chegando aos poucos em cada dificuldade: Gigante a partir do Recruta, Colosso Blindado a partir do Soldado, Mestre da Katana a partir do Veterano. O Espectro e o Lenhador ficam só no Apocalipse, nas ondas mais avançadas.", "O modo Infecção não mudou."], "en": {"t": "Big map, smarter zombies and bosses by difficulty (11/15/2026)", "b": ["Extreme and Apocalypse now use a big map, about 3 times the arena's area, with buildings in the middle and more containers, cars and crates. Zombies spawn 18–30 m from you, not at the wall.", "Smarter zombies at each difficulty: they go around containers, cars and buildings instead of getting stuck. On Soldier only some do it; from Nightmare on, all of them. On Extreme and Apocalypse they also surround you from different sides.", "More zombie variety: runners and brutes show up earlier and in greater numbers as the difficulty rises, and Nightmare has fewer easy zombies.", "Bosses arrive gradually on each difficulty: Giant from Recruit, Armored Colossus from Soldier, Katana Master from Veteran. The Specter and the Lumberjack are only on Apocalypse, in the later waves.", "Infection mode is unchanged."]}, "es": {"t": "Mapa grande, zombis más listos y jefes por dificultad (15/11/2026)", "b": ["Extremo y Apocalipsis ahora usan un mapa grande, con unas 3 veces el área de la arena, edificios en el medio y más contenedores, coches y cajas. Los zombis aparecen a 18–30 m de ti, no junto al muro.", "Zombis más listos en cada dificultad: rodean contenedores, coches y edificios en lugar de quedarse atascados. En Soldado solo algunos lo hacen; desde Pesadilla, todos. En Extremo y Apocalipsis además te rodean por distintos lados.", "Más variedad de zombis: los corredores y los brutos aparecen antes y en mayor número según la dificultad, y Pesadilla tiene menos zombis fáciles.", "Los jefes llegan poco a poco en cada dificultad: Gigante desde Recluta, Coloso Blindado desde Soldado, Maestro de la Katana desde Veterano. El Espectro y el Leñador quedan solo en Apocalipsis, en las oleadas más avanzadas.", "El modo Infección no cambió."]}};
   // ===================== IDIOMAS (inglês, espanhol, português) =====================
   // O jogo é escrito em português. Este tradutor troca, na tela, todo texto que aparece (menus, HUD, avisos, mensagens do servidor).
   // REGRA: todo texto novo do jogo precisa de uma entrada aqui (D = frase exata, P = frase com números/nomes). Veja I18N.md.
@@ -850,7 +850,12 @@ const GAME_VERSION = 202611150231, GAME_NOTES = {"t": "Lenhador gigante e machad
       "Jogar": ["Play", "Jugar"], "Jogar de novo": ["Play again", "Jugar de nuevo"],
       // ---------- dificuldades e ambientes ----------
       "Recruta": ["Recruit", "Recluta"], "Zumbis mais fracos e lentos, munição de sobra.": ["Weaker, slower zombies and plenty of ammo.", "Zombis más débiles y lentos, munición de sobra."],
-      "Soldado": ["Soldier", "Soldado"], "A experiência padrão da arena.": ["The standard arena experience.", "La experiencia estándar de la arena."],
+      "Soldado": ["Soldier", "Soldado"], "A experiência padrão da arena.": ["The standard arena experience.", "La experiencia estándar de la arena."], "A experiência padrão da arena, com um gigante de vez em quando.": ["The standard arena experience, with a giant now and then.", "La experiencia estándar de la arena, con un gigante de vez en cuando."],
+      "Zumbis com 60% mais vida e mais rápidos. Gigantes, o Colosso Blindado e o Mestre da Katana nas ondas avançadas.": ["Zombies with 60% more health and faster. Giants, the Armored Colossus and the Katana Master in later waves.", "Zombis con 60% más vida y más rápidos. Gigantes, el Coloso Blindado y el Maestro de la Katana en las oleadas avanzadas."],
+      "Zumbis com 140% mais vida, hordas cheias de corredores e brutamontes, gigantes e chefes desde cedo.": ["Zombies with 140% more health, hordes full of runners and brutes, giants and bosses early on.", "Zombis con 140% más vida, hordas llenas de corredores y brutos, gigantes y jefes desde temprano."],
+      "Mapa grande com prédios, zumbis que contornam obstáculos e cercam você, Colosso Blindado e Mestre da Katana. Quase impossível.": ["Big map with buildings, zombies that go around obstacles and surround you, Armored Colossus and Katana Master. Almost impossible.", "Mapa grande con edificios, zombis que rodean los obstáculos y te cercan, Coloso Blindado y Maestro de la Katana. Casi imposible."],
+      "O fim. Mapa grande, os zumbis mais espertos e todos os chefes, até o Espectro e o Lenhador, chegando aos poucos.": ["The end. Big map, the smartest zombies and every boss, even the Specter and the Lumberjack, arriving bit by bit.", "El fin. Mapa grande, los zombis más listos y todos los jefes, hasta el Espectro y el Leñador, llegando poco a poco."],
+      "Montando o mapa grande…": ["Building the big map…", "Montando el mapa grande…"],
       "Veterano": ["Veteran", "Veterano"], "Zumbis com 60% mais vida, rápidos, e um gigante a cada 3 ondas a partir da 6.": ["Zombies with 60% more health, fast, and a giant every 3 waves from wave 6.", "Zombis con 60% más vida, rápidos, y un gigante cada 3 oleadas desde la 6."],
       "Pesadelo": ["Nightmare", "Pesadilla"], "Zumbis com 140% mais vida, hordas enormes e gigantes a cada 2 ondas a partir da 4.": ["Zombies with 140% more health, huge hordes and giants every 2 waves from wave 4.", "Zombis con 140% más vida, hordas enormes y gigantes cada 2 oleadas desde la 4."],
       "Extremo": ["Extreme", "Extremo"], "Três vezes mais vida, hordas gigantescas, Colosso Blindado e o Mestre da Katana. Quase impossível.": ["Three times the health, gigantic hordes, the Armored Colossus and the Katana Master. Nearly impossible.", "El triple de vida, hordas gigantescas, el Coloso Blindado y el Maestro de la Katana. Casi imposible."],
@@ -1414,19 +1419,27 @@ const Logic = (function () {
   };
   const WEAPON_ORDER = ["p45", "smg", "ax4", "brutus", "falcao", "revolver", "titan"];
 
+  // mix: tipos de zumbi comum por onda · run/brute = [onda inicial, chance base, + por onda, chance máxima (, brutamontes vivos no máximo)]
+  // smart: fração dos zumbis que contorna containers e prédios (campo de fluxo) · flank: cercam o jogador por lados diferentes · big: mapa grande
   const DIFF = {
-    easy: { name: "Recruta", sub: "Zumbis mais fracos e lentos, munição de sobra.", hp: 0.75, speed: 0.9, dmg: 0.6, ammo: 1.4, count: 0.8, heal: 35, score: 0.8, coin: 0.5, drop: 1, giants: null },
-    normal: { name: "Soldado", sub: "A experiência padrão da arena.", hp: 1, speed: 1, dmg: 1, ammo: 1, count: 1, heal: 25, score: 1, coin: 1, drop: 1, giants: null },
-    hard: { name: "Veterano", sub: "Zumbis com 60% mais vida, rápidos, e um gigante a cada 3 ondas a partir da 6.", hp: 1.6, speed: 1.1, dmg: 1.4, ammo: 0.8, count: 1.25, heal: 15, score: 1.4, coin: 1.5, drop: 1,
-      giants: { from: 6, every: 3, extra: 12, maxAlive: 1 } },
-    nightmare: { name: "Pesadelo", sub: "Zumbis com 140% mais vida, hordas enormes e gigantes a cada 2 ondas a partir da 4.", hp: 2.4, speed: 1.2, dmg: 2, ammo: 0.6, count: 1.6, heal: 8, score: 2, coin: 2.2, drop: 1.1,
-      giants: { from: 4, every: 2, extra: 8, maxAlive: 2 } },
-    extremo: { name: "Extremo", sub: "Três vezes mais vida, hordas gigantescas, Colosso Blindado e o Mestre da Katana. Quase impossível.", hp: 3, speed: 1.25, dmg: 2.6, ammo: 0.55, count: 1.75, heal: 5, score: 3, coin: 3.5, drop: 1.7, extreme: 1,
-      giants: { from: 4, every: 3, extra: 9, maxAlive: 1 },
-      elite: { tank: { from: 2, every: 2, grow: 4, cap: 2, max: 1 }, samurai: { from: 1, every: 1, grow: 3, cap: 3, max: 2 } } },
-    apocalipse: { name: "Apocalipse", sub: "O fim. Tudo do Extremo, em dobro, e o Espectro da Espada que ninguém consegue ver.", hp: 3.8, speed: 1.35, dmg: 3.4, ammo: 0.5, count: 2, heal: 0, score: 5, coin: 5, drop: 1.9, extreme: 2,
-      giants: { from: 3, every: 2, extra: 6, maxAlive: 2 },
-      elite: { tank: { from: 2, every: 1, grow: 3, cap: 2, max: 2 }, samurai: { from: 1, every: 1, grow: 2, cap: 4, max: 3 }, wraith: { from: 3, every: 2, grow: 4, cap: 2, max: 1 } } },
+    easy: { name: "Recruta", sub: "Zumbis mais fracos e lentos, munição de sobra.", hp: 0.75, speed: 0.9, dmg: 0.6, ammo: 1.4, count: 0.8, heal: 35, score: 0.8, coin: 0.5, drop: 1,
+      giants: { from: 8, every: 4, extra: 99, maxAlive: 1 }, mix: { run: [4, 0.08, 0.02, 0.25], brute: [6, 0.03, 0.01, 0.08, 1] }, smart: 0 },
+    normal: { name: "Soldado", sub: "A experiência padrão da arena, com um gigante de vez em quando.", hp: 1, speed: 1, dmg: 1, ammo: 1, count: 1, heal: 25, score: 1, coin: 1, drop: 1,
+      giants: { from: 6, every: 4, extra: 99, maxAlive: 1 }, elite: { tank: { from: 10, every: 5, grow: 99, cap: 1, max: 1 } },
+      mix: { run: [3, 0.12, 0.03, 0.4], brute: [5, 0.04, 0.02, 0.16, 2] }, smart: 0.3 },
+    hard: { name: "Veterano", sub: "Zumbis com 60% mais vida e mais rápidos. Gigantes, o Colosso Blindado e o Mestre da Katana nas ondas avançadas.", hp: 1.6, speed: 1.1, dmg: 1.4, ammo: 0.8, count: 1.25, heal: 15, score: 1.4, coin: 1.5, drop: 1,
+      giants: { from: 5, every: 3, extra: 12, maxAlive: 1 }, elite: { tank: { from: 7, every: 4, grow: 99, cap: 1, max: 1 }, samurai: { from: 9, every: 4, grow: 99, cap: 1, max: 1 } },
+      mix: { run: [2, 0.18, 0.035, 0.45], brute: [4, 0.06, 0.02, 0.2, 2] }, smart: 0.6 },
+    nightmare: { name: "Pesadelo", sub: "Zumbis com 140% mais vida, hordas cheias de corredores e brutamontes, gigantes e chefes desde cedo.", hp: 2.4, speed: 1.2, dmg: 2, ammo: 0.6, count: 1.6, heal: 8, score: 2, coin: 2.2, drop: 0.85,
+      giants: { from: 4, every: 2, extra: 8, maxAlive: 2 }, elite: { tank: { from: 4, every: 3, grow: 8, cap: 1, max: 1 }, samurai: { from: 6, every: 3, grow: 8, cap: 1, max: 1 } },
+      mix: { run: [1, 0.28, 0.04, 0.55], brute: [2, 0.1, 0.025, 0.26, 3] }, smart: 1 },
+    extremo: { name: "Extremo", sub: "Mapa grande com prédios, zumbis que contornam obstáculos e cercam você, Colosso Blindado e Mestre da Katana. Quase impossível.", hp: 3, speed: 1.25, dmg: 2.6, ammo: 0.55, count: 1.75, heal: 5, score: 3, coin: 3.5, drop: 1.7, extreme: 1,
+      giants: { from: 3, every: 3, extra: 9, maxAlive: 1 }, elite: { tank: { from: 2, every: 2, grow: 4, cap: 2, max: 1 }, samurai: { from: 3, every: 2, grow: 3, cap: 2, max: 2 } },
+      mix: { run: [1, 0.35, 0.04, 0.6], brute: [1, 0.12, 0.025, 0.3, 4] }, smart: 1, flank: 1, big: true },
+    apocalipse: { name: "Apocalipse", sub: "O fim. Mapa grande, os zumbis mais espertos e todos os chefes, até o Espectro e o Lenhador, chegando aos poucos.", hp: 3.8, speed: 1.35, dmg: 3.4, ammo: 0.5, count: 2, heal: 0, score: 5, coin: 5, drop: 1.9, extreme: 2,
+      giants: { from: 2, every: 2, extra: 6, maxAlive: 2 },
+      elite: { tank: { from: 3, every: 2, grow: 3, cap: 2, max: 2 }, samurai: { from: 4, every: 2, grow: 3, cap: 3, max: 2 }, wraith: { from: 6, every: 3, grow: 4, cap: 1, max: 1 }, lumber: { from: 8, every: 4, grow: 99, cap: 1, max: 1 } },
+      mix: { run: [1, 0.4, 0.04, 0.65], brute: [1, 0.15, 0.03, 0.32, 5] }, smart: 1, flank: 1.5, big: true },
   };
   const DIFF_ORDER = ["easy", "normal", "hard", "nightmare", "extremo", "apocalipse"];
   // vida base dos zumbis especiais (cresce por onda; o escudo, a esquiva e a invisibilidade compensam)
@@ -1436,9 +1449,6 @@ const Logic = (function () {
     wraith: { hp: 1500, grow: 140, speed: 9.5, dmg: 1, pts: 2000, coins: 60, s: [1.27, 1.29] },
     lumber: { hp: 7000, grow: 450, speed: 1.75, dmg: 1, pts: 4000, coins: 120, s: [3.2, 3.3], min: 7000 },   // Lenhador: o dobro do zumbi comum, machado de duas mãos
   };
-  // Lenhador: aparece em todas as dificuldades (onda inicial, intervalo)
-  const LUMBER_AT = { easy: [5, 5], normal: [5, 5], hard: [4, 4], nightmare: [4, 4], extremo: [3, 3], apocalipse: [3, 3] };
-  for (const k in LUMBER_AT) { const d = DIFF[k]; d.elite = Object.assign({}, d.elite || {}, { lumber: { from: LUMBER_AT[k][0], every: LUMBER_AT[k][1], grow: 99, cap: 1, max: 1 } }); }
 
   // golpes do Mestre da Katana: preparo, golpe, recuperação (s), alcance e avanço (m), cone de acerto e multiplicador de dano
   const SAM = {
@@ -1476,23 +1486,51 @@ const Logic = (function () {
     [-16, 16, 0.3, 0.3, 4.2, "lamp"], [16, 16, 0.3, 0.3, 4.2, "lamp"],
     [0, -17, 0.3, 0.3, 4.2, "lamp"], [0, 18, 0.3, 0.3, 4.2, "lamp"],
   ];
-  const ARENA_BOXES = (function () {
-    const a = ARENA, t = 1.0;
+  function mkBoxes(a, obst, lamps) {
+    const t = 1.0;
     const b = [
       [-a - t, a + t, a, a + t, WALL_H], [-a - t, a + t, -a - t, -a, WALL_H],
       [a, a + t, -a, a, WALL_H], [-a - t, -a, -a, a, WALL_H],
     ];
-    for (const o of OBSTACLES.concat(LAMPS)) b.push([o[0] - o[2] / 2, o[0] + o[2] / 2, o[1] - o[3] / 2, o[1] + o[3] / 2, o[4]]);
+    for (const o of obst.concat(lamps)) b.push([o[0] - o[2] / 2, o[0] + o[2] / 2, o[1] - o[3] / 2, o[1] + o[3] / 2, o[4]]);
     for (const q of b) q[5] = 0;                                         // base no chão
     return b;
+  }
+  const ARENA_BOXES = mkBoxes(ARENA0, OBSTACLES, LAMPS);
+
+  // ---------- mapa grande (Extremo e Apocalipse): ~3x a área da arena, com prédios no meio ----------
+  const BIG = (function () {
+    const A = 38, obst = [], lamps = [];
+    const free = (x, y, w, d, m, list) => {
+      if (Math.abs(x) + w / 2 > A - 1.5 || Math.abs(y) + d / 2 > A - 1.5 || Math.hypot(x, y + 4) < 7) return false;
+      for (const o of list || obst) if (Math.abs(o[0] - x) < (o[2] + w) / 2 + m && Math.abs(o[1] - y) < (o[3] + d) / 2 + m) return false;
+      return true;
+    };
+    // prédios: [x, y, largura x, largura y, altura]
+    for (const b of [[-22, -21, 11, 9, 15], [23, -20, 9, 12, 18], [-21, 22, 10, 10, 13], [22, 23, 12, 9, 16], [1, 29, 14, 6, 11], [-29, 1, 6, 14, 12], [29, 3, 6, 12, 14], [3, -29, 12, 6, 10]])
+      obst.push([b[0], b[1], b[2], b[3], b[4], "building"]);
+    // a arena original, espalhada
+    for (const o of OBSTACLES) { const x = o[0] * 1.55, y = o[1] * 1.55; if (free(x, y, o[2], o[3], 1.6)) obst.push([x, y, o[2], o[3], o[4], o[5]]); }
+    // mais obstáculos sorteados (semente fixa: todos os jogadores veem o mesmo mapa)
+    let sd = 4242; const r = () => (sd = (sd * 16807) % 2147483647) / 2147483647;
+    const K = [["container", 6.1, 2.5, 2.6], ["container", 2.5, 6.1, 2.6], ["car", 4.4, 1.9, 1.5], ["car", 1.9, 4.4, 1.5], ["crate", 1.4, 1.4, 1.2], ["crate", 2, 2, 1.6],
+      ["sandbag", 3, 0.9, 1], ["sandbag", 0.9, 3, 1], ["barrel", 0.8, 0.8, 1], ["dumpster", 1.2, 2, 1.4], ["pillar", 1.3, 1.3, 3.2]];
+    for (let i = 0, n = 0; n < 30 && i < 800; i++) { const k = K[Math.floor(r() * K.length)], x = (r() * 2 - 1) * (A - 3), y = (r() * 2 - 1) * (A - 3); if (free(x, y, k[1], k[2], 2.4)) { obst.push([x, y, k[1], k[2], k[3], k[0]]); n++; } }
+    // postes: o mesmo número de luzes da arena (trocar a quantidade de luzes recompila os shaders e trava)
+    for (const o of LAMPS) {
+      let x = o[0] * 1.8, y = o[1] * 1.8;
+      for (let k = 0; k < 12 && !free(x, y, 0.3, 0.3, 1.2); k++) { x += x > 0 ? -1.5 : 1.5; y += k % 2 ? 1.2 : -1.2; }
+      lamps.push([x, y, o[2], o[3], o[4], o[5]]);
+    }
+    return { A, obst, lamps, boxes: mkBoxes(A, obst, lamps) };
   })();
 
   // mapa do modo Infecção (mapit.js): vila italiana com morros, casas e lojas
   const ITALY_BOXES = ITALIA.boxes.map((b) => [b[0], b[1], b[2], b[3], b[4], b[5] || 0]);   // [x0, x1, y0, y1, topo, base]
   let BOXES = ARENA_BOXES, MAP = "arena";
   function setMap(m) {
-    MAP = m === "italia" ? "italia" : "arena";
-    BOXES = MAP === "italia" ? ITALY_BOXES : ARENA_BOXES; ARENA = MAP === "italia" ? ITALIA.A : ARENA0;
+    MAP = m === "italia" ? "italia" : m === "grande" ? "grande" : "arena";
+    BOXES = MAP === "italia" ? ITALY_BOXES : MAP === "grande" ? BIG.boxes : ARENA_BOXES; ARENA = MAP === "italia" ? ITALIA.A : MAP === "grande" ? BIG.A : ARENA0;
   }
 
   const clamp = (v, lo, hi) => (v < lo ? lo : v > hi ? hi : v);
@@ -1534,6 +1572,73 @@ const Logic = (function () {
     for (const b of BOXES) if (x > b[0] - margin && x < b[1] + margin && y > b[2] - margin && y < b[3] + margin) return true;
     return false;
   }
+
+  // ---------- campo de fluxo: zumbis "espertos" contornam containers, carros e prédios (arena e mapa grande; a Infecção não usa) ----------
+  // grade de 1 m; Dijkstra a partir da célula do alvo; cada zumbi desce o campo e mira no ponto mais distante que ele enxerga
+  const Flow = (() => {
+    const C = 1, grids = {};
+    function grid(r) {
+      const k = MAP + ":" + r; if (grids[k]) return grids[k];
+      const A = ARENA, N = Math.ceil((2 * A) / C), blk = new Uint8Array(N * N);
+      for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) {
+        const x = -A + (i + 0.5) * C, y = -A + (j + 0.5) * C;
+        if (Math.abs(x) > A - r || Math.abs(y) > A - r) { blk[j * N + i] = 1; continue; }
+        for (const b of BOXES) { if (b[4] <= STEP) continue; const nx = clamp(x, b[0], b[1]), ny = clamp(y, b[2], b[3]); if ((x - nx) * (x - nx) + (y - ny) * (y - ny) < r * r) { blk[j * N + i] = 1; break; } }
+      }
+      return (grids[k] = { N, A, blk, fields: new Map(), heap: new Int32Array(N * N * 4), hk: new Float32Array(N * N * 4) });
+    }
+    const cell = (g, x, y) => { const i = clamp(Math.floor((x + g.A) / C), 0, g.N - 1), j = clamp(Math.floor((y + g.A) / C), 0, g.N - 1); return j * g.N + i; };
+    const NB = [[1, 0, 1], [-1, 0, 1], [0, 1, 1], [0, -1, 1], [1, 1, 1.414], [1, -1, 1.414], [-1, 1, 1.414], [-1, -1, 1.414]];
+    function nearestFree(g, c) {
+      if (!g.blk[c]) return c; const N = g.N, i0 = c % N, j0 = (c / N) | 0;
+      for (let r = 1; r < 6; r++) for (let j = j0 - r; j <= j0 + r; j++) for (let i = i0 - r; i <= i0 + r; i++) if (i >= 0 && j >= 0 && i < N && j < N && !g.blk[j * N + i]) return j * N + i;
+      return c;
+    }
+    function field(g, tc, now) {
+      let f = g.fields.get(tc); if (f) { f.t = now; return f.d; }
+      const N = g.N, d = new Float32Array(N * N).fill(1e9), H = g.heap, K = g.hk; let n = 0;
+      const push = (c, v) => { let i = n++; while (i > 0) { const p = (i - 1) >> 1; if (K[p] <= v) break; H[i] = H[p]; K[i] = K[p]; i = p; } H[i] = c; K[i] = v; };
+      const pop = () => { const c = H[0], last = H[--n], lv = K[n]; let i = 0; for (;;) { let m = 2 * i + 1; if (m >= n) break; if (m + 1 < n && K[m + 1] < K[m]) m++; if (K[m] >= lv) break; H[i] = H[m]; K[i] = K[m]; i = m; } H[i] = last; K[i] = lv; return c; };
+      const s0 = nearestFree(g, tc); d[s0] = 0; push(s0, 0);
+      while (n > 0 && n < H.length - 8) {
+        const kv = K[0], c = pop(); if (kv > d[c]) continue;
+        const i = c % N, j = (c / N) | 0;
+        for (const [di, dj, w] of NB) {
+          const a = i + di, b = j + dj; if (a < 0 || b < 0 || a >= N || b >= N) continue;
+          const q = b * N + a; if (g.blk[q]) continue;
+          if (di && dj && (g.blk[j * N + a] || g.blk[b * N + i])) continue;          // não corta quina
+          const v = d[c] + w; if (v < d[q]) { d[q] = v; push(q, v); }
+        }
+      }
+      g.fields.set(tc, { d, t: now });
+      if (g.fields.size > 10) { let ok = -1, ot = 1e18; for (const [k, v] of g.fields) if (v.t < ot) { ot = v.t; ok = k; } g.fields.delete(ok); }
+      return d;
+    }
+    function los(g, x0, y0, x1, y1) {
+      const L = Math.hypot(x1 - x0, y1 - y0), n = Math.ceil(L / 0.45);
+      for (let k = 1; k < n; k++) { const t = k / n; if (g.blk[cell(g, x0 + (x1 - x0) * t, y0 + (y1 - y0) * t)]) return false; }
+      return true;
+    }
+    // direção (unitária) para seguir até (tx,ty), ou null quando o caminho reto está livre
+    function steer(x, y, tx, ty, r, now) {
+      const g = grid(r);
+      if (los(g, x, y, tx, ty)) return null;
+      const d = field(g, cell(g, tx, ty), now), N = g.N;
+      let c = nearestFree(g, cell(g, x, y)), aim = -1;
+      for (let step = 0; step < 6; step++) {
+        const i = c % N, j = (c / N) | 0; let best = -1, bv = d[c];
+        for (const [di, dj] of NB) { const a = i + di, b = j + dj; if (a < 0 || b < 0 || a >= N || b >= N) continue; const q = b * N + a; if (g.blk[q] || d[q] >= bv) continue; if (di && dj && (g.blk[j * N + a] || g.blk[b * N + i])) continue; bv = d[q]; best = q; }
+        if (best < 0) break;
+        const bx = -g.A + ((best % N) + 0.5) * C, by = -g.A + (((best / N) | 0) + 0.5) * C;
+        if (aim >= 0 && !los(g, x, y, bx, by)) break;
+        aim = best; c = best;
+      }
+      if (aim < 0) return null;
+      const ax = -g.A + ((aim % N) + 0.5) * C - x, ay = -g.A + (((aim / N) | 0) + 0.5) * C - y, l = Math.hypot(ax, ay) || 1;
+      return [ax / l, ay / l];
+    }
+    return { steer };
+  })();
 
   // ---------- navegação dos bots: grade de 0,5 m com andares (casas, terraços, escadas) + A* ----------
   const Nav = (() => {
@@ -2090,8 +2195,13 @@ const Logic = (function () {
       const w = this.wave, D = this.diff;
       let x = 0, y = 0;
       for (let i = 0; i < 40; i++) {
-        const side = this.randint(4), u = this.uniform(-ARENA + 2, ARENA - 2), e = ARENA - this.uniform(1.4, 3);
-        [x, y] = [[u, e], [u, -e], [e, u], [-e, u]][side];
+        if (MAP === "grande") {                                      // mapa grande: nascem num anel de 18 a 30 m de um jogador (não lá no muro, a 70 m)
+          const tp = this.randomPlayer(), a = this.rnd() * 6.283, rr = this.uniform(18, 30), lim = ARENA - 2;
+          x = clamp(tp.x + Math.cos(a) * rr, -lim, lim); y = clamp(tp.y + Math.sin(a) * rr, -lim, lim);
+        } else {
+          const side = this.randint(4), u = this.uniform(-ARENA + 2, ARENA - 2), e = ARENA - this.uniform(1.4, 3);
+          [x, y] = [[u, e], [u, -e], [e, u], [-e, u]][side];
+        }
         if (this.nearAny(x, y, 14) || insideAny(x, y, 0.9)) continue;
         break;
       }
@@ -2106,14 +2216,19 @@ const Logic = (function () {
       }
       if (this.giantsLeft > 0 && giantsUp < (D.giants ? D.giants.maxAlive : 0) && (forced || this.toSpawn <= Math.ceil(this.giantTotal * 0.7))) { kind = "giant"; this.giantsLeft -= 1; }
       else if (forced) return false;                                  // só faltam especiais e todos estão no limite: espera abrir vaga
-      else if (w >= 5 && brutes < 2 && this.rnd() < Math.min(0.04 + 0.02 * w, 0.16)) kind = "brute";
-      else if (w >= 3 && this.rnd() < Math.min(0.12 + 0.03 * w, 0.4)) kind = "runner";
+      else {
+        const MX = D.mix || DIFF.normal.mix, B = MX.brute, R = MX.run;
+        if (w >= B[0] && brutes < B[4] && this.rnd() < Math.min(B[1] + B[2] * (w - B[0]), B[3])) kind = "brute";
+        else if (w >= R[0] && this.rnd() < Math.min(R[1] + R[2] * (w - R[0]), R[3])) kind = "runner";
+      }
       let hp = (100 + 12 * (w - 1)) * D.hp, speed, dm = 1;
       if (kind === "runner") { hp *= 0.6; speed = this.uniform(3.3, 4.0); dm = 0.8; }
       else if (kind === "brute") { hp *= 3.5; speed = this.uniform(1.0, 1.4); dm = 2.2; }
       else if (kind === "giant") { hp *= 11; speed = this.uniform(1.15, 1.45); dm = 3; }
       else speed = this.uniform(1.2, 2.0) + Math.min(0.07 * w, 0.7);
-      this.zombies.push(new Zombie(x, y, hp, speed * D.speed, kind, this.randint(3), this, dm));
+      const nz = new Zombie(x, y, hp, speed * D.speed, kind, this.randint(3), this, dm);
+      nz.smart = kind === "giant" ? (D.smart || 0) > 0 : this.rnd() < (D.smart || 0); nz.flankA = this.rnd() * 6.283; nz.flowT = this.rnd() * 0.3;
+      this.zombies.push(nz);
       if (kind === "giant") { this.events.push(["giant"]); this.banner = "UM GIGANTE!"; this.bannerSub = "Mire na cabeça · aguente firme"; this.bannerT = 3; }
       return true;
     }
@@ -2122,6 +2237,7 @@ const Logic = (function () {
       const hp = Math.max(E.min || 0, (E.hp + E.grow * (w - 1)) * hpMul), speed = E.speed * (kind === "wraith" ? 1 : 1 + 0.04 * (D.extreme || 0));
       if (kind === "wraith") { const a = this.rnd() * 6.28, tp = this.randomPlayer(); x = clamp(tp.x + Math.cos(a) * 16, -ARENA + 2, ARENA - 2); y = clamp(tp.y + Math.sin(a) * 16, -ARENA + 2, ARENA - 2); }
       const z = new Zombie(x, y, hp, speed, kind, this.randint(3), this, E.dmg);
+      z.smart = (D.smart || 0) > 0 && kind !== "wraith"; z.flankA = this.rnd() * 6.283; z.flowT = 0;
       this.zombies.push(z);
       if (kind === "wraith") { z.untouch = true; z.vis = 0; z.act = "stalk"; }
       if (kind === "samurai") { z.act = "approach"; z.cd = this.uniform(0.5, 1.5); }
@@ -2297,7 +2413,16 @@ const Logic = (function () {
     }
     // caminhada com desvio de obstáculos
     walkToward(z, dt, dx, dy, dist, spd) {
+      if (z.smart && this.gm !== "infect" && MAP !== "italia") {
+        const F = this.diff.flank || 0;
+        if (F && dist > 5 && !z.elite) {                                   // cercam: cada um mira num lado do jogador
+          const k = Math.min(3.5 * F, dist * 0.3); dx += Math.cos(z.flankA) * k; dy += Math.sin(z.flankA) * k; dist = Math.hypot(dx, dy) || 1e-6;
+        }
+        z.flowT -= dt;
+        if (z.flowT <= 0) { z.flowT = 0.22 + this.rnd() * 0.12; z.flowDir = Flow.steer(z.x, z.y, z.x + dx, z.y + dy, z.heavy || z.giant ? Math.min(1.7, ZOMBIE_R * z.s + 0.2) : 0.55, this.time || 0); }
+      }
       let ux = dx / dist, uy = dy / dist;
+      if (z.smart && z.flowDir) { ux = z.flowDir[0]; uy = z.flowDir[1]; z.sideT = 0; }
       if (z.sideT > 0) {
         z.sideT -= dt;
         const nx = ux - uy * z.side * 1.1, ny = uy + ux * z.side * 1.1, ln = Math.hypot(nx, ny) || 1;
@@ -3454,8 +3579,8 @@ const Logic = (function () {
   }
 
   return {
-    Game, Zombie, Pickup, Nav, BOT_AI, POT, buildSlot, groundAt, setMap, getMap: () => MAP, rangeFactor, damageAt, weaponStats, recoilPattern, pushOut, insideAny, clamp, wrapAngle, BOXES, OBSTACLES, LAMPS, WEAPONS, WEAPON_ORDER, DIFF, DIFF_ORDER, ELITE, SAM,
-    C: { ZOMBIE_RESPAWN, ARENA, WALL_H, EYE_H, CROUCH_DROP, PLAYER_R, RADAR_RANGE: 18, SWITCH_TIME, MELEE_CD, PICK_TTL },
+    Game, Zombie, Pickup, Nav, Flow, BIG, BOT_AI, POT, buildSlot, groundAt, setMap, getMap: () => MAP, rangeFactor, damageAt, weaponStats, recoilPattern, pushOut, insideAny, clamp, wrapAngle, BOXES, OBSTACLES, LAMPS, WEAPONS, WEAPON_ORDER, DIFF, DIFF_ORDER, ELITE, SAM,
+    C: { ZOMBIE_RESPAWN, get ARENA() { return ARENA; }, WALL_H, EYE_H, CROUCH_DROP, PLAYER_R, RADAR_RANGE: 18, SWITCH_TIME, MELEE_CD, PICK_TTL },
   };
 })();
 // ==LOGIC-END==
@@ -4313,10 +4438,12 @@ const Logic = (function () {
 
   // ---------- montagem do mundo ----------
   let wdSky = null, wdMoon = null, wdBlds = [], wdSkyCache = {}, wdSkyKey = "";
-  function wdBuildWorld() {
-    wdMaterials();
+  // opt: { A, obst, lamps, walls, sky } — a arena padrão ou o mapa grande (Extremo/Apocalipse)
+  function wdBuildWorld(opt) {
+    opt = opt || { A: ARENA, obst: OBSTACLES, lamps: LAMPS, walls: BOXES, sky: true };
+    if (!WD.asphalt) wdMaterials();
     const solid = new WdBatch(), deco = new WdBatch(), decal = new WdBatch(), I = new THREE.Matrix4();
-    const A = ARENA, WH = L.C.WALL_H;
+    const A = opt.A, WH = L.C.WALL_H, SC = A / 22;
     // chão
     const floor = new THREE.Mesh(new THREE.PlaneGeometry(2 * A + 4, 2 * A + 4), WD.asphalt);
     floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; scene.add(floor);
@@ -4327,7 +4454,7 @@ const Logic = (function () {
 
     // muros (cada um com a face de dentro voltada para a arena)
     for (let i = 0; i < 4; i++) {
-      const b = BOXES[i], w = b[1] - b[0], d = b[3] - b[2];
+      const b = opt.walls[i], w = b[1] - b[0], d = b[3] - b[2];
       solid.add(WD.wall, wdBoxG(w, b[4], d, 6, 3.6), wdT((b[0] + b[1]) / 2, b[4] / 2, -(b[2] + b[3]) / 2));
     }
     const sides = [[0, A, 0, 1], [0, -A, Math.PI, 1], [A, 0, Math.PI / 2, 0], [-A, 0, -Math.PI / 2, 0]];   // x, y(lógico), giro, eixo
@@ -4385,7 +4512,7 @@ const Logic = (function () {
 
     // obstáculos
     const counts = {};
-    OBSTACLES.forEach((o) => {
+    opt.obst.forEach((o) => {
       const kind = o[5], cx = o[0], cy = o[1], sx = o[2], sy = o[3], h = o[4];
       const n = counts[kind] = (counts[kind] || 0);
       counts[kind]++;
@@ -4398,31 +4525,33 @@ const Logic = (function () {
       else if (kind === "pillar") wdPillar(solid, decal, base, n);
       else if (kind === "sandbag") wdSandbags(solid, base, Math.max(sx, sy), 40 + n);
       else if (kind === "barrel") wdBarrel(solid, wdT(cx, 0, -cy), n);
+      else if (kind === "building") wdBuilding(solid, decal, cx, cy, sx, sy, h, n);
     });
 
     // postes de luz
-    wdLampPos = [];
-    LAMPS.forEach((o, i) => { wdLampPos.push(wdLamp(solid, o, i)); });
+    const lampPos = [];
+    opt.lamps.forEach((o, i) => { lampPos.push(wdLamp(solid, o, i)); });
+    if (opt.sky) wdLampPos = lampPos;
 
     // detritos soltos (sem colisão, baixinhos)
     const rr = wdR(777), okSpot = (x, y, m) => !insideAny(x, y, m) && Math.hypot(x, y + 4) > 2.2;
     const tireG = new THREE.TorusGeometry(0.3, 0.13, 8, 14);
-    for (let i = 0, n = 0; n < 9 && i < 60; i++) {
-      const x = (rr() * 2 - 1) * 19, y = (rr() * 2 - 1) * 19;
+    for (let i = 0, n = 0; n < 9 * SC && i < 60 * SC; i++) {
+      const x = (rr() * 2 - 1) * 19 * SC, y = (rr() * 2 - 1) * 19 * SC;
       if (!okSpot(x, y, 0.8)) continue; n++;
       deco.add(WD.rubber, tireG, wdT(x, 0.13, -y, -Math.PI / 2 + (rr() - 0.5) * 0.15, 0, rr() * 6));
     }
     const coneG = new THREE.ConeGeometry(0.16, 0.55, 8), coneBase = new THREE.BoxGeometry(0.38, 0.03, 0.38), coneBand = new THREE.CylinderGeometry(0.1, 0.12, 0.1, 8);
-    for (let i = 0, n = 0; n < 7 && i < 60; i++) {
-      const x = (rr() * 2 - 1) * 19, y = (rr() * 2 - 1) * 19;
+    for (let i = 0, n = 0; n < 7 * SC && i < 60 * SC; i++) {
+      const x = (rr() * 2 - 1) * 19 * SC, y = (rr() * 2 - 1) * 19 * SC;
       if (!okSpot(x, y, 0.8)) continue; n++;
       const tipped = rr() < 0.3, ry = rr() * 6;
       const b = tipped ? wdT(x, 0.16, -y, 0, ry, Math.PI / 2 * 0.95) : wdT(x, 0, -y, 0, ry, 0);
       deco.add(WD.cone, coneG, wdMul(b, wdT(0, 0.3, 0))); deco.add(WD.cone, coneBase, wdMul(b, wdT(0, 0.015, 0))); deco.add(WD.coneWhite, coneBand, wdMul(b, wdT(0, 0.32, 0)));
     }
     const rubG = new THREE.DodecahedronGeometry(1, 0), plankG = new THREE.BoxGeometry(1.4, 0.04, 0.16);
-    for (let i = 0, n = 0; n < 26 && i < 120; i++) {
-      const x = (rr() * 2 - 1) * 20, y = (rr() * 2 - 1) * 20;
+    for (let i = 0, n = 0; n < 26 * SC && i < 120 * SC; i++) {
+      const x = (rr() * 2 - 1) * 20 * SC, y = (rr() * 2 - 1) * 20 * SC;
       if (!okSpot(x, y, 0.5)) continue; n++;
       const s = 0.05 + rr() * 0.12;
       deco.add(WD.rubble, rubG, wdT(x, s * 0.5, -y, rr() * 3, rr() * 3, rr() * 3, s * 1.3, s * 0.8, s));
@@ -4431,7 +4560,7 @@ const Logic = (function () {
     // moitas de mato
     const grassQ = new THREE.PlaneGeometry(0.6, 0.55);
     const gb = [new WdBatch(), new WdBatch()];
-    for (let i = 0, n = 0; n < 150 && i < 600; i++) {
+    for (let i = 0, n = 0; n < 150 * SC && i < 600 * SC; i++) {
       const edge = rr() < 0.7;
       let x, y;
       if (edge) { const side = rr() * 4 | 0, u = (rr() * 2 - 1) * (A - 0.8), d = A - 0.35 - rr() * 1.4; [x, y] = [[u, d], [u, -d], [d, u], [-d, u]][side]; }
@@ -4448,9 +4577,9 @@ const Logic = (function () {
     const bb = new WdBatch(), br = wdR(901);
     const ring = (cx, cz, w, hh, d, m) => { bb.add(m, wdBoxG(w, hh, d, 6, 9), wdT(cx, hh / 2, cz)); };
     for (let k = 0; k < 4; k++) {
-      let u = -58;
-      while (u < 58) {
-        const w = 8 + br() * 9, d = 8 + br() * 8, hh = 9 + br() * 18, off = 31 + br() * 12;
+      let u = -(A + 36);
+      while (u < A + 36) {
+        const w = 8 + br() * 9, d = 8 + br() * 8, hh = 9 + br() * 18, off = A + 9 + br() * 12;
         const m = br() < 0.5 ? WD.bldgDark : WD.bldgDark2;
         const p = [[u + w / 2, off], [u + w / 2, -off], [off, u + w / 2], [-off, u + w / 2]][k];
         ring(p[0], p[1], k < 2 ? w : d, hh, k < 2 ? d : w, m);
@@ -4460,6 +4589,7 @@ const Logic = (function () {
     }
     bb.build(scene, false, false);
 
+    if (!opt.sky) return lampPos;
     // céu
     const skyMat = new THREE.MeshBasicMaterial({ side: THREE.BackSide, fog: false, depthWrite: false });
     wdSky = new THREE.Mesh(new THREE.SphereGeometry(100, 24, 14), skyMat);
@@ -4467,6 +4597,15 @@ const Logic = (function () {
     wdMoon = new THREE.Sprite(new THREE.SpriteMaterial({ map: wdMoonTex(), fog: false, transparent: true, depthWrite: false }));
     wdMoon.scale.set(34, 34, 1); wdMoon.renderOrder = -9; scene.add(wdMoon);
     void I;
+    return lampPos;
+  }
+  // prédio do mapa grande: bloco com janelas, faixa de concreto na base, platibanda e uma porta de aço
+  function wdBuilding(B, D, cx, cy, w, d, h, n) {
+    B.add(n % 2 ? WD.bldgDark : WD.bldgDark2, wdBoxG(w, h, d, 6, 9), wdT(cx, h / 2, -cy));
+    B.add(WD.concrete, wdBoxG(w + 0.14, 1.3, d + 0.14, 1.2), wdT(cx, 0.65, -cy));
+    B.add(WD.cap, wdBoxG(w + 0.3, 0.35, d + 0.3, 1.4), wdT(cx, h + 0.17, -cy));
+    for (const [px, pz, ry] of [[0, d / 2 + 0.08, 0], [0, -d / 2 - 0.08, Math.PI], [w / 2 + 0.08, 0, Math.PI / 2], [-w / 2 - 0.08, 0, -Math.PI / 2]].slice(0, 2 + (n % 3)))
+      D.add(WD.gate, wdPlaneG(2.2, 2.6, 1, 1), wdT(cx + px, 1.3, -cy + pz, 0, ry, 0));
   }
   let wdLampPos = [];
 
@@ -7361,14 +7500,35 @@ const Logic = (function () {
     scene.add = function () { return worldItaly.add.apply(worldItaly, arguments); };
     try { buildItalia(); } finally { scene.add = realAdd; }
   }
+  // mapa grande do Extremo/Apocalipse: mesmo estilo da arena, ~3x a área, com prédios (mesmo número de luzes da arena)
+  const bigLights = [];
+  let worldBig = null;
+  function ensureBig() {
+    if (worldBig) return;
+    worldBig = new THREE.Group(); worldBig.visible = false; scene.add(worldBig);
+    const realAdd = scene.add;
+    scene.add = function () { return worldBig.add.apply(worldBig, arguments); };
+    const prev = L.getMap(); L.setMap("grande");                  // insideAny/BOXES do mapa grande durante a montagem
+    try {
+      const B = L.BIG, pos = wdBuildWorld({ A: B.A, obst: B.obst, lamps: B.lamps, walls: B.boxes, sky: false });
+      B.lamps.forEach((o, i) => {
+        const p = pos[i] || [o[0], o[4] - 0.3, -o[1]];
+        const pl = new THREE.PointLight(0xffb866, 1.7, 28, 1.6); pl.position.set(p[0], p[1], p[2]); worldBig.add(pl); bigLights.push(pl);
+        const sp = new THREE.Sprite(WD.glowL); sp.scale.set(2.4, 2.4, 1); sp.position.set(p[0], p[1] + 0.1, p[2]); worldBig.add(sp);
+      });
+    } catch (err) { if (window.console) console.error("mapa grande falhou", err); }
+    finally { scene.add = realAdd; L.setMap(prev); }
+  }
   function useMap(m) {
-    const it = m === "italia";
+    const it = m === "italia", big = m === "grande";
     if (it) ensureItalia();
-    L.setMap(it ? "italia" : "arena");
+    if (big) ensureBig();
+    L.setMap(it ? "italia" : big ? "grande" : "arena");
     if (!arenaLights.length && lampLights.length) arenaLights.push(...lampLights);
-    if (worldArena) worldArena.visible = !it;
+    if (worldArena) worldArena.visible = !it && !big;
     if (worldItaly) worldItaly.visible = it;
-    lampLights.length = 0; lampLights.push(...(it ? itLights : arenaLights));
+    if (worldBig) worldBig.visible = big;
+    lampLights.length = 0; lampLights.push(...(it ? itLights : big ? bigLights : arenaLights));
     if (!it) for (const v of boostViews) v.root.visible = false;
     applyEnv();
   }
@@ -10914,7 +11074,7 @@ const Logic = (function () {
     const ro = runOpts(); runUsed = ro.used; burnFlash = 0;
     game = new Game({ loadout: loadoutSel(), diff: Coop.inRoom() && !Coop.isHost() ? Coop.st.diff : S.diff, perks: ro.perks, melee: ro.melee });
     clearAllies(); Coop.attach(game); Coop.sendInfo(ro);
-    useMap(game.gm === "infect" ? "italia" : "arena");                            // Infecção: vila italiana; resto: arena
+    useMap(game.gm === "infect" ? "italia" : game.diff.big ? "grande" : "arena");   // Infecção: vila italiana; Extremo/Apocalipse: mapa grande; resto: arena
     setMeleeModel(wallet.melee); updateWho();
     vmKey = ""; setViewGun(game.w());
     adsT = 0; sprintBlend = 0; hfov = S.fov; dmgT = 0; $("feed").innerHTML = "";
@@ -11838,6 +11998,7 @@ const Logic = (function () {
       ["Preparando a faca e as poções", () => { PotFX.ensureLights(); KnifeVM.prebuild(); PotVM.prebuild(); }],
       ["Montando a vila italiana", () => { ensureItalia(); }],
       ["Compilando os gráficos", () => { useMap("italia"); warmVM("infect"); renderer.render(scene, camera); }],
+      ["Montando o mapa grande", () => { useMap("grande"); renderer.render(scene, camera); }],
       ["Compilando os gráficos", () => { useMap("arena"); warmVM("arena"); renderer.render(scene, camera); }],
     ];
     const wait = () => new Promise((r) => setTimeout(r, 40));

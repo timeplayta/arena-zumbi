@@ -75,19 +75,27 @@ const Logic = (function () {
   };
   const WEAPON_ORDER = ["p45", "smg", "ax4", "brutus", "falcao", "revolver", "titan"];
 
+  // mix: tipos de zumbi comum por onda · run/brute = [onda inicial, chance base, + por onda, chance máxima (, brutamontes vivos no máximo)]
+  // smart: fração dos zumbis que contorna containers e prédios (campo de fluxo) · flank: cercam o jogador por lados diferentes · big: mapa grande
   const DIFF = {
-    easy: { name: "Recruta", sub: "Zumbis mais fracos e lentos, munição de sobra.", hp: 0.75, speed: 0.9, dmg: 0.6, ammo: 1.4, count: 0.8, heal: 35, score: 0.8, coin: 0.5, drop: 1, giants: null },
-    normal: { name: "Soldado", sub: "A experiência padrão da arena.", hp: 1, speed: 1, dmg: 1, ammo: 1, count: 1, heal: 25, score: 1, coin: 1, drop: 1, giants: null },
-    hard: { name: "Veterano", sub: "Zumbis com 60% mais vida, rápidos, e um gigante a cada 3 ondas a partir da 6.", hp: 1.6, speed: 1.1, dmg: 1.4, ammo: 0.8, count: 1.25, heal: 15, score: 1.4, coin: 1.5, drop: 1,
-      giants: { from: 6, every: 3, extra: 12, maxAlive: 1 } },
-    nightmare: { name: "Pesadelo", sub: "Zumbis com 140% mais vida, hordas enormes e gigantes a cada 2 ondas a partir da 4.", hp: 2.4, speed: 1.2, dmg: 2, ammo: 0.6, count: 1.6, heal: 8, score: 2, coin: 2.2, drop: 1.1,
-      giants: { from: 4, every: 2, extra: 8, maxAlive: 2 } },
-    extremo: { name: "Extremo", sub: "Três vezes mais vida, hordas gigantescas, Colosso Blindado e o Mestre da Katana. Quase impossível.", hp: 3, speed: 1.25, dmg: 2.6, ammo: 0.55, count: 1.75, heal: 5, score: 3, coin: 3.5, drop: 1.7, extreme: 1,
-      giants: { from: 4, every: 3, extra: 9, maxAlive: 1 },
-      elite: { tank: { from: 2, every: 2, grow: 4, cap: 2, max: 1 }, samurai: { from: 1, every: 1, grow: 3, cap: 3, max: 2 } } },
-    apocalipse: { name: "Apocalipse", sub: "O fim. Tudo do Extremo, em dobro, e o Espectro da Espada que ninguém consegue ver.", hp: 3.8, speed: 1.35, dmg: 3.4, ammo: 0.5, count: 2, heal: 0, score: 5, coin: 5, drop: 1.9, extreme: 2,
-      giants: { from: 3, every: 2, extra: 6, maxAlive: 2 },
-      elite: { tank: { from: 2, every: 1, grow: 3, cap: 2, max: 2 }, samurai: { from: 1, every: 1, grow: 2, cap: 4, max: 3 }, wraith: { from: 3, every: 2, grow: 4, cap: 2, max: 1 } } },
+    easy: { name: "Recruta", sub: "Zumbis mais fracos e lentos, munição de sobra.", hp: 0.75, speed: 0.9, dmg: 0.6, ammo: 1.4, count: 0.8, heal: 35, score: 0.8, coin: 0.5, drop: 1,
+      giants: { from: 8, every: 4, extra: 99, maxAlive: 1 }, mix: { run: [4, 0.08, 0.02, 0.25], brute: [6, 0.03, 0.01, 0.08, 1] }, smart: 0 },
+    normal: { name: "Soldado", sub: "A experiência padrão da arena, com um gigante de vez em quando.", hp: 1, speed: 1, dmg: 1, ammo: 1, count: 1, heal: 25, score: 1, coin: 1, drop: 1,
+      giants: { from: 6, every: 4, extra: 99, maxAlive: 1 }, elite: { tank: { from: 10, every: 5, grow: 99, cap: 1, max: 1 } },
+      mix: { run: [3, 0.12, 0.03, 0.4], brute: [5, 0.04, 0.02, 0.16, 2] }, smart: 0.3 },
+    hard: { name: "Veterano", sub: "Zumbis com 60% mais vida e mais rápidos. Gigantes, o Colosso Blindado e o Mestre da Katana nas ondas avançadas.", hp: 1.6, speed: 1.1, dmg: 1.4, ammo: 0.8, count: 1.25, heal: 15, score: 1.4, coin: 1.5, drop: 1,
+      giants: { from: 5, every: 3, extra: 12, maxAlive: 1 }, elite: { tank: { from: 7, every: 4, grow: 99, cap: 1, max: 1 }, samurai: { from: 9, every: 4, grow: 99, cap: 1, max: 1 } },
+      mix: { run: [2, 0.18, 0.035, 0.45], brute: [4, 0.06, 0.02, 0.2, 2] }, smart: 0.6 },
+    nightmare: { name: "Pesadelo", sub: "Zumbis com 140% mais vida, hordas cheias de corredores e brutamontes, gigantes e chefes desde cedo.", hp: 2.4, speed: 1.2, dmg: 2, ammo: 0.6, count: 1.6, heal: 8, score: 2, coin: 2.2, drop: 0.85,
+      giants: { from: 4, every: 2, extra: 8, maxAlive: 2 }, elite: { tank: { from: 4, every: 3, grow: 8, cap: 1, max: 1 }, samurai: { from: 6, every: 3, grow: 8, cap: 1, max: 1 } },
+      mix: { run: [1, 0.28, 0.04, 0.55], brute: [2, 0.1, 0.025, 0.26, 3] }, smart: 1 },
+    extremo: { name: "Extremo", sub: "Mapa grande com prédios, zumbis que contornam obstáculos e cercam você, Colosso Blindado e Mestre da Katana. Quase impossível.", hp: 3, speed: 1.25, dmg: 2.6, ammo: 0.55, count: 1.75, heal: 5, score: 3, coin: 3.5, drop: 1.7, extreme: 1,
+      giants: { from: 3, every: 3, extra: 9, maxAlive: 1 }, elite: { tank: { from: 2, every: 2, grow: 4, cap: 2, max: 1 }, samurai: { from: 3, every: 2, grow: 3, cap: 2, max: 2 } },
+      mix: { run: [1, 0.35, 0.04, 0.6], brute: [1, 0.12, 0.025, 0.3, 4] }, smart: 1, flank: 1, big: true },
+    apocalipse: { name: "Apocalipse", sub: "O fim. Mapa grande, os zumbis mais espertos e todos os chefes, até o Espectro e o Lenhador, chegando aos poucos.", hp: 3.8, speed: 1.35, dmg: 3.4, ammo: 0.5, count: 2, heal: 0, score: 5, coin: 5, drop: 1.9, extreme: 2,
+      giants: { from: 2, every: 2, extra: 6, maxAlive: 2 },
+      elite: { tank: { from: 3, every: 2, grow: 3, cap: 2, max: 2 }, samurai: { from: 4, every: 2, grow: 3, cap: 3, max: 2 }, wraith: { from: 6, every: 3, grow: 4, cap: 1, max: 1 }, lumber: { from: 8, every: 4, grow: 99, cap: 1, max: 1 } },
+      mix: { run: [1, 0.4, 0.04, 0.65], brute: [1, 0.15, 0.03, 0.32, 5] }, smart: 1, flank: 1.5, big: true },
   };
   const DIFF_ORDER = ["easy", "normal", "hard", "nightmare", "extremo", "apocalipse"];
   // vida base dos zumbis especiais (cresce por onda; o escudo, a esquiva e a invisibilidade compensam)
@@ -97,9 +105,6 @@ const Logic = (function () {
     wraith: { hp: 1500, grow: 140, speed: 9.5, dmg: 1, pts: 2000, coins: 60, s: [1.27, 1.29] },
     lumber: { hp: 7000, grow: 450, speed: 1.75, dmg: 1, pts: 4000, coins: 120, s: [3.2, 3.3], min: 7000 },   // Lenhador: o dobro do zumbi comum, machado de duas mãos
   };
-  // Lenhador: aparece em todas as dificuldades (onda inicial, intervalo)
-  const LUMBER_AT = { easy: [5, 5], normal: [5, 5], hard: [4, 4], nightmare: [4, 4], extremo: [3, 3], apocalipse: [3, 3] };
-  for (const k in LUMBER_AT) { const d = DIFF[k]; d.elite = Object.assign({}, d.elite || {}, { lumber: { from: LUMBER_AT[k][0], every: LUMBER_AT[k][1], grow: 99, cap: 1, max: 1 } }); }
 
   // golpes do Mestre da Katana: preparo, golpe, recuperação (s), alcance e avanço (m), cone de acerto e multiplicador de dano
   const SAM = {
@@ -137,23 +142,51 @@ const Logic = (function () {
     [-16, 16, 0.3, 0.3, 4.2, "lamp"], [16, 16, 0.3, 0.3, 4.2, "lamp"],
     [0, -17, 0.3, 0.3, 4.2, "lamp"], [0, 18, 0.3, 0.3, 4.2, "lamp"],
   ];
-  const ARENA_BOXES = (function () {
-    const a = ARENA, t = 1.0;
+  function mkBoxes(a, obst, lamps) {
+    const t = 1.0;
     const b = [
       [-a - t, a + t, a, a + t, WALL_H], [-a - t, a + t, -a - t, -a, WALL_H],
       [a, a + t, -a, a, WALL_H], [-a - t, -a, -a, a, WALL_H],
     ];
-    for (const o of OBSTACLES.concat(LAMPS)) b.push([o[0] - o[2] / 2, o[0] + o[2] / 2, o[1] - o[3] / 2, o[1] + o[3] / 2, o[4]]);
+    for (const o of obst.concat(lamps)) b.push([o[0] - o[2] / 2, o[0] + o[2] / 2, o[1] - o[3] / 2, o[1] + o[3] / 2, o[4]]);
     for (const q of b) q[5] = 0;                                         // base no chão
     return b;
+  }
+  const ARENA_BOXES = mkBoxes(ARENA0, OBSTACLES, LAMPS);
+
+  // ---------- mapa grande (Extremo e Apocalipse): ~3x a área da arena, com prédios no meio ----------
+  const BIG = (function () {
+    const A = 38, obst = [], lamps = [];
+    const free = (x, y, w, d, m, list) => {
+      if (Math.abs(x) + w / 2 > A - 1.5 || Math.abs(y) + d / 2 > A - 1.5 || Math.hypot(x, y + 4) < 7) return false;
+      for (const o of list || obst) if (Math.abs(o[0] - x) < (o[2] + w) / 2 + m && Math.abs(o[1] - y) < (o[3] + d) / 2 + m) return false;
+      return true;
+    };
+    // prédios: [x, y, largura x, largura y, altura]
+    for (const b of [[-22, -21, 11, 9, 15], [23, -20, 9, 12, 18], [-21, 22, 10, 10, 13], [22, 23, 12, 9, 16], [1, 29, 14, 6, 11], [-29, 1, 6, 14, 12], [29, 3, 6, 12, 14], [3, -29, 12, 6, 10]])
+      obst.push([b[0], b[1], b[2], b[3], b[4], "building"]);
+    // a arena original, espalhada
+    for (const o of OBSTACLES) { const x = o[0] * 1.55, y = o[1] * 1.55; if (free(x, y, o[2], o[3], 1.6)) obst.push([x, y, o[2], o[3], o[4], o[5]]); }
+    // mais obstáculos sorteados (semente fixa: todos os jogadores veem o mesmo mapa)
+    let sd = 4242; const r = () => (sd = (sd * 16807) % 2147483647) / 2147483647;
+    const K = [["container", 6.1, 2.5, 2.6], ["container", 2.5, 6.1, 2.6], ["car", 4.4, 1.9, 1.5], ["car", 1.9, 4.4, 1.5], ["crate", 1.4, 1.4, 1.2], ["crate", 2, 2, 1.6],
+      ["sandbag", 3, 0.9, 1], ["sandbag", 0.9, 3, 1], ["barrel", 0.8, 0.8, 1], ["dumpster", 1.2, 2, 1.4], ["pillar", 1.3, 1.3, 3.2]];
+    for (let i = 0, n = 0; n < 30 && i < 800; i++) { const k = K[Math.floor(r() * K.length)], x = (r() * 2 - 1) * (A - 3), y = (r() * 2 - 1) * (A - 3); if (free(x, y, k[1], k[2], 2.4)) { obst.push([x, y, k[1], k[2], k[3], k[0]]); n++; } }
+    // postes: o mesmo número de luzes da arena (trocar a quantidade de luzes recompila os shaders e trava)
+    for (const o of LAMPS) {
+      let x = o[0] * 1.8, y = o[1] * 1.8;
+      for (let k = 0; k < 12 && !free(x, y, 0.3, 0.3, 1.2); k++) { x += x > 0 ? -1.5 : 1.5; y += k % 2 ? 1.2 : -1.2; }
+      lamps.push([x, y, o[2], o[3], o[4], o[5]]);
+    }
+    return { A, obst, lamps, boxes: mkBoxes(A, obst, lamps) };
   })();
 
   // mapa do modo Infecção (mapit.js): vila italiana com morros, casas e lojas
   const ITALY_BOXES = ITALIA.boxes.map((b) => [b[0], b[1], b[2], b[3], b[4], b[5] || 0]);   // [x0, x1, y0, y1, topo, base]
   let BOXES = ARENA_BOXES, MAP = "arena";
   function setMap(m) {
-    MAP = m === "italia" ? "italia" : "arena";
-    BOXES = MAP === "italia" ? ITALY_BOXES : ARENA_BOXES; ARENA = MAP === "italia" ? ITALIA.A : ARENA0;
+    MAP = m === "italia" ? "italia" : m === "grande" ? "grande" : "arena";
+    BOXES = MAP === "italia" ? ITALY_BOXES : MAP === "grande" ? BIG.boxes : ARENA_BOXES; ARENA = MAP === "italia" ? ITALIA.A : MAP === "grande" ? BIG.A : ARENA0;
   }
 
   const clamp = (v, lo, hi) => (v < lo ? lo : v > hi ? hi : v);
@@ -195,6 +228,73 @@ const Logic = (function () {
     for (const b of BOXES) if (x > b[0] - margin && x < b[1] + margin && y > b[2] - margin && y < b[3] + margin) return true;
     return false;
   }
+
+  // ---------- campo de fluxo: zumbis "espertos" contornam containers, carros e prédios (arena e mapa grande; a Infecção não usa) ----------
+  // grade de 1 m; Dijkstra a partir da célula do alvo; cada zumbi desce o campo e mira no ponto mais distante que ele enxerga
+  const Flow = (() => {
+    const C = 1, grids = {};
+    function grid(r) {
+      const k = MAP + ":" + r; if (grids[k]) return grids[k];
+      const A = ARENA, N = Math.ceil((2 * A) / C), blk = new Uint8Array(N * N);
+      for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) {
+        const x = -A + (i + 0.5) * C, y = -A + (j + 0.5) * C;
+        if (Math.abs(x) > A - r || Math.abs(y) > A - r) { blk[j * N + i] = 1; continue; }
+        for (const b of BOXES) { if (b[4] <= STEP) continue; const nx = clamp(x, b[0], b[1]), ny = clamp(y, b[2], b[3]); if ((x - nx) * (x - nx) + (y - ny) * (y - ny) < r * r) { blk[j * N + i] = 1; break; } }
+      }
+      return (grids[k] = { N, A, blk, fields: new Map(), heap: new Int32Array(N * N * 4), hk: new Float32Array(N * N * 4) });
+    }
+    const cell = (g, x, y) => { const i = clamp(Math.floor((x + g.A) / C), 0, g.N - 1), j = clamp(Math.floor((y + g.A) / C), 0, g.N - 1); return j * g.N + i; };
+    const NB = [[1, 0, 1], [-1, 0, 1], [0, 1, 1], [0, -1, 1], [1, 1, 1.414], [1, -1, 1.414], [-1, 1, 1.414], [-1, -1, 1.414]];
+    function nearestFree(g, c) {
+      if (!g.blk[c]) return c; const N = g.N, i0 = c % N, j0 = (c / N) | 0;
+      for (let r = 1; r < 6; r++) for (let j = j0 - r; j <= j0 + r; j++) for (let i = i0 - r; i <= i0 + r; i++) if (i >= 0 && j >= 0 && i < N && j < N && !g.blk[j * N + i]) return j * N + i;
+      return c;
+    }
+    function field(g, tc, now) {
+      let f = g.fields.get(tc); if (f) { f.t = now; return f.d; }
+      const N = g.N, d = new Float32Array(N * N).fill(1e9), H = g.heap, K = g.hk; let n = 0;
+      const push = (c, v) => { let i = n++; while (i > 0) { const p = (i - 1) >> 1; if (K[p] <= v) break; H[i] = H[p]; K[i] = K[p]; i = p; } H[i] = c; K[i] = v; };
+      const pop = () => { const c = H[0], last = H[--n], lv = K[n]; let i = 0; for (;;) { let m = 2 * i + 1; if (m >= n) break; if (m + 1 < n && K[m + 1] < K[m]) m++; if (K[m] >= lv) break; H[i] = H[m]; K[i] = K[m]; i = m; } H[i] = last; K[i] = lv; return c; };
+      const s0 = nearestFree(g, tc); d[s0] = 0; push(s0, 0);
+      while (n > 0 && n < H.length - 8) {
+        const kv = K[0], c = pop(); if (kv > d[c]) continue;
+        const i = c % N, j = (c / N) | 0;
+        for (const [di, dj, w] of NB) {
+          const a = i + di, b = j + dj; if (a < 0 || b < 0 || a >= N || b >= N) continue;
+          const q = b * N + a; if (g.blk[q]) continue;
+          if (di && dj && (g.blk[j * N + a] || g.blk[b * N + i])) continue;          // não corta quina
+          const v = d[c] + w; if (v < d[q]) { d[q] = v; push(q, v); }
+        }
+      }
+      g.fields.set(tc, { d, t: now });
+      if (g.fields.size > 10) { let ok = -1, ot = 1e18; for (const [k, v] of g.fields) if (v.t < ot) { ot = v.t; ok = k; } g.fields.delete(ok); }
+      return d;
+    }
+    function los(g, x0, y0, x1, y1) {
+      const L = Math.hypot(x1 - x0, y1 - y0), n = Math.ceil(L / 0.45);
+      for (let k = 1; k < n; k++) { const t = k / n; if (g.blk[cell(g, x0 + (x1 - x0) * t, y0 + (y1 - y0) * t)]) return false; }
+      return true;
+    }
+    // direção (unitária) para seguir até (tx,ty), ou null quando o caminho reto está livre
+    function steer(x, y, tx, ty, r, now) {
+      const g = grid(r);
+      if (los(g, x, y, tx, ty)) return null;
+      const d = field(g, cell(g, tx, ty), now), N = g.N;
+      let c = nearestFree(g, cell(g, x, y)), aim = -1;
+      for (let step = 0; step < 6; step++) {
+        const i = c % N, j = (c / N) | 0; let best = -1, bv = d[c];
+        for (const [di, dj] of NB) { const a = i + di, b = j + dj; if (a < 0 || b < 0 || a >= N || b >= N) continue; const q = b * N + a; if (g.blk[q] || d[q] >= bv) continue; if (di && dj && (g.blk[j * N + a] || g.blk[b * N + i])) continue; bv = d[q]; best = q; }
+        if (best < 0) break;
+        const bx = -g.A + ((best % N) + 0.5) * C, by = -g.A + (((best / N) | 0) + 0.5) * C;
+        if (aim >= 0 && !los(g, x, y, bx, by)) break;
+        aim = best; c = best;
+      }
+      if (aim < 0) return null;
+      const ax = -g.A + ((aim % N) + 0.5) * C - x, ay = -g.A + (((aim / N) | 0) + 0.5) * C - y, l = Math.hypot(ax, ay) || 1;
+      return [ax / l, ay / l];
+    }
+    return { steer };
+  })();
 
   // ---------- navegação dos bots: grade de 0,5 m com andares (casas, terraços, escadas) + A* ----------
   const Nav = (() => {
@@ -751,8 +851,13 @@ const Logic = (function () {
       const w = this.wave, D = this.diff;
       let x = 0, y = 0;
       for (let i = 0; i < 40; i++) {
-        const side = this.randint(4), u = this.uniform(-ARENA + 2, ARENA - 2), e = ARENA - this.uniform(1.4, 3);
-        [x, y] = [[u, e], [u, -e], [e, u], [-e, u]][side];
+        if (MAP === "grande") {                                      // mapa grande: nascem num anel de 18 a 30 m de um jogador (não lá no muro, a 70 m)
+          const tp = this.randomPlayer(), a = this.rnd() * 6.283, rr = this.uniform(18, 30), lim = ARENA - 2;
+          x = clamp(tp.x + Math.cos(a) * rr, -lim, lim); y = clamp(tp.y + Math.sin(a) * rr, -lim, lim);
+        } else {
+          const side = this.randint(4), u = this.uniform(-ARENA + 2, ARENA - 2), e = ARENA - this.uniform(1.4, 3);
+          [x, y] = [[u, e], [u, -e], [e, u], [-e, u]][side];
+        }
         if (this.nearAny(x, y, 14) || insideAny(x, y, 0.9)) continue;
         break;
       }
@@ -767,14 +872,19 @@ const Logic = (function () {
       }
       if (this.giantsLeft > 0 && giantsUp < (D.giants ? D.giants.maxAlive : 0) && (forced || this.toSpawn <= Math.ceil(this.giantTotal * 0.7))) { kind = "giant"; this.giantsLeft -= 1; }
       else if (forced) return false;                                  // só faltam especiais e todos estão no limite: espera abrir vaga
-      else if (w >= 5 && brutes < 2 && this.rnd() < Math.min(0.04 + 0.02 * w, 0.16)) kind = "brute";
-      else if (w >= 3 && this.rnd() < Math.min(0.12 + 0.03 * w, 0.4)) kind = "runner";
+      else {
+        const MX = D.mix || DIFF.normal.mix, B = MX.brute, R = MX.run;
+        if (w >= B[0] && brutes < B[4] && this.rnd() < Math.min(B[1] + B[2] * (w - B[0]), B[3])) kind = "brute";
+        else if (w >= R[0] && this.rnd() < Math.min(R[1] + R[2] * (w - R[0]), R[3])) kind = "runner";
+      }
       let hp = (100 + 12 * (w - 1)) * D.hp, speed, dm = 1;
       if (kind === "runner") { hp *= 0.6; speed = this.uniform(3.3, 4.0); dm = 0.8; }
       else if (kind === "brute") { hp *= 3.5; speed = this.uniform(1.0, 1.4); dm = 2.2; }
       else if (kind === "giant") { hp *= 11; speed = this.uniform(1.15, 1.45); dm = 3; }
       else speed = this.uniform(1.2, 2.0) + Math.min(0.07 * w, 0.7);
-      this.zombies.push(new Zombie(x, y, hp, speed * D.speed, kind, this.randint(3), this, dm));
+      const nz = new Zombie(x, y, hp, speed * D.speed, kind, this.randint(3), this, dm);
+      nz.smart = kind === "giant" ? (D.smart || 0) > 0 : this.rnd() < (D.smart || 0); nz.flankA = this.rnd() * 6.283; nz.flowT = this.rnd() * 0.3;
+      this.zombies.push(nz);
       if (kind === "giant") { this.events.push(["giant"]); this.banner = "UM GIGANTE!"; this.bannerSub = "Mire na cabeça · aguente firme"; this.bannerT = 3; }
       return true;
     }
@@ -783,6 +893,7 @@ const Logic = (function () {
       const hp = Math.max(E.min || 0, (E.hp + E.grow * (w - 1)) * hpMul), speed = E.speed * (kind === "wraith" ? 1 : 1 + 0.04 * (D.extreme || 0));
       if (kind === "wraith") { const a = this.rnd() * 6.28, tp = this.randomPlayer(); x = clamp(tp.x + Math.cos(a) * 16, -ARENA + 2, ARENA - 2); y = clamp(tp.y + Math.sin(a) * 16, -ARENA + 2, ARENA - 2); }
       const z = new Zombie(x, y, hp, speed, kind, this.randint(3), this, E.dmg);
+      z.smart = (D.smart || 0) > 0 && kind !== "wraith"; z.flankA = this.rnd() * 6.283; z.flowT = 0;
       this.zombies.push(z);
       if (kind === "wraith") { z.untouch = true; z.vis = 0; z.act = "stalk"; }
       if (kind === "samurai") { z.act = "approach"; z.cd = this.uniform(0.5, 1.5); }
@@ -958,7 +1069,16 @@ const Logic = (function () {
     }
     // caminhada com desvio de obstáculos
     walkToward(z, dt, dx, dy, dist, spd) {
+      if (z.smart && this.gm !== "infect" && MAP !== "italia") {
+        const F = this.diff.flank || 0;
+        if (F && dist > 5 && !z.elite) {                                   // cercam: cada um mira num lado do jogador
+          const k = Math.min(3.5 * F, dist * 0.3); dx += Math.cos(z.flankA) * k; dy += Math.sin(z.flankA) * k; dist = Math.hypot(dx, dy) || 1e-6;
+        }
+        z.flowT -= dt;
+        if (z.flowT <= 0) { z.flowT = 0.22 + this.rnd() * 0.12; z.flowDir = Flow.steer(z.x, z.y, z.x + dx, z.y + dy, z.heavy || z.giant ? Math.min(1.7, ZOMBIE_R * z.s + 0.2) : 0.55, this.time || 0); }
+      }
       let ux = dx / dist, uy = dy / dist;
+      if (z.smart && z.flowDir) { ux = z.flowDir[0]; uy = z.flowDir[1]; z.sideT = 0; }
       if (z.sideT > 0) {
         z.sideT -= dt;
         const nx = ux - uy * z.side * 1.1, ny = uy + ux * z.side * 1.1, ln = Math.hypot(nx, ny) || 1;
@@ -2115,8 +2235,8 @@ const Logic = (function () {
   }
 
   return {
-    Game, Zombie, Pickup, Nav, BOT_AI, POT, buildSlot, groundAt, setMap, getMap: () => MAP, rangeFactor, damageAt, weaponStats, recoilPattern, pushOut, insideAny, clamp, wrapAngle, BOXES, OBSTACLES, LAMPS, WEAPONS, WEAPON_ORDER, DIFF, DIFF_ORDER, ELITE, SAM,
-    C: { ZOMBIE_RESPAWN, ARENA, WALL_H, EYE_H, CROUCH_DROP, PLAYER_R, RADAR_RANGE: 18, SWITCH_TIME, MELEE_CD, PICK_TTL },
+    Game, Zombie, Pickup, Nav, Flow, BIG, BOT_AI, POT, buildSlot, groundAt, setMap, getMap: () => MAP, rangeFactor, damageAt, weaponStats, recoilPattern, pushOut, insideAny, clamp, wrapAngle, BOXES, OBSTACLES, LAMPS, WEAPONS, WEAPON_ORDER, DIFF, DIFF_ORDER, ELITE, SAM,
+    C: { ZOMBIE_RESPAWN, get ARENA() { return ARENA; }, WALL_H, EYE_H, CROUCH_DROP, PLAYER_R, RADAR_RANGE: 18, SWITCH_TIME, MELEE_CD, PICK_TTL },
   };
 })();
 // ==LOGIC-END==

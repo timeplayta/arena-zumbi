@@ -1,5 +1,12 @@
 # Novedades — Arena Zumbi
 
+## Mapa grande, zombis más listos y jefes por dificultad (15/11/2026)
+- Extremo y Apocalipsis ahora usan un mapa grande, con unas 3 veces el área de la arena, edificios en el medio y más contenedores, coches y cajas. Los zombis aparecen a 18–30 m de ti, no junto al muro.
+- Zombis más listos en cada dificultad: rodean contenedores, coches y edificios en lugar de quedarse atascados. En Soldado solo algunos lo hacen; desde Pesadilla, todos. En Extremo y Apocalipsis además te rodean por distintos lados.
+- Más variedad de zombis: los corredores y los brutos aparecen antes y en mayor número según la dificultad, y Pesadilla tiene menos zombis fáciles.
+- Los jefes llegan poco a poco en cada dificultad: Gigante desde Recluta, Coloso Blindado desde Soldado, Maestro de la Katana desde Veterano. El Espectro y el Leñador quedan solo en Apocalipsis, en las oleadas más avanzadas.
+- El modo Infección no cambió.
+
 ## Leñador gigante y hacha enorme (14/11/2026)
 - El Leñador es mucho más grande: más de 5,5 m de alto y mucho más ancho.
 - El hacha ahora es gigante: mango largo y grueso, hoja enorme. El alcance de sus golpes también creció.

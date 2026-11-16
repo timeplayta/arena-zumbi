@@ -1,5 +1,12 @@
 # What's new — Arena Zumbi
 
+## Big map, smarter zombies and bosses by difficulty (11/15/2026)
+- Extreme and Apocalypse now use a big map, about 3 times the arena's area, with buildings in the middle and more containers, cars and crates. Zombies spawn 18–30 m from you, not at the wall.
+- Smarter zombies at each difficulty: they go around containers, cars and buildings instead of getting stuck. On Soldier only some do it; from Nightmare on, all of them. On Extreme and Apocalypse they also surround you from different sides.
+- More zombie variety: runners and brutes show up earlier and in greater numbers as the difficulty rises, and Nightmare has fewer easy zombies.
+- Bosses arrive gradually on each difficulty: Giant from Recruit, Armored Colossus from Soldier, Katana Master from Veteran. The Specter and the Lumberjack are only on Apocalypse, in the later waves.
+- Infection mode is unchanged.
+
 ## Giant Lumberjack and huge axe (11/14/2026)
 - The Lumberjack is much bigger: over 5.5 m tall and much wider.
 - The axe is now giant: a long, thick handle and a huge blade. The reach of his blows grew too.

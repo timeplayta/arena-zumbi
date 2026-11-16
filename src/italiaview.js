@@ -357,14 +357,35 @@
     scene.add = function () { return worldItaly.add.apply(worldItaly, arguments); };
     try { buildItalia(); } finally { scene.add = realAdd; }
   }
+  // mapa grande do Extremo/Apocalipse: mesmo estilo da arena, ~3x a área, com prédios (mesmo número de luzes da arena)
+  const bigLights = [];
+  let worldBig = null;
+  function ensureBig() {
+    if (worldBig) return;
+    worldBig = new THREE.Group(); worldBig.visible = false; scene.add(worldBig);
+    const realAdd = scene.add;
+    scene.add = function () { return worldBig.add.apply(worldBig, arguments); };
+    const prev = L.getMap(); L.setMap("grande");                  // insideAny/BOXES do mapa grande durante a montagem
+    try {
+      const B = L.BIG, pos = wdBuildWorld({ A: B.A, obst: B.obst, lamps: B.lamps, walls: B.boxes, sky: false });
+      B.lamps.forEach((o, i) => {
+        const p = pos[i] || [o[0], o[4] - 0.3, -o[1]];
+        const pl = new THREE.PointLight(0xffb866, 1.7, 28, 1.6); pl.position.set(p[0], p[1], p[2]); worldBig.add(pl); bigLights.push(pl);
+        const sp = new THREE.Sprite(WD.glowL); sp.scale.set(2.4, 2.4, 1); sp.position.set(p[0], p[1] + 0.1, p[2]); worldBig.add(sp);
+      });
+    } catch (err) { if (window.console) console.error("mapa grande falhou", err); }
+    finally { scene.add = realAdd; L.setMap(prev); }
+  }
   function useMap(m) {
-    const it = m === "italia";
+    const it = m === "italia", big = m === "grande";
     if (it) ensureItalia();
-    L.setMap(it ? "italia" : "arena");
+    if (big) ensureBig();
+    L.setMap(it ? "italia" : big ? "grande" : "arena");
     if (!arenaLights.length && lampLights.length) arenaLights.push(...lampLights);
-    if (worldArena) worldArena.visible = !it;
+    if (worldArena) worldArena.visible = !it && !big;
     if (worldItaly) worldItaly.visible = it;
-    lampLights.length = 0; lampLights.push(...(it ? itLights : arenaLights));
+    if (worldBig) worldBig.visible = big;
+    lampLights.length = 0; lampLights.push(...(it ? itLights : big ? bigLights : arenaLights));
     if (!it) for (const v of boostViews) v.root.visible = false;
     applyEnv();
   }

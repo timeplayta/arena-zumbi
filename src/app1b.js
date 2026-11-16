@@ -629,10 +629,12 @@
 
   // ---------- montagem do mundo ----------
   let wdSky = null, wdMoon = null, wdBlds = [], wdSkyCache = {}, wdSkyKey = "";
-  function wdBuildWorld() {
-    wdMaterials();
+  // opt: { A, obst, lamps, walls, sky } — a arena padrão ou o mapa grande (Extremo/Apocalipse)
+  function wdBuildWorld(opt) {
+    opt = opt || { A: ARENA, obst: OBSTACLES, lamps: LAMPS, walls: BOXES, sky: true };
+    if (!WD.asphalt) wdMaterials();
     const solid = new WdBatch(), deco = new WdBatch(), decal = new WdBatch(), I = new THREE.Matrix4();
-    const A = ARENA, WH = L.C.WALL_H;
+    const A = opt.A, WH = L.C.WALL_H, SC = A / 22;
     // chão
     const floor = new THREE.Mesh(new THREE.PlaneGeometry(2 * A + 4, 2 * A + 4), WD.asphalt);
     floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; scene.add(floor);
@@ -643,7 +645,7 @@
 
     // muros (cada um com a face de dentro voltada para a arena)
     for (let i = 0; i < 4; i++) {
-      const b = BOXES[i], w = b[1] - b[0], d = b[3] - b[2];
+      const b = opt.walls[i], w = b[1] - b[0], d = b[3] - b[2];
       solid.add(WD.wall, wdBoxG(w, b[4], d, 6, 3.6), wdT((b[0] + b[1]) / 2, b[4] / 2, -(b[2] + b[3]) / 2));
     }
     const sides = [[0, A, 0, 1], [0, -A, Math.PI, 1], [A, 0, Math.PI / 2, 0], [-A, 0, -Math.PI / 2, 0]];   // x, y(lógico), giro, eixo
@@ -701,7 +703,7 @@
 
     // obstáculos
     const counts = {};
-    OBSTACLES.forEach((o) => {
+    opt.obst.forEach((o) => {
       const kind = o[5], cx = o[0], cy = o[1], sx = o[2], sy = o[3], h = o[4];
       const n = counts[kind] = (counts[kind] || 0);
       counts[kind]++;
@@ -714,31 +716,33 @@
       else if (kind === "pillar") wdPillar(solid, decal, base, n);
       else if (kind === "sandbag") wdSandbags(solid, base, Math.max(sx, sy), 40 + n);
       else if (kind === "barrel") wdBarrel(solid, wdT(cx, 0, -cy), n);
+      else if (kind === "building") wdBuilding(solid, decal, cx, cy, sx, sy, h, n);
     });
 
     // postes de luz
-    wdLampPos = [];
-    LAMPS.forEach((o, i) => { wdLampPos.push(wdLamp(solid, o, i)); });
+    const lampPos = [];
+    opt.lamps.forEach((o, i) => { lampPos.push(wdLamp(solid, o, i)); });
+    if (opt.sky) wdLampPos = lampPos;
 
     // detritos soltos (sem colisão, baixinhos)
     const rr = wdR(777), okSpot = (x, y, m) => !insideAny(x, y, m) && Math.hypot(x, y + 4) > 2.2;
     const tireG = new THREE.TorusGeometry(0.3, 0.13, 8, 14);
-    for (let i = 0, n = 0; n < 9 && i < 60; i++) {
-      const x = (rr() * 2 - 1) * 19, y = (rr() * 2 - 1) * 19;
+    for (let i = 0, n = 0; n < 9 * SC && i < 60 * SC; i++) {
+      const x = (rr() * 2 - 1) * 19 * SC, y = (rr() * 2 - 1) * 19 * SC;
       if (!okSpot(x, y, 0.8)) continue; n++;
       deco.add(WD.rubber, tireG, wdT(x, 0.13, -y, -Math.PI / 2 + (rr() - 0.5) * 0.15, 0, rr() * 6));
     }
     const coneG = new THREE.ConeGeometry(0.16, 0.55, 8), coneBase = new THREE.BoxGeometry(0.38, 0.03, 0.38), coneBand = new THREE.CylinderGeometry(0.1, 0.12, 0.1, 8);
-    for (let i = 0, n = 0; n < 7 && i < 60; i++) {
-      const x = (rr() * 2 - 1) * 19, y = (rr() * 2 - 1) * 19;
+    for (let i = 0, n = 0; n < 7 * SC && i < 60 * SC; i++) {
+      const x = (rr() * 2 - 1) * 19 * SC, y = (rr() * 2 - 1) * 19 * SC;
       if (!okSpot(x, y, 0.8)) continue; n++;
       const tipped = rr() < 0.3, ry = rr() * 6;
       const b = tipped ? wdT(x, 0.16, -y, 0, ry, Math.PI / 2 * 0.95) : wdT(x, 0, -y, 0, ry, 0);
       deco.add(WD.cone, coneG, wdMul(b, wdT(0, 0.3, 0))); deco.add(WD.cone, coneBase, wdMul(b, wdT(0, 0.015, 0))); deco.add(WD.coneWhite, coneBand, wdMul(b, wdT(0, 0.32, 0)));
     }
     const rubG = new THREE.DodecahedronGeometry(1, 0), plankG = new THREE.BoxGeometry(1.4, 0.04, 0.16);
-    for (let i = 0, n = 0; n < 26 && i < 120; i++) {
-      const x = (rr() * 2 - 1) * 20, y = (rr() * 2 - 1) * 20;
+    for (let i = 0, n = 0; n < 26 * SC && i < 120 * SC; i++) {
+      const x = (rr() * 2 - 1) * 20 * SC, y = (rr() * 2 - 1) * 20 * SC;
       if (!okSpot(x, y, 0.5)) continue; n++;
       const s = 0.05 + rr() * 0.12;
       deco.add(WD.rubble, rubG, wdT(x, s * 0.5, -y, rr() * 3, rr() * 3, rr() * 3, s * 1.3, s * 0.8, s));
@@ -747,7 +751,7 @@
     // moitas de mato
     const grassQ = new THREE.PlaneGeometry(0.6, 0.55);
     const gb = [new WdBatch(), new WdBatch()];
-    for (let i = 0, n = 0; n < 150 && i < 600; i++) {
+    for (let i = 0, n = 0; n < 150 * SC && i < 600 * SC; i++) {
       const edge = rr() < 0.7;
       let x, y;
       if (edge) { const side = rr() * 4 | 0, u = (rr() * 2 - 1) * (A - 0.8), d = A - 0.35 - rr() * 1.4; [x, y] = [[u, d], [u, -d], [d, u], [-d, u]][side]; }
@@ -764,9 +768,9 @@
     const bb = new WdBatch(), br = wdR(901);
     const ring = (cx, cz, w, hh, d, m) => { bb.add(m, wdBoxG(w, hh, d, 6, 9), wdT(cx, hh / 2, cz)); };
     for (let k = 0; k < 4; k++) {
-      let u = -58;
-      while (u < 58) {
-        const w = 8 + br() * 9, d = 8 + br() * 8, hh = 9 + br() * 18, off = 31 + br() * 12;
+      let u = -(A + 36);
+      while (u < A + 36) {
+        const w = 8 + br() * 9, d = 8 + br() * 8, hh = 9 + br() * 18, off = A + 9 + br() * 12;
         const m = br() < 0.5 ? WD.bldgDark : WD.bldgDark2;
         const p = [[u + w / 2, off], [u + w / 2, -off], [off, u + w / 2], [-off, u + w / 2]][k];
         ring(p[0], p[1], k < 2 ? w : d, hh, k < 2 ? d : w, m);
@@ -776,6 +780,7 @@
     }
     bb.build(scene, false, false);
 
+    if (!opt.sky) return lampPos;
     // céu
     const skyMat = new THREE.MeshBasicMaterial({ side: THREE.BackSide, fog: false, depthWrite: false });
     wdSky = new THREE.Mesh(new THREE.SphereGeometry(100, 24, 14), skyMat);
@@ -783,6 +788,15 @@
     wdMoon = new THREE.Sprite(new THREE.SpriteMaterial({ map: wdMoonTex(), fog: false, transparent: true, depthWrite: false }));
     wdMoon.scale.set(34, 34, 1); wdMoon.renderOrder = -9; scene.add(wdMoon);
     void I;
+    return lampPos;
+  }
+  // prédio do mapa grande: bloco com janelas, faixa de concreto na base, platibanda e uma porta de aço
+  function wdBuilding(B, D, cx, cy, w, d, h, n) {
+    B.add(n % 2 ? WD.bldgDark : WD.bldgDark2, wdBoxG(w, h, d, 6, 9), wdT(cx, h / 2, -cy));
+    B.add(WD.concrete, wdBoxG(w + 0.14, 1.3, d + 0.14, 1.2), wdT(cx, 0.65, -cy));
+    B.add(WD.cap, wdBoxG(w + 0.3, 0.35, d + 0.3, 1.4), wdT(cx, h + 0.17, -cy));
+    for (const [px, pz, ry] of [[0, d / 2 + 0.08, 0], [0, -d / 2 - 0.08, Math.PI], [w / 2 + 0.08, 0, Math.PI / 2], [-w / 2 - 0.08, 0, -Math.PI / 2]].slice(0, 2 + (n % 3)))
+      D.add(WD.gate, wdPlaneG(2.2, 2.6, 1, 1), wdT(cx + px, 1.3, -cy + pz, 0, ry, 0));
   }
   let wdLampPos = [];
 

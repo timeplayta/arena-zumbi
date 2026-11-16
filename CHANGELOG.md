@@ -1,5 +1,12 @@
 # Novidades — Arena Zumbi
 
+## Mapa grande, zumbis mais espertos e chefes por dificuldade (15/11/2026)
+- Extremo e Apocalipse agora usam um mapa grande, com cerca de 3 vezes a área da arena, prédios no meio, mais containers, carros e caixotes. Os zumbis nascem a 18–30 m de você, não lá no muro.
+- Zumbis mais espertos a cada dificuldade: eles contornam containers, carros e prédios em vez de travar. No Soldado só alguns fazem isso; do Pesadelo em diante, todos. No Extremo e no Apocalipse eles também cercam você por lados diferentes.
+- Mais variedade de zumbis: corredores e brutamontes aparecem mais cedo e em maior número conforme a dificuldade, e o Pesadelo ficou com menos zumbis fáceis.
+- Chefes chegando aos poucos em cada dificuldade: Gigante a partir do Recruta, Colosso Blindado a partir do Soldado, Mestre da Katana a partir do Veterano. O Espectro e o Lenhador ficam só no Apocalipse, nas ondas mais avançadas.
+- O modo Infecção não mudou.
+
 ## Lenhador gigante e machado enorme (14/11/2026)
 - O Lenhador ficou muito maior: mais de 5,5 m de altura e bem mais largo.
 - O machado agora é gigante: cabo longo e grosso, lâmina enorme. O alcance dos golpes cresceu junto.
