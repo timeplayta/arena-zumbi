@@ -241,7 +241,7 @@
   }
   document.addEventListener("pointerlockchange", () => {
     if (document.pointerLockElement === canvas) lockHeld = true;
-    else if (lockHeld) { lockHeld = false; if (state === "run" && !Rev.open() && !Gore.busy()) pause(); }
+    else if (lockHeld) { lockHeld = false; if (state === "run" && !Rev.open() && !Gore.busy() && !TowerUI.won()) pause(); }
   });
   let runId = 0;
   function startGame() {
@@ -265,7 +265,7 @@
     adsT = 0; sprintBlend = 0; hfov = S.fov; dmgT = 0; $("feed").innerHTML = "";
     for (const k of ro.used) feedLine(k === "revive" ? "SEGUNDA CHANCE ATIVA" : k === "ammoPack" ? "MOCHILA DUPLA ATIVA" : "COLETE EXTRA ATIVO", false);
     $("menu").hidden = true; $("hud").hidden = false; $("pause").hidden = true; $("dead").hidden = true;
-    $("hud").querySelector(".radar-box").hidden = !S.radar;
+    $("hud").querySelector(".radar-box").hidden = !S.radar || twMode;          // prédio: sem radar (o susto é parte do jogo)
     applyCrosshair();
     state = "run"; applyEnv();
     warmVM(game.gm);                                                // faca/poções prontas: não trava na 1ª vez que puxa

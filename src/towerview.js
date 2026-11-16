@@ -76,7 +76,7 @@
         lamp: bas({ color: 0xe8f0ff }), lampOff: lam({ color: 0x3a3c40 }), tv: bas({ color: 0x223040 }),
         exit: bas({ map: signTex("ESCADA ↑", "#3dff8a", "#06200f") }), elevS: bas({ map: signTex("ELEVADOR", "#ffd27a", "#201806") }), downS: bas({ map: signTex("↓ DESCE", "#ff6a5a", "#200806") }), inS: bas({ map: signTex("ENTRADA", "#9fd0ff", "#061420") }),
         solar: lam({ color: 0x1d3458 }), solarF: lam({ color: 0x9aa0a6 }), water: lam({ color: 0x3f6a80 }), sky: bas({ color: 0xa8d0e8, transparent: true, opacity: 0.5 }), plant: lam({ color: 0x3a6a34 }), soil: lam({ color: 0x3a2a1a }),
-        steel: lam({ color: 0xa7adb3 }), hut: lam({ map: wdConcreteTex(34, 120) }), pad: lam({ color: 0xd8b03a }), padW: lam({ color: 0xe0dccf }),
+        steel: lam({ color: 0xa7adb3 }), hut: lam({ map: wdConcreteTex(34, 120) }), pad: lam({ color: 0xb8952e }), padW: lam({ color: 0x7c7a74 }),
         gl: { white: glow([220, 235, 255], 0.6), green: glow([60, 255, 140], 0.7), red: glow([255, 60, 40], 0.8), blue: glow([120, 190, 255], 0.6), amber: glow([255, 200, 110], 0.7), item: glow([255, 230, 150], 0.55) },
       };
       return MT;
@@ -342,10 +342,11 @@
         if (pf) { pf.hidden = false; pf.firstChild.nodeValue = "JOGAR"; pf.querySelector("i").textContent = String(T.bag[T.throwK] || 0); }
         if (ph) { ph.hidden = false; ph.firstChild.nodeValue = "CURA"; ph.querySelector("i").textContent = String(T.bag.bandagem + T.bag.kit); }
       }
+      $("hud").classList.toggle("twcine", !!T.won);
       if (!lockEl) lockEl = $("twLocker");
       lockEl.hidden = T.hide === null;
     }
-    function off() { $("twHud").hidden = true; $("twLocker").hidden = true; const ub = touchEl.querySelector('[data-act="use"]'); if (ub) ub.hidden = true; const pf = touchEl.querySelector('[data-act="potfire"]'), ph = touchEl.querySelector('[data-act="potheal"]'); if (pf) { pf.firstChild.nodeValue = "FOGO"; pf.hidden = true; } if (ph) { ph.firstChild.nodeValue = "CURA"; ph.hidden = true; } hudLast.pots = "x"; last = ""; }
+    function off() { $("hud").classList.remove("twcine"); $("twHud").hidden = true; $("twLocker").hidden = true; const ub = touchEl.querySelector('[data-act="use"]'); if (ub) ub.hidden = true; const pf = touchEl.querySelector('[data-act="potfire"]'), ph = touchEl.querySelector('[data-act="potheal"]'); if (pf) { pf.firstChild.nodeValue = "FOGO"; pf.hidden = true; } if (ph) { ph.firstChild.nodeValue = "CURA"; ph.hidden = true; } hudLast.pots = "x"; last = ""; }
     // eventos do jogo -> sons e avisos
     function event(ev) {
       const g = game;
