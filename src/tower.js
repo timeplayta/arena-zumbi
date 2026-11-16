@@ -73,14 +73,9 @@
     const TYPES_ALL = { escritorio: "Escritório", reuniao: "Reunião", copa: "Copa", banheiro: "Banheiro", deposito: "Depósito", estar: "Sala de estar", servidores: "Servidores", arquivo: "Arquivo", corredor: "Corredor", terraco: "Terraço" };
     const memo = new Map();
     function plan(level, floor) { const k = level * 100 + floor; if (!memo.has(k)) memo.set(k, build(level, floor)); return memo.get(k); }
-    function build(level, floor) {
-      const LV = LEVELS[level], r = rng(1000003 * (level + 1) + 7919 * (floor + 1)), top = floor === LV.floors - 1;
+    // salas e corredores por divisão binária (BSP); só usa r() aqui, então dá para prever o andar de cima
+    function bsp(r, regs, root) {
       const uni = (a, b) => a + r() * (b - a);
-      // ---------- salas: BSP com corredores nas divisões de cima ----------
-      const regs = [];                                    // { x0, y0, x1, y1, kind: "room" | "hall" | "terrace" }
-      let root = { x0: -A, y0: -A, x1: A, y1: A };
-      const prev = floor > 0 ? plan(level, floor - 1) : null;
-      if (top) return roof(level, floor, prev, r, uni);
       const HALL = 3.2, MIN = 5.5, MAX = 15;
       (function split(b, depth) {
         const w = b.x1 - b.x0, h = b.y1 - b.y0;
@@ -102,6 +97,21 @@
           split({ x0: b.x0, y0: c + gap, x1: b.x1, y1: b.y1 }, depth + 1);
         }
       })(root, 0);
+    }
+    // plantas (só as salas) do andar seguinte: a escada daqui tem que cair dentro de uma sala lá em cima
+    function nextRegs(level, floor) {
+      const LV = LEVELS[level]; if (floor >= LV.floors - 1) return null;
+      const regs = []; bsp(rng(1000003 * (level + 1) + 7919 * (floor + 1)), regs, { x0: -A, y0: -A, x1: A, y1: A }); return regs;
+    }
+    function build(level, floor) {
+      const LV = LEVELS[level], r = rng(1000003 * (level + 1) + 7919 * (floor + 1)), top = floor === LV.floors - 1;
+      const uni = (a, b) => a + r() * (b - a);
+      // ---------- salas: BSP com corredores nas divisões de cima ----------
+      const regs = [];                                    // { x0, y0, x1, y1, kind: "room" | "hall" | "terrace" }
+      let root = { x0: -A, y0: -A, x1: A, y1: A };
+      const prev = floor > 0 ? plan(level, floor - 1) : null;
+      if (top) return roof(level, floor, prev, r, uni);
+      bsp(r, regs, root);
       regs.forEach((g, i) => { g.id = i; g.cx = (g.x0 + g.x1) / 2; g.cy = (g.y0 + g.y1) / 2; g.area = (g.x1 - g.x0) * (g.y1 - g.y0); });
       // ---------- vizinhança (parede em comum) ----------
       const adj = [];
@@ -156,7 +166,11 @@
         const t = regs.find((g) => g.kind === "terrace"); exit = { x: t.cx, y: t.cy, r: 4 }; used.add(t.id);
       } else {
         const far = reach.slice(0, Math.max(1, Math.ceil(reach.length * 0.25)));
-        const g = far[Math.floor(r() * far.length)]; used.add(g.id); const p = corner(g, Math.floor(r() * 4)); up = { x: p[0], y: p[1], room: g.id };
+        const nx = nextRegs(level, floor + 1);
+        const fits = (p) => !nx || nx.some((q) => p[0] > q.x0 + 2.2 && p[0] < q.x1 - 2.2 && p[1] > q.y0 + 1.6 && p[1] < q.y1 - 1.6);   // a escada que desce lá em cima fica dentro de uma sala
+        let g = far[Math.floor(r() * far.length)], p = corner(g, Math.floor(r() * 4));
+        for (let t = 0; t < 60 && !fits(p); t++) { const pool = t < 30 ? far : reach; g = pool[Math.floor(r() * pool.length)]; p = corner(g, Math.floor(r() * 4)); }
+        used.add(g.id); up = { x: p[0], y: p[1], room: g.id };
         if (floor > 0 && floor < LV.floors - 2 && r() < LV.elev) {   // elevador: atalho no meio do caminho (só sobe 1 andar)
           const mid = reach.filter((q) => !used.has(q.id) && dist[q.id] >= 2 && dist[q.id] <= Math.max(2, dist[g.id] - 2));
           if (mid.length) { const e = mid[Math.floor(r() * mid.length)]; used.add(e.id); const c = corner(e, Math.floor(r() * 4)); elev = { x: c[0], y: c[1], room: e.id }; }
@@ -260,6 +274,13 @@
           wallRow(g, "tv", 1.6, 0.25, 1.4, 4, [Math.floor(r() * 4)]);
           corners(g, "planta", 0.7, 1.5);
         }
+      }
+      // nada encostado nas portas nem em cima da chegada/escada (cadeiras e monitores entram direto, sem a checagem do put)
+      for (let i = furn.length - 1; i >= 0; i--) {
+        const f = furn[i]; if (f.locker) continue;
+        const blocks = doors.some((d) => Math.abs(d.x - f.x) < f.w / 2 + (d.axis === "x" ? 1.0 : d.w / 2 + 0.5) && Math.abs(d.y - f.y) < f.d / 2 + (d.axis === "y" ? 1.0 : d.w / 2 + 0.5))
+          || keep.some((k) => Math.abs(k[0] - f.x) < f.w / 2 + k[2] * 0.8 && Math.abs(k[1] - f.y) < f.d / 2 + k[2] * 0.8);
+        if (blocks) furn.splice(i, 1);
       }
       const KINDS = ["bandagem", "kit", "garrafa", "sinalizador", "bateria"];
       const items = [];
