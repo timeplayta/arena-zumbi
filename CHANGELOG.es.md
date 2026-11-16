@@ -1,5 +1,10 @@
 # Novedades — Arena Zumbi
 
+## Modo Edificio más bonito y sin callejones (16/11/2026)
+- La escalera de cada piso siempre llega dentro de una sala del piso de arriba.
+- Ningún mueble bloquea puertas, escaleras ni el punto de llegada.
+- Más ambiente: haces de luz bajo las lámparas que aún funcionan, polvo en el aire, papeles y manchas de sangre en el suelo, cables colgando del techo.
+
 ## Nuevo modo Edificio (16/11/2026)
 - Nuevo modo de juego: Edificio. Elígelo en Misión > Modo de juego. Son 5 niveles, con edificios de 7, 9, 13, 18 y 20 pisos de 72 × 72 m, llenos de salas, pasillos y puertas.
 - Oscuridad total: solo tu linterna ilumina. La batería se acaba; encuentra baterías por el camino (el cambio es automático).

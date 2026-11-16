@@ -1,5 +1,10 @@
 # What's new — Arena Zumbi
 
+## Prettier Building mode with no dead ends (11/16/2026)
+- The stairs on each floor always arrive inside a room on the floor above.
+- No furniture blocks doors, stairs or the arrival spot anymore.
+- More atmosphere: light beams under the lamps that still work, dust in the air, papers and blood stains on the floor, wires hanging from the ceiling.
+
 ## New Building mode (11/16/2026)
 - New game mode: Building. Pick it in Mission > Game mode. There are 5 levels, with buildings of 7, 9, 13, 18 and 20 floors of 72 × 72 m, full of rooms, hallways and doors.
 - Total darkness: only your flashlight lights the way. The battery runs out; find batteries along the way (they swap automatically).

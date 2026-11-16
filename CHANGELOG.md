@@ -1,5 +1,10 @@
 # Novidades — Arena Zumbi
 
+## Modo Prédio mais bonito e sem becos (16/11/2026)
+- A escada de cada andar sempre chega dentro de uma sala no andar de cima.
+- Nenhum móvel fica bloqueando portas, escadas ou a chegada.
+- Mais clima: feixes de luz embaixo das lâmpadas que ainda funcionam, poeira no ar, papéis e manchas de sangue no chão, fios pendurados do forro.
+
 ## Novo Modo Prédio (16/11/2026)
 - Novo modo de jogo: Prédio. Escolha em Missão > Modo de jogo. São 5 níveis, com prédios de 7, 9, 13, 18 e 20 andares de 72 × 72 m, cheios de salas, corredores e portas.
 - Escuro total: só a sua lanterna ilumina. A bateria acaba; ache baterias pelo caminho (a troca é automática).

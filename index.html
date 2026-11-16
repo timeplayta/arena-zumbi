@@ -843,7 +843,7 @@ table.sc td:first-child { font-family: var(--font-display); font-size: 22px; col
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
-const GAME_VERSION = 202611160246, GAME_NOTES = {"t": "Novo Modo Prédio (16/11/2026)", "b": ["Novo modo de jogo: Prédio. Escolha em Missão > Modo de jogo. São 5 níveis, com prédios de 7, 9, 13, 18 e 20 andares de 72 × 72 m, cheios de salas, corredores e portas.", "Escuro total: só a sua lanterna ilumina. A bateria acaba; ache baterias pelo caminho (a troca é automática).", "Mochila com bandagens, kits médicos, garrafas e sinalizadores. H cura, G joga a garrafa ou o sinalizador para distrair os zumbis, 4 troca o que jogar.", "Armários grandes: aperte E para se esconder. Agachado você quase não faz barulho; correndo e atirando, todo mundo escuta.", "Zumbis menores e mais espertos a cada nível: andam à toa, depois escutam barulho, correm atrás de você, procuram nos armários e, no último nível, se escondem e caçam você.", "Ache a escada de cada andar (às vezes há um elevador que sobe 1 andar). No terraço, corra até o helicóptero de resgate para escapar. Vencer um nível libera o próximo."], "en": {"t": "New Building mode (11/16/2026)", "b": ["New game mode: Building. Pick it in Mission > Game mode. There are 5 levels, with buildings of 7, 9, 13, 18 and 20 floors of 72 × 72 m, full of rooms, hallways and doors.", "Total darkness: only your flashlight lights the way. The battery runs out; find batteries along the way (they swap automatically).", "Backpack with bandages, medkits, bottles and flares. H heals, G throws the bottle or flare to distract zombies, 4 swaps what you throw.", "Big lockers: press E to hide. Crouching you barely make noise; running and shooting, everyone hears you.", "Smaller zombies that get smarter at each level: they wander, then hear noise, chase you, search the lockers and, on the last level, hide and hunt you.", "Find the stairs on each floor (sometimes there is an elevator that goes up 1 floor). On the roof, run to the rescue helicopter to escape. Beating a level unlocks the next one."]}, "es": {"t": "Nuevo modo Edificio (16/11/2026)", "b": ["Nuevo modo de juego: Edificio. Elígelo en Misión > Modo de juego. Son 5 niveles, con edificios de 7, 9, 13, 18 y 20 pisos de 72 × 72 m, llenos de salas, pasillos y puertas.", "Oscuridad total: solo tu linterna ilumina. La batería se acaba; encuentra baterías por el camino (el cambio es automático).", "Mochila con vendas, botiquines, botellas y bengalas. H cura, G lanza la botella o la bengala para distraer a los zombis, 4 cambia lo que lanzas.", "Armarios grandes: pulsa E para esconderte. Agachado casi no haces ruido; corriendo y disparando, todos te oyen.", "Zombis más pequeños y más listos en cada nivel: deambulan, luego oyen ruido, te persiguen, buscan en los armarios y, en el último nivel, se esconden y te cazan.", "Encuentra la escalera de cada piso (a veces hay un ascensor que sube 1 piso). En la azotea, corre hasta el helicóptero de rescate para escapar. Ganar un nivel desbloquea el siguiente."]}};
+const GAME_VERSION = 202611160256, GAME_NOTES = {"t": "Modo Prédio mais bonito e sem becos (16/11/2026)", "b": ["A escada de cada andar sempre chega dentro de uma sala no andar de cima.", "Nenhum móvel fica bloqueando portas, escadas ou a chegada.", "Mais clima: feixes de luz embaixo das lâmpadas que ainda funcionam, poeira no ar, papéis e manchas de sangue no chão, fios pendurados do forro."], "en": {"t": "Prettier Building mode with no dead ends (11/16/2026)", "b": ["The stairs on each floor always arrive inside a room on the floor above.", "No furniture blocks doors, stairs or the arrival spot anymore.", "More atmosphere: light beams under the lamps that still work, dust in the air, papers and blood stains on the floor, wires hanging from the ceiling."]}, "es": {"t": "Modo Edificio más bonito y sin callejones (16/11/2026)", "b": ["La escalera de cada piso siempre llega dentro de una sala del piso de arriba.", "Ningún mueble bloquea puertas, escaleras ni el punto de llegada.", "Más ambiente: haces de luz bajo las lámparas que aún funcionan, polvo en el aire, papeles y manchas de sangre en el suelo, cables colgando del techo."]}};
   // ===================== IDIOMAS (inglês, espanhol, português) =====================
   // O jogo é escrito em português. Este tradutor troca, na tela, todo texto que aparece (menus, HUD, avisos, mensagens do servidor).
   // REGRA: todo texto novo do jogo precisa de uma entrada aqui (D = frase exata, P = frase com números/nomes). Veja I18N.md.
@@ -1674,7 +1674,7 @@ const Logic = (function () {
         if (Math.abs(x) > A - r || Math.abs(y) > A - r) { blk[j * N + i] = 1; continue; }
         for (const b of near(x, y)) { if (b[4] <= STEP) continue; const nx = clamp(x, b[0], b[1]), ny = clamp(y, b[2], b[3]); if ((x - nx) * (x - nx) + (y - ny) * (y - ny) < r * r) { blk[j * N + i] = 1; break; } }
       }
-      return (grids[k] = { N, A, blk, fields: new Map(), heap: new Int32Array(N * N * 4), hk: new Float32Array(N * N * 4) });
+      return (grids[k] = { N, A, blk, fields: new Map(), heap: new Int32Array(N * N * 10), hk: new Float32Array(N * N * 10) });
     }
     const cell = (g, x, y) => { const i = clamp(Math.floor((x + g.A) / C), 0, g.N - 1), j = clamp(Math.floor((y + g.A) / C), 0, g.N - 1); return j * g.N + i; };
     const NB = [[1, 0, 1], [-1, 0, 1], [0, 1, 1], [0, -1, 1], [1, 1, 1.414], [1, -1, 1.414], [-1, 1, 1.414], [-1, -1, 1.414]];
@@ -3753,14 +3753,9 @@ const Logic = (function () {
     const TYPES_ALL = { escritorio: "Escritório", reuniao: "Reunião", copa: "Copa", banheiro: "Banheiro", deposito: "Depósito", estar: "Sala de estar", servidores: "Servidores", arquivo: "Arquivo", corredor: "Corredor", terraco: "Terraço" };
     const memo = new Map();
     function plan(level, floor) { const k = level * 100 + floor; if (!memo.has(k)) memo.set(k, build(level, floor)); return memo.get(k); }
-    function build(level, floor) {
-      const LV = LEVELS[level], r = rng(1000003 * (level + 1) + 7919 * (floor + 1)), top = floor === LV.floors - 1;
+    // salas e corredores por divisão binária (BSP); só usa r() aqui, então dá para prever o andar de cima
+    function bsp(r, regs, root) {
       const uni = (a, b) => a + r() * (b - a);
-      // ---------- salas: BSP com corredores nas divisões de cima ----------
-      const regs = [];                                    // { x0, y0, x1, y1, kind: "room" | "hall" | "terrace" }
-      let root = { x0: -A, y0: -A, x1: A, y1: A };
-      const prev = floor > 0 ? plan(level, floor - 1) : null;
-      if (top) return roof(level, floor, prev, r, uni);
       const HALL = 3.2, MIN = 5.5, MAX = 15;
       (function split(b, depth) {
         const w = b.x1 - b.x0, h = b.y1 - b.y0;
@@ -3782,6 +3777,21 @@ const Logic = (function () {
           split({ x0: b.x0, y0: c + gap, x1: b.x1, y1: b.y1 }, depth + 1);
         }
       })(root, 0);
+    }
+    // plantas (só as salas) do andar seguinte: a escada daqui tem que cair dentro de uma sala lá em cima
+    function nextRegs(level, floor) {
+      const LV = LEVELS[level]; if (floor >= LV.floors - 1) return null;
+      const regs = []; bsp(rng(1000003 * (level + 1) + 7919 * (floor + 1)), regs, { x0: -A, y0: -A, x1: A, y1: A }); return regs;
+    }
+    function build(level, floor) {
+      const LV = LEVELS[level], r = rng(1000003 * (level + 1) + 7919 * (floor + 1)), top = floor === LV.floors - 1;
+      const uni = (a, b) => a + r() * (b - a);
+      // ---------- salas: BSP com corredores nas divisões de cima ----------
+      const regs = [];                                    // { x0, y0, x1, y1, kind: "room" | "hall" | "terrace" }
+      let root = { x0: -A, y0: -A, x1: A, y1: A };
+      const prev = floor > 0 ? plan(level, floor - 1) : null;
+      if (top) return roof(level, floor, prev, r, uni);
+      bsp(r, regs, root);
       regs.forEach((g, i) => { g.id = i; g.cx = (g.x0 + g.x1) / 2; g.cy = (g.y0 + g.y1) / 2; g.area = (g.x1 - g.x0) * (g.y1 - g.y0); });
       // ---------- vizinhança (parede em comum) ----------
       const adj = [];
@@ -3836,7 +3846,11 @@ const Logic = (function () {
         const t = regs.find((g) => g.kind === "terrace"); exit = { x: t.cx, y: t.cy, r: 4 }; used.add(t.id);
       } else {
         const far = reach.slice(0, Math.max(1, Math.ceil(reach.length * 0.25)));
-        const g = far[Math.floor(r() * far.length)]; used.add(g.id); const p = corner(g, Math.floor(r() * 4)); up = { x: p[0], y: p[1], room: g.id };
+        const nx = nextRegs(level, floor + 1);
+        const fits = (p) => !nx || nx.some((q) => p[0] > q.x0 + 2.2 && p[0] < q.x1 - 2.2 && p[1] > q.y0 + 1.6 && p[1] < q.y1 - 1.6);   // a escada que desce lá em cima fica dentro de uma sala
+        let g = far[Math.floor(r() * far.length)], p = corner(g, Math.floor(r() * 4));
+        for (let t = 0; t < 60 && !fits(p); t++) { const pool = t < 30 ? far : reach; g = pool[Math.floor(r() * pool.length)]; p = corner(g, Math.floor(r() * 4)); }
+        used.add(g.id); up = { x: p[0], y: p[1], room: g.id };
         if (floor > 0 && floor < LV.floors - 2 && r() < LV.elev) {   // elevador: atalho no meio do caminho (só sobe 1 andar)
           const mid = reach.filter((q) => !used.has(q.id) && dist[q.id] >= 2 && dist[q.id] <= Math.max(2, dist[g.id] - 2));
           if (mid.length) { const e = mid[Math.floor(r() * mid.length)]; used.add(e.id); const c = corner(e, Math.floor(r() * 4)); elev = { x: c[0], y: c[1], room: e.id }; }
@@ -3940,6 +3954,13 @@ const Logic = (function () {
           wallRow(g, "tv", 1.6, 0.25, 1.4, 4, [Math.floor(r() * 4)]);
           corners(g, "planta", 0.7, 1.5);
         }
+      }
+      // nada encostado nas portas nem em cima da chegada/escada (cadeiras e monitores entram direto, sem a checagem do put)
+      for (let i = furn.length - 1; i >= 0; i--) {
+        const f = furn[i]; if (f.locker) continue;
+        const blocks = doors.some((d) => Math.abs(d.x - f.x) < f.w / 2 + (d.axis === "x" ? 1.0 : d.w / 2 + 0.5) && Math.abs(d.y - f.y) < f.d / 2 + (d.axis === "y" ? 1.0 : d.w / 2 + 0.5))
+          || keep.some((k) => Math.abs(k[0] - f.x) < f.w / 2 + k[2] * 0.8 && Math.abs(k[1] - f.y) < f.d / 2 + k[2] * 0.8);
+        if (blocks) furn.splice(i, 1);
       }
       const KINDS = ["bandagem", "kit", "garrafa", "sinalizador", "bateria"];
       const items = [];
@@ -8420,7 +8441,14 @@ const Logic = (function () {
     const H = 3.0;                                                       // pé-direito
     let floorG = null, builtKey = "", spots = [], lights = [], lockers = [], items = [], heli = null, flyers = [], flareV = [], P = null, assignT = 0, tt = 0, winCam = null;
     const lam = (o) => new THREE.MeshLambertMaterial(o), bas = (o) => new THREE.MeshBasicMaterial(o);
-    let MT = null;
+    let MT = null, dust = null;
+    function ensureDust() {                                                  // poeira flutuando em volta da câmera (brilha no facho da lanterna)
+      if (dust) return dust;
+      const n = 500, pos = new Float32Array(n * 3), r = wdR(5); for (let i = 0; i < n * 3; i++) pos[i] = (r() - 0.5) * 9;
+      const g = new THREE.BufferGeometry(); g.setAttribute("position", new THREE.BufferAttribute(pos, 3));
+      dust = new THREE.Points(g, new THREE.PointsMaterial({ color: 0xd8d0c0, size: 0.018, transparent: true, opacity: 0.55, depthWrite: false, sizeAttenuation: true }));
+      dust.frustumCulled = false; root.add(dust); return dust;
+    }
     // ---------- texturas (desenhadas em canvas, uma vez) ----------
     function grime(x, S, r, n, a) { for (let i = 0; i < n; i++) wdBlot(x, S, S, r() * S, r() * S, 8 + r() * S * 0.18, [20, 16, 12], a * (0.4 + r() * 0.6), true); }
     function tilesTex(S, n, base, line, seed, a) {
@@ -8470,6 +8498,11 @@ const Logic = (function () {
       x.fillStyle = col; x.font = "700 52px 'Barlow Condensed','Arial Narrow',sans-serif"; x.textAlign = "center"; x.textBaseline = "middle"; x.fillText(txt, 128, 52);
       const t = new THREE.CanvasTexture(c); return t;
     }
+    function bloodTex() {                                                  // poça/rastro de sangue seco (decalque no chão)
+      const [c, x] = wdCv(128, 128), r = wdR(66);
+      for (let i = 0; i < 26; i++) { const px = 64 + (r() - 0.5) * 70, py = 64 + (r() - 0.5) * 70, rad = 4 + r() * 22; const g = x.createRadialGradient(px, py, 0, px, py, rad); g.addColorStop(0, "rgba(70,6,6,0.85)"); g.addColorStop(0.7, "rgba(60,4,4,0.55)"); g.addColorStop(1, "rgba(50,4,4,0)"); x.fillStyle = g; x.beginPath(); x.arc(px, py, rad, 0, 6.3); x.fill(); }
+      return new THREE.CanvasTexture(c);
+    }
     function glowTex(rgb) { const [c, x] = wdCv(64, 64), g = x.createRadialGradient(32, 32, 0, 32, 32, 32); g.addColorStop(0, wdRgba(rgb[0], rgb[1], rgb[2], 1)); g.addColorStop(0.35, wdRgba(rgb[0], rgb[1], rgb[2], 0.35)); g.addColorStop(1, wdRgba(rgb[0], rgb[1], rgb[2], 0)); x.fillStyle = g; x.fillRect(0, 0, 64, 64); return new THREE.CanvasTexture(c); }
     function mats() {
       if (MT) return MT;
@@ -8489,6 +8522,10 @@ const Logic = (function () {
         exit: bas({ map: signTex("ESCADA ↑", "#3dff8a", "#06200f") }), elevS: bas({ map: signTex("ELEVADOR", "#ffd27a", "#201806") }), downS: bas({ map: signTex("↓ DESCE", "#ff6a5a", "#200806") }), inS: bas({ map: signTex("ENTRADA", "#9fd0ff", "#061420") }),
         solar: lam({ color: 0x1d3458 }), solarF: lam({ color: 0x9aa0a6 }), water: lam({ color: 0x3f6a80 }), sky: bas({ color: 0xa8d0e8, transparent: true, opacity: 0.5 }), plant: lam({ color: 0x3a6a34 }), soil: lam({ color: 0x3a2a1a }),
         steel: lam({ color: 0xa7adb3 }), hut: lam({ map: wdConcreteTex(34, 120) }), pad: lam({ color: 0xb8952e }), padW: lam({ color: 0x7c7a74 }),
+        cone: new THREE.MeshBasicMaterial({ color: 0x9fb8e8, transparent: true, opacity: 0.055, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, fog: true }),
+        coneG: new THREE.MeshBasicMaterial({ color: 0x3dff8a, transparent: true, opacity: 0.05, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide }),
+        paperF: lam({ color: 0xa8a290, side: THREE.DoubleSide }), blood: lam({ map: bloodTex(), transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }),
+        cable: lam({ color: 0x0c0c0e }),
         gl: { white: glow([220, 235, 255], 0.6), green: glow([60, 255, 140], 0.7), red: glow([255, 60, 40], 0.8), blue: glow([120, 190, 255], 0.6), amber: glow([255, 200, 110], 0.7), item: glow([255, 230, 150], 0.55) },
       };
       return MT;
@@ -8612,9 +8649,16 @@ const Logic = (function () {
           const along = g.x1 - g.x0 > g.y1 - g.y0, u = (i + 0.5) / n, x = along ? g.x0 + (g.x1 - g.x0) * u : g.cx, y = along ? g.cy : g.y0 + (g.y1 - g.y0) * u;
           const on = rr() < (g.kind === "hall" ? 0.45 : 0.3);
           bx(B, on ? m.lamp : m.lampOff, x, y, along ? 1.2 : 0.3, along ? 0.3 : 1.2, 0.04, H - 0.05);
-          if (on) spots.push({ x, y, h: H - 0.25, c: 0xcfdcff, i: 0.85, r: 8.5, flick: rr() < 0.4 ? rr() * 10 : -1 }), deco.push(["white", x, y, H - 0.12, 1.4]);
+          if (on) { spots.push({ x, y, h: H - 0.25, c: 0xcfdcff, i: 0.85, r: 8.5, flick: rr() < 0.4 ? rr() * 10 : -1 }); deco.push(["white", x, y, H - 0.12, 1.4]); B.add(m.cone, new THREE.ConeGeometry(1.5, H - 0.1, 18, 1, true), wdT(x, (H - 0.1) / 2, -y)); }
         }
         if (g.kind === "hall" && rr() < 0.6) spots.push({ x: g.cx, y: g.cy, h: 2.6, c: 0xff3a24, i: 0.5, r: 8, pulse: rr() * 6 }), deco.push(["red", g.cx, g.cy, 2.75, 0.5]);
+      }
+      // bagunça: papéis no chão, manchas de sangue, cabos pendurados do forro
+      if (!P.roof) for (const g of P.regs) {
+        const n = Math.round(g.area / 14);
+        for (let i = 0; i < n; i++) { const x = g.x0 + 0.5 + rr() * (g.x1 - g.x0 - 1), y = g.y0 + 0.5 + rr() * (g.y1 - g.y0 - 1); B.add(m.paperF, new THREE.PlaneGeometry(0.22, 0.3), wdT(x, 0.006 + i * 0.0003, -y, -Math.PI / 2, 0, rr() * 6.28)); }
+        if (rr() < 0.35) { const x = g.cx + (rr() - 0.5) * (g.x1 - g.x0) * 0.6, y = g.cy + (rr() - 0.5) * (g.y1 - g.y0) * 0.6, sz = 1 + rr() * 1.6; B.add(m.blood, new THREE.PlaneGeometry(sz, sz * (0.6 + rr())), wdT(x, 0.012, -y, -Math.PI / 2, 0, rr() * 6.28)); }
+        if (rr() < 0.3) { const x = g.cx + (rr() - 0.5) * 3, y = g.cy + (rr() - 0.5) * 3, len = 0.5 + rr() * 1.3; B.add(m.cable, new THREE.BoxGeometry(0.025, len, 0.025), wdT(x, H - len / 2, -y, (rr() - 0.5) * 0.3, 0, (rr() - 0.5) * 0.3)); B.add(m.lampOff, new THREE.BoxGeometry(0.6, 0.02, 0.6), wdT(x + 0.2, H - 0.25, -y, 0.5, rr(), 0.3)); }
       }
       // escada para cima: lance de degraus subindo até um vão no teto + placa verde
       const flight = (p, up) => {
@@ -8636,6 +8680,7 @@ const Logic = (function () {
         B.add(sign, new THREE.PlaneGeometry(0.9, 0.34), wdT(p.x - sx * (L / 2 + 0.1), 2.35, -p.y, 0, sx > 0 ? -Math.PI / 2 : Math.PI / 2, 0));
         spots.push({ x: p.x - sx * (L / 2 + 0.3), y: p.y, h: 2.4, c: up ? 0x3dff8a : 0xff5a4a, i: up ? 1.3 : 0.7, r: up ? 9 : 6, key: up });
         deco.push([up ? "green" : "red", p.x - sx * (L / 2 + 0.12), p.y, 2.35, 1.1]);
+        if (up) B.add(m.coneG, new THREE.ConeGeometry(1.4, 2.3, 16, 1, true), wdT(p.x - sx * (L / 2 + 0.3), 1.2, -p.y));
       };
       if (P.up) flight(P.up, true);
       if (P.floor > 0 && !P.roof) flight(P.arrive, false);
@@ -8696,6 +8741,7 @@ const Logic = (function () {
         l.intensity += (want - l.intensity) * Math.min(1, dt * 8);
       }
       floorG.children.forEach((o) => { if (o.userData.blink) o.visible = tt % 1.4 < 0.15; });
+      { const d = ensureDust(); d.visible = !P.roof; if (d.visible) { const c = camera.position, a = d.geometry.attributes.position, A = a.array; for (let i = 0; i < A.length; i += 3) { A[i + 1] -= dt * 0.03; A[i] += Math.sin(tt * 0.3 + i) * dt * 0.02; let dx = A[i] - c.x, dy = A[i + 1] - c.y, dz = A[i + 2] - c.z; if (dx > 4.5) A[i] -= 9; else if (dx < -4.5) A[i] += 9; if (dy > 4.5) A[i + 1] -= 9; else if (dy < -4.5) A[i + 1] += 9; if (dz > 4.5) A[i + 2] -= 9; else if (dz < -4.5) A[i + 2] += 9; } a.needsUpdate = true; } }
       for (const v of items) { v.g.visible = v.it.on; if (v.it.on) { v.g.rotation.y += dt * 1.5; v.g.position.y = 0.14 + Math.sin(tt * 2 + v.it.id) * 0.03; } }
       for (const L of lockers) { L.open += (L.want - L.open) * Math.min(1, dt * 7); if (L.shut > 0) { L.shut -= dt; if (L.shut <= 0) L.want = 0; } for (const d of L.doors) d.piv.rotation.y = d.s * L.open * 1.6; }
       // garrafas/sinalizadores voando e sinalizadores no chão
