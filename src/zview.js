@@ -44,7 +44,7 @@
     // braços e pés
     for (let i = 0; i < 2; i++) { const q = r(); P.armCut[i] = q < 0.03 * gm ? 3 : q < 0.065 * gm ? 2 : q < 0.1 * gm ? 1 : 0; if (P.armCut[i]) P.parts++; }
     if (limp) for (let i = 0; i < 2; i++) if (r() < 0.14) { P.footCut[i] = 1; P.parts++; break; }
-    if (kind === "lumber") { P.armCut = [0, 0]; P.lostJaw = false; P.hole = null; }                // o Lenhador precisa dos dois braços (machado)
+    if (kind === "lumber") { P.armCut = [0, 0]; P.lostJaw = false; P.hole = null; P.dead = 0.28; }    // morto há pouco: pele ainda curtida, não branca                // o Lenhador precisa dos dois braços (machado)
     // corpo
     P.belly = r() < 0.16 * gm; P.gut = P.belly && r() < 0.55; P.chest = !P.belly && r() < 0.09 * gm; if (kind === "lumber") P.belly = P.gut = P.chest = false; P.shoulderBite = r() < 0.12 * gm;
     P.splats = 1 + Math.floor(r() * 3.5 * gm); P.gashes = Math.floor(r() * 2.7 * gm); P.bites = r() < 0.22 * gm ? 1 + Math.floor(r() * 2) : 0;
@@ -70,6 +70,7 @@
       // pele: tom humano misturado com a podridão
       const skinC = C(pick(r, SKIN_BASE)).lerp(ROT, 0.5 + r() * 0.2).multiplyScalar(0.8 + r() * 0.2);
       { const hsl = {}; skinC.getHSL(hsl); skinC.setHSL(hsl.h, hsl.s * 0.55, Math.min(0.62, hsl.l * 1.06)); }
+      if (z.lumber) skinC.set(0x9a6a46).lerp(ROT, 0.12).multiplyScalar(0.5);                 // Lenhador: pele curtida de sol (morto há pouco), não "boneco branco"
       const hairName = pick(r, A.hairColor || ["preto", "preto", "castanho", "castanho", "castClaro", "loiro", "ruivo", "grisalho"]);
       let hairC = vary(HAIRC[hairName], 0.15).multiplyScalar(0.85);
       const hatName = (() => { let h = null; for (const [n, p] of A.hat || []) if (!h && r() < p) h = n; return h; })();
@@ -254,7 +255,7 @@
       catch (e) { console.error("cabeça:", e); const sk = add(G.skull, skinM, 0, 0.12, 0, head); }
       if (A.hoodie && hatName !== "hood") add(G.hoodDown, top, 0, 0.44, 0.085, spine);
       // ----- braços -----
-      const shX = buff ? 0.24 : fem ? 0.178 : fat ? 0.245 : 0.2, armW = buff ? 1.48 : fem ? 0.86 : fat || z.brute ? 1.3 : z.runner ? 0.88 : 1;
+      const shX = buff ? 0.24 : fem ? 0.178 : fat ? 0.245 : 0.2, armW = buff ? 1.36 : fem ? 0.86 : fat || z.brute ? 1.3 : z.runner ? 0.88 : 1;
       const longS = A.sleeve === "long", shortS = A.sleeve === "short" && !A.vestOnly;
       const handRGB = P.bloodyHands ? skinRGB.map((v, i) => v + ([0.35, 0.04, 0.05][i] - v) * 0.5) : skinRGB;
       const claw = r() < 0.55;
@@ -329,7 +330,7 @@
       const scalp = bald ? "none" : style === "buzz" ? "buzz" : style === "balding" ? "sides" : style === "mohawk" ? "mohawk" : style === "afro" ? "none" : "full";
       const recede = style === "balding" ? -0.4 : (A.sex === "m" && r() < 0.15) ? -0.18 : 0;
       let beardKind = null;
-      if (!fem && r() < (A.beard || 0)) beardKind = pick(r, z.lumber ? ["full"] : A.beard > 0.7 ? ["full", "full", "short", "goatee"] : ["short", "short", "goatee", "mustache", "full"]);
+      if (!fem && r() < (A.beard || 0)) beardKind = pick(r, z.lumber ? ["lumber"] : A.beard > 0.7 ? ["full", "full", "short", "goatee"] : ["short", "short", "goatee", "mustache", "full"]);
       const stubble = beardKind ? 0 : (!fem && r() < 0.5 ? 0.35 + r() * 0.5 : 0);
       const face = ZH.paintFace(r, { skin: skinRGB, hairRGB, dead, fem, stubble, scalp, recede, wounds: W, noBrows: r() < 0.06 });
       this.tex = face;
@@ -399,14 +400,14 @@
         const seed = 1 + Math.floor(r() * 4);
         const hg = ZHair.build(style, seed, { hat: !!hatName, recede, hole: P.hole, blood: Math.round(Math.min(0.6, P.blood) * 4) / 4 });
         const hm = ZHair.mat();
-        const hcol = hairHex ? C(hairHex) : hairC.clone();
+        const hcol = hairHex ? C(hairHex) : z.lumber ? C(0x5a3a22) : hairC.clone();
         hm.color.copy(hcol).multiplyScalar(0.9); hm.userData.own = true;
         this.mats.push(hm);
         const hmesh = new THREE.Mesh(hg, hm); hmesh.userData.keep = true; hmesh.castShadow = false; hc.add(hmesh);
       }
       if (beardKind) {
         const bg = ZHair.beard(beardKind, 1 + Math.floor(r() * 4));
-        const bm = ZHair.mat(); bm.color.copy(hairC).multiplyScalar(0.85); bm.userData.own = true; this.mats.push(bm);
+        const bm = ZHair.mat(); bm.color.copy(hairC).multiplyScalar(0.85); if (z.lumber) bm.color.setHex(0x6a4428); bm.userData.own = true; this.mats.push(bm);
         const bmesh = new THREE.Mesh(bg, bm); bmesh.userData.keep = true;
         bmesh.position.set(-ZH.JAW_HINGE.x, -ZH.JAW_HINGE.y, -ZH.JAW_HINGE.z);
         if (P.lostJaw) hc.add(bmesh); else jr.add(bmesh);
@@ -417,6 +418,7 @@
       const G = ZG, lamH = (hex) => tok(hex);
       if (hatName === "cap") { const cm = lamH(o.vary(pick(r, [0x1a3a6a, 0x7a1a1a, 0x1c1c1c, 0x4a5a2a]))); hatAdd(G.capCrown, cm, 0, 0.045, 0.004); hatAdd(G.visor, cm, 0, 0.045, -0.05); }
       else if (hatName === "police") { hatAdd(G.police, lamH(0x141a2c), 0, 0.06, 0); hatAdd(G.visor, lamH(0x0a0a0a), 0, 0.065, -0.04); hatAdd(G.plate, lamH(0xd8b040), 0, 0.11, -0.12, (h) => h.scale.set(0.025, 0.025, 0.006)); }
+      else if (hatName === "beanie" && z.lumber) this.capAt = true;                     // o Lenhador ganha um gorro de lã próprio (zlumber.js)
       else if (hatName === "beanie") hatAdd(G.beanie, lamH(o.vary(pick(r, [0x2a2a2c, 0x6a1a1a, 0x2a3a5a, 0x5a4a2a]))), 0, 0.012, 0.004);
       else if (hatName === "helmet") { const h = hatAdd(G.helmet, lamH(0x3e4630), 0, 0.04, 0.006); h.castShadow = true; }
       else if (hatName === "fire") { const fm = lamH(0xc8a020); hatAdd(G.helmet, fm, 0, 0.045, 0.006).castShadow = true; hatAdd(G.brim, fm, 0, 0.04, 0.03, (h) => h.scale.set(1, 1, 1.15)); }

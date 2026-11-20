@@ -1,5 +1,12 @@
 # Novedades — Arena Zumbi
 
+## Leñador con nuevo aspecto (20/11/2026)
+- Barba poblada de verdad, con pelos, bigote y patillas.
+- Gorro de lana tejido.
+- Camisa de franela a cuadros rojos y negros y pantalón vaquero con textura, suciedad y desgaste.
+- Piel curtida por el sol y brazos más naturales.
+- Hacha nueva: mango de madera curvo con vetas, empuñadura de cuero y hoja forjada con filo, óxido y sangre.
+
 ## Modo Edificio más bonito y sin callejones (16/11/2026)
 - La escalera de cada piso siempre llega dentro de una sala del piso de arriba.
 - Ningún mueble bloquea puertas, escaleras ni el punto de llegada.

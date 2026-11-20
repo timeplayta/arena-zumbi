@@ -4,49 +4,147 @@
   //  Aqui: modelo do machado, poses (braços por cinemática inversa até o cabo) e o machado solto no mundo
   //  (preso no chão, voando, caído).
   // ======================================================================
+  // ---------- texturas do Lenhador: flanela xadrez, jeans, lã tricotada, nogueira, aço forjado, couro ----------
+  //  (desenhadas uma vez e compartilhadas; flanela/jeans/lã são em tons de cinza: a cor vem dos vértices/material)
+  const LTX = {};
+  function ltex(kind) {
+    if (LTX[kind]) return LTX[kind];
+    const W = kind === "wood" ? 64 : kind === "steel" ? 512 : kind === "knit" || kind === "leather" ? 128 : 256, H = kind === "wood" ? 512 : kind === "steel" ? 256 : W;
+    const cv = ZH.mkCanvas(W, H), c = cv.getContext("2d"), r = ZH.mulberry({ flannel: 11, denim: 12, knit: 13, wood: 14, steel: 15, leather: 16 }[kind]);
+    const noise = (amt, cell, alpha) => { for (let y = 0; y < H; y += cell) for (let x = 0; x < W; x += cell) { const v = (r() - 0.5) * amt; c.fillStyle = v > 0 ? "rgba(255,255,255," + (v * alpha) + ")" : "rgba(0,0,0," + (-v * alpha) + ")"; c.fillRect(x, y, cell, cell); } };
+    if (kind === "flannel") {                                                    // xadrez búfalo: quadrados vermelho/preto, sarja, penugem e desgaste
+      c.fillStyle = "rgb(238,236,232)"; c.fillRect(0, 0, W, H);
+      const B = W / 2;
+      for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+        const a = (x % W) < B, b = (y % H) < B, k = a && b ? 0.82 : a || b ? 0.5 : 0; if (!k) continue;
+        c.fillStyle = "rgba(10,6,6," + k + ")"; c.fillRect(x, y, 1, 1);
+      }
+      for (let y = 0; y < H; y += 2) for (let x = (y >> 1) & 3; x < W; x += 4) { c.fillStyle = "rgba(0,0,0,0.10)"; c.fillRect(x, y, 2, 1); }   // sarja (diagonal)
+      for (let i = 0; i < 2600; i++) { const x = r() * W, y = r() * H, L = 2 + r() * 5, a = r() * 6.28; c.strokeStyle = "rgba(255,255,255," + (0.05 + r() * 0.08) + ")"; c.lineWidth = 0.6; c.beginPath(); c.moveTo(x, y); c.lineTo(x + Math.cos(a) * L, y + Math.sin(a) * L); c.stroke(); }   // penugem da flanela
+      for (let i = 0; i < 26; i++) { const x = r() * W, y = r() * H, rad = 10 + r() * 30, g = c.createRadialGradient(x, y, 0, x, y, rad); g.addColorStop(0, "rgba(255,240,220,0.10)"); g.addColorStop(1, "rgba(255,240,220,0)"); c.fillStyle = g; c.fillRect(x - rad, y - rad, rad * 2, rad * 2); }   // gasto
+      for (let i = 0; i < 18; i++) { const x = r() * W, y = r() * H, rad = 8 + r() * 26, g = c.createRadialGradient(x, y, 0, x, y, rad); g.addColorStop(0, "rgba(30,18,8,0.22)"); g.addColorStop(1, "rgba(30,18,8,0)"); c.fillStyle = g; c.fillRect(x - rad, y - rad, rad * 2, rad * 2); }   // sujeira e suor
+      noise(14, 1, 0.012);
+    } else if (kind === "denim") {                                               // jeans: sarja azul, fio branco aparecendo, desbotado
+      c.fillStyle = "rgb(214,214,218)"; c.fillRect(0, 0, W, H);
+      for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { const d = (x + y) % 4; if (d < 2) { c.fillStyle = "rgba(0,0,10," + (d ? 0.16 : 0.24) + ")"; c.fillRect(x, y, 1, 1); } }
+      for (let i = 0; i < 5000; i++) { c.fillStyle = "rgba(255,255,255," + (0.08 + r() * 0.16) + ")"; c.fillRect(r() * W, r() * H, 1, 2 + r() * 3); }   // trama clara
+      for (let i = 0; i < 9; i++) { const y = r() * H, g = c.createLinearGradient(0, y - 30, 0, y + 30); g.addColorStop(0, "rgba(255,255,255,0)"); g.addColorStop(0.5, "rgba(255,255,255,0.12)"); g.addColorStop(1, "rgba(255,255,255,0)"); c.fillStyle = g; c.fillRect(0, y - 30, W, 60); }   // desbotado
+      for (let i = 0; i < 14; i++) { const x = r() * W, y = r() * H, rad = 10 + r() * 34, g = c.createRadialGradient(x, y, 0, x, y, rad); g.addColorStop(0, "rgba(40,26,12,0.25)"); g.addColorStop(1, "rgba(40,26,12,0)"); c.fillStyle = g; c.fillRect(x - rad, y - rad, rad * 2, rad * 2); }   // lama
+      c.strokeStyle = "rgba(255,230,180,0.35)"; c.setLineDash([4, 3]); c.lineWidth = 1.2; c.beginPath(); c.moveTo(W * 0.5, 0); c.lineTo(W * 0.5, H); c.stroke(); c.setLineDash([]);   // costura
+      noise(10, 1, 0.01);
+    } else if (kind === "knit") {                                                // lã tricotada (gorro): colunas de "V"
+      c.fillStyle = "rgb(150,150,150)"; c.fillRect(0, 0, W, H);
+      const cw = 8, ch = 7;
+      for (let y = 0; y < H; y += ch) for (let x = 0; x < W; x += cw) {
+        for (const s of [-1, 1]) { const g = c.createLinearGradient(x + cw / 2, y, x + cw / 2 + s * cw / 2, y + ch); g.addColorStop(0, "rgba(255,255,255,0.55)"); g.addColorStop(1, "rgba(255,255,255,0.15)");
+          c.fillStyle = g; c.beginPath(); c.moveTo(x + cw / 2, y + ch); c.lineTo(x + cw / 2 + s * cw * 0.48, y + 1); c.lineTo(x + cw / 2 + s * cw * 0.2, y); c.lineTo(x + cw / 2, y + ch * 0.55); c.closePath(); c.fill(); }
+        c.fillStyle = "rgba(0,0,0,0.35)"; c.fillRect(x, y, 1, ch);
+      }
+      for (let i = 0; i < 900; i++) { c.strokeStyle = "rgba(255,255,255," + (0.05 + r() * 0.1) + ")"; c.lineWidth = 0.5; const x = r() * W, y = r() * H; c.beginPath(); c.moveTo(x, y); c.lineTo(x + (r() - 0.5) * 6, y + (r() - 0.5) * 6); c.stroke(); }
+    } else if (kind === "wood") {                                                // cabo de nogueira: veios ao comprido, nós, encardido
+      const g = c.createLinearGradient(0, 0, W, 0); g.addColorStop(0, "#5a3a20"); g.addColorStop(0.5, "#86603a"); g.addColorStop(1, "#5a3a20"); c.fillStyle = g; c.fillRect(0, 0, W, H);
+      for (let i = 0; i < 60; i++) { const x0 = r() * W, w = 0.5 + r() * 1.8, sh = 0.18 + r() * 0.3; c.strokeStyle = "rgba(40,22,10," + sh + ")"; c.lineWidth = w; c.beginPath(); c.moveTo(x0, 0); for (let y = 0; y <= H; y += 16) c.lineTo(x0 + Math.sin(y * 0.02 + i) * 2.5 + (r() - 0.5), y); c.stroke(); }
+      for (let i = 0; i < 3; i++) { const x = r() * W, y = r() * H; c.fillStyle = "rgba(40,20,8,0.7)"; c.beginPath(); c.ellipse(x, y, 3 + r() * 3, 8 + r() * 6, 0, 0, 6.3); c.fill(); }
+      const gr = c.createLinearGradient(0, H * 0.55, 0, H); gr.addColorStop(0, "rgba(20,10,4,0)"); gr.addColorStop(1, "rgba(20,10,4,0.55)"); c.fillStyle = gr; c.fillRect(0, 0, W, H);   // encardido onde as mãos pegam
+      for (let i = 0; i < 10; i++) { const x = r() * W, y = H * 0.1 + r() * H * 0.5; c.fillStyle = "rgba(70,6,6," + (0.4 + r() * 0.4) + ")"; c.beginPath(); c.ellipse(x, y, 2 + r() * 4, 4 + r() * 18, 0, 0, 6.3); c.fill(); }   // sangue escorrido
+    } else if (kind === "steel") {                                               // aço: u = do olhal até o fio; v = altura
+      const g = c.createLinearGradient(0, 0, W, 0); g.addColorStop(0, "#1c1e21"); g.addColorStop(0.32, "#2a2d31"); g.addColorStop(0.5, "#6c7178"); g.addColorStop(0.86, "#8a9097"); g.addColorStop(0.9, "#d8dde2"); g.addColorStop(1, "#eef2f5"); c.fillStyle = g; c.fillRect(0, 0, W, H);
+      for (let i = 0; i < 900; i++) { const y = r() * H, x = W * 0.3 + r() * W * 0.7, L = 20 + r() * 80; c.strokeStyle = "rgba(255,255,255," + (0.03 + r() * 0.06) + ")"; c.lineWidth = 0.7; c.beginPath(); c.moveTo(x, y); c.lineTo(x + L, y + (r() - 0.5) * 3); c.stroke(); }   // lixado
+      for (let i = 0; i < 140; i++) { const x = r() * W * 0.42, y = r() * H, rad = 2 + r() * 6; c.fillStyle = "rgba(255,255,255," + (0.03 + r() * 0.05) + ")"; c.beginPath(); c.arc(x, y, rad, 0, 6.3); c.fill(); }   // marcas de martelo na forja
+      for (let i = 0; i < 40; i++) { const x = r() * W * 0.85, y = r() * H, rad = 3 + r() * 14, gg = c.createRadialGradient(x, y, 0, x, y, rad); gg.addColorStop(0, "rgba(120,58,22,0.55)"); gg.addColorStop(1, "rgba(120,58,22,0)"); c.fillStyle = gg; c.fillRect(x - rad, y - rad, rad * 2, rad * 2); }   // ferrugem
+      for (let i = 0; i < 22; i++) { const x = W * (0.62 + r() * 0.36), y = r() * H, w = 6 + r() * 24, h = 3 + r() * 10; c.fillStyle = "rgba(" + (70 + r() * 30) + ",4,4," + (0.55 + r() * 0.35) + ")"; c.beginPath(); c.ellipse(x, y, w, h, (r() - 0.5) * 0.6, 0, 6.3); c.fill(); }   // sangue no fio
+      for (let i = 0; i < 12; i++) { const x = W * (0.6 + r() * 0.3), y = r() * H, L = 15 + r() * 50; c.strokeStyle = "rgba(60,2,2,0.6)"; c.lineWidth = 1.5 + r() * 2.5; c.beginPath(); c.moveTo(x, y); c.lineTo(x - L * 0.3, y + L); c.stroke(); }
+    } else {                                                                     // couro do punho, enrolado
+      c.fillStyle = "#3a2414"; c.fillRect(0, 0, W, H);
+      for (let k = -H; k < W + H; k += 16) { c.strokeStyle = "rgba(0,0,0,0.55)"; c.lineWidth = 3; c.beginPath(); c.moveTo(k, 0); c.lineTo(k + H * 0.5, H); c.stroke(); c.strokeStyle = "rgba(255,220,180,0.12)"; c.lineWidth = 2; c.beginPath(); c.moveTo(k + 5, 0); c.lineTo(k + 5 + H * 0.5, H); c.stroke(); }
+      noise(30, 2, 0.01);
+    }
+    const t = new THREE.CanvasTexture(cv); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 4;
+    if (kind === "flannel") t.repeat.set(2.4, 2.4); else if (kind === "denim") t.repeat.set(3, 3); else if (kind === "knit") t.repeat.set(6, 2);
+    if (kind === "wood" || kind === "steel" || kind === "leather") t.encoding = THREE.sRGBEncoding;
+    return (LTX[kind] = t);
+  }
   // machado gigante: K aumenta o cabo (para cima) e a cabeça; o punho (onde as mãos seguram) fica no mesmo lugar
+  //  cabo de nogueira levemente curvo e oval, punho enrolado em couro; cabeça de machado de derrubada forjada,
+  //  com a lâmina afinando até o fio (cunha), fio afiado brilhando, ferrugem e sangue
   const AXE_K = 1.7;
   function makeAxe() {
     const K = AXE_K, HY = 0.72 * K, g = new THREE.Group(); g.rotation.order = "YXZ";
-    const wood = new THREE.MeshPhongMaterial({ color: 0x3a2413, specular: 0x1a120a, shininess: 8 });
-    const steel = new THREE.MeshPhongMaterial({ color: 0x7f868e, specular: 0xaab2bc, shininess: 60 });
-    const dark = new THREE.MeshPhongMaterial({ color: 0x2c3036, specular: 0x555a60, shininess: 30 });
-    const gore = new THREE.MeshLambertMaterial({ color: 0x4a0606 });
-    const mats = [wood, steel, dark, gore]; for (const m of mats) m.userData.own = true;
-    const add = (geo, m, x, y, z) => { const o = new THREE.Mesh(geo, m); o.position.set(x, y, z); o.castShadow = true; g.add(o); return o; };
-    // cabo grosso (de -0,47 até a cabeça)
-    const top = HY + 0.09 * K, bot = -0.47, R0 = 0.03, R1 = 0.036;
-    add(new THREE.CylinderGeometry(R0, R1, top - bot, 12), wood, 0, (top + bot) / 2, 0);
-    add(new THREE.CylinderGeometry(0.043, 0.034, 0.08, 12), wood, 0, -0.45, 0);
-    for (let i = 0; i < 5; i++) add(new THREE.CylinderGeometry(0.038, 0.038, 0.02, 12), dark, 0, -0.38 + i * 0.075, 0);   // fita do punho
-    // cabeça do machado: olhal + lâmina larga (fio para -Z) + martelo atrás
-    add(new THREE.BoxGeometry(0.075 * K, 0.17 * K, 0.14 * K), dark, 0, HY, -0.01 * K);
-    const sh = new THREE.Shape();
-    sh.moveTo(0.05 * K, 0.075 * K); sh.lineTo(0.3 * K, 0.21 * K); sh.quadraticCurveTo(0.4 * K, 0, 0.3 * K, -0.21 * K); sh.lineTo(0.05 * K, -0.075 * K); sh.closePath();
-    const bg = new THREE.ExtrudeGeometry(sh, { depth: 0.01 * K, bevelEnabled: true, bevelThickness: 0.008 * K, bevelSize: 0.012 * K, bevelSegments: 2 });
-    bg.translate(0, 0, -0.005 * K); bg.rotateY(Math.PI / 2);
-    add(bg, steel, 0, HY, 0);
-    add(new THREE.BoxGeometry(0.085 * K, 0.1 * K, 0.08 * K), dark, 0, HY, 0.09 * K);
-    // sangue seco no fio (um pouco afastado da lâmina para não piscar)
-    const sb = new THREE.Shape(); sb.moveTo(0.25 * K, 0.18 * K); sb.lineTo(0.3 * K, 0.21 * K); sb.quadraticCurveTo(0.4 * K, 0, 0.3 * K, -0.21 * K); sb.lineTo(0.23 * K, -0.15 * K); sb.quadraticCurveTo(0.31 * K, 0, 0.25 * K, 0.18 * K);
-    const sg = new THREE.ExtrudeGeometry(sb, { depth: 0.036 * K, bevelEnabled: false }); sg.translate(0, 0, -0.018 * K); sg.rotateY(Math.PI / 2);
-    add(sg, gore, 0, HY, 0).castShadow = false;
-    g.userData = { mats, hL: new THREE.Vector3(0, -0.36, 0), hR: new THREE.Vector3(0, -0.1, 0), head: new THREE.Vector3(0, HY, -0.32 * K), R: R1 };
+    const wood = new THREE.MeshPhongMaterial({ map: ltex("wood"), specular: 0x1a120a, shininess: 10 });
+    const steel = new THREE.MeshPhongMaterial({ map: ltex("steel"), specular: 0x9aa2ac, shininess: 70 });
+    const leather = new THREE.MeshPhongMaterial({ map: ltex("leather"), specular: 0x221810, shininess: 14 });
+    const dark = new THREE.MeshPhongMaterial({ color: 0x24272b, specular: 0x555a60, shininess: 40 });
+    const mats = [wood, steel, leather, dark]; for (const m of mats) m.userData.own = true;
+    const add = (geo, m, x, y, z) => { const o = new THREE.Mesh(geo, m); o.position.set(x || 0, y || 0, z || 0); o.castShadow = true; g.add(o); return o; };
+    // ----- cabo: cilindro deformado (oval, mais grosso no pé, curvinha suave) -----
+    const top = HY + 0.09 * K, bot = -0.5, L = top - bot, R0 = 0.034;
+    const hg = new THREE.CylinderGeometry(1, 1, L, 16, 40), P = hg.attributes.position;
+    for (let i = 0; i < P.count; i++) {
+      const y = P.getY(i), t = (y + L / 2) / L;                                   // 0 = pé, 1 = cabeça
+      const swell = 1 + 0.35 * Math.exp(-Math.pow((t - 0.025) / 0.03, 2)) - 0.12 * Math.exp(-Math.pow((t - 0.12) / 0.06, 2)) - 0.1 * t;   // botão no pé, cintura, afina para cima
+      const bend = 0.016 * Math.sin(Math.PI * t) * (1 - t);                       // curvinha de cabo de machado ("pé de corça")
+      P.setXYZ(i, P.getX(i) * R0 * 0.82 * swell, y + bot + L / 2, P.getZ(i) * R0 * 1.12 * swell + bend);
+    }
+    hg.computeVertexNormals(); add(hg, wood);
+    // couro enrolado onde as mãos pegam
+    const lg = new THREE.CylinderGeometry(R0 * 0.93, R0 * 0.98, 0.42, 16, 1, true); lg.scale(0.9, 1, 1.22);
+    const lw = add(lg, leather, 0, -0.24, 0.004); lw.material.side = THREE.DoubleSide;
+    for (const y of [-0.45, -0.03]) add(new THREE.TorusGeometry(R0 * 1.0, 0.006, 6, 16), leather, 0, y, 0.004).rotation.x = Math.PI / 2;
+    // ----- cabeça: perfil de machado de derrubada, extrudado e afinado até o fio -----
+    const sh = new THREE.Shape(), k = K;
+    sh.moveTo(-0.105 * k, -0.06 * k); sh.lineTo(-0.105 * k, 0.06 * k); sh.quadraticCurveTo(-0.1 * k, 0.085 * k, -0.06 * k, 0.088 * k);
+    sh.lineTo(0.045 * k, 0.085 * k); sh.quadraticCurveTo(0.12 * k, 0.08 * k, 0.24 * k, 0.15 * k); sh.quadraticCurveTo(0.31 * k, 0.19 * k, 0.37 * k, 0.215 * k);
+    sh.quadraticCurveTo(0.45 * k, 0.0, 0.36 * k, -0.24 * k);
+    sh.quadraticCurveTo(0.27 * k, -0.17 * k, 0.17 * k, -0.11 * k); sh.quadraticCurveTo(0.09 * k, -0.08 * k, 0.045 * k, -0.085 * k);
+    sh.lineTo(-0.06 * k, -0.088 * k); sh.quadraticCurveTo(-0.1 * k, -0.085 * k, -0.105 * k, -0.06 * k);
+    const T0 = 0.042 * k;
+    const eg = new THREE.ExtrudeGeometry(sh, { depth: 2 * T0, bevelEnabled: true, bevelThickness: 0.006 * k, bevelSize: 0.006 * k, bevelSegments: 3, curveSegments: 14, steps: 1 });
+    eg.translate(0, 0, -T0);
+    const EP = eg.attributes.position, UV = eg.attributes.uv, ss = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
+    for (let i = 0; i < EP.count; i++) {
+      const a = EP.getX(i), b = EP.getY(i), th = EP.getZ(i);
+      const f = 1 - 0.93 * ss(0.05 * k, 0.4 * k, a) - 0.04 * ss(-0.02 * k, 0.05 * k, a);                   // cunha: grosso no olhal, fino no fio
+      EP.setXYZ(i, th * f, HY + b, -a);                                          // perfil vira o plano Y-Z (fio para -Z)
+      UV.setXY(i, (a + 0.11 * k) / (0.56 * k), (b + 0.25 * k) / (0.5 * k));
+    }
+    eg.computeVertexNormals(); add(eg, steel);
+    add(new THREE.BoxGeometry(0.012, 0.03, 0.05 * k), dark, 0, top + 0.004, -0.005);   // cunha de aço no topo do cabo
+    g.userData = { mats, hL: new THREE.Vector3(0, -0.36, 0), hR: new THREE.Vector3(0, -0.1, 0), head: new THREE.Vector3(0, HY, -0.32 * K), R: R0 * 1.05 };
     return g;
+  }
+  // gorro de lã com barra dobrada (cobre o alto da cabeça; o cabelo já é cortado pelo "chapéu")
+  function knitCap() {
+    const pts = [];
+    for (let i = 0; i <= 18; i++) { const t = i / 18, a = t * Math.PI * 0.5; pts.push(new THREE.Vector2(Math.max(0.001, Math.cos(a) * 1.0), Math.sin(a) * 0.9 + (t > 0.85 ? 0.02 : 0))); }
+    const crown = new THREE.LatheGeometry(pts, 28); crown.scale(0.112, 0.12, 0.118);
+    const cuff = new THREE.CylinderGeometry(0.118, 0.12, 0.05, 28, 2, true);
+    return { crown, cuff };
   }
 
   class LumberView extends EliteView {
     constructor(z) {
       super(z);
       const R = ZE, hz = ZH.HZ;
-      // barbão (por cima da barba do rosto) e suspensórios
-      const hairM = R.mkPhong({ specular: 0x0a0806, shininess: 3 });
-      this.gm.push(hairM);
-      const b = new R.GB(), BR = 0x3a2516, BR2 = 0x2c1b10;
-      b.add(R.GEO.sph, [0, hz - 0.125, -0.082], [0.25, 0, 0], [0.078, 0.105, 0.05], BR, 0.5);
-      b.add(R.GEO.sph, [0, hz - 0.2, -0.07], [0.3, 0, 0], [0.058, 0.075, 0.04], BR2, 0.5);
-      for (const sx of [-1, 1]) { b.add(R.GEO.sph, [sx * 0.07, hz - 0.075, -0.045], null, [0.035, 0.07, 0.05], BR, 0.5); b.add(R.GEO.sph, [sx * 0.035, hz - 0.045, -0.105], [0, 0, sx * 0.5], [0.04, 0.016, 0.02], BR2, 0.4); }
-      this.head.add(b.mesh(hairM));
+      // roupa com textura de verdade: flanela xadrez búfalo na camisa, jeans na calça
+      const flan = new THREE.MeshLambertMaterial({ map: ltex("flannel"), vertexColors: true }), denim = new THREE.MeshLambertMaterial({ map: ltex("denim"), vertexColors: true });
+      flan.userData.own = denim.userData.own = true; this.gm.push(flan, denim);
+      const plaidT = ZA.tex("plaid"), clothT = ZA.tex("cloth");
+      this.root.traverse((o) => {
+        if (!o.isMesh || !o.material || !o.material.map) return;
+        if (o.material.map === plaidT) { const m = o.material.side === THREE.DoubleSide ? (this._flan2 || (this._flan2 = flan.clone())) : flan; m.side = o.material.side; o.material = m; }
+        else if (o.material.map === clothT) { const m = o.material.side === THREE.DoubleSide ? (this._den2 || (this._den2 = denim.clone())) : denim; m.side = o.material.side; o.material = m; }
+      });
+      if (this._flan2) { this._flan2.userData.own = true; this.gm.push(this._flan2); }
+      if (this._den2) { this._den2.userData.own = true; this.gm.push(this._den2); }
+      // gorro de lã no lugar do gorro simples
+      const knit = new THREE.MeshLambertMaterial({ map: ltex("knit"), color: 0x2a2e24 }), cuffT = ltex("knit").clone(); cuffT.needsUpdate = true; cuffT.repeat.set(10, 1);
+      const knitC = new THREE.MeshLambertMaterial({ map: cuffT, color: 0x23271f, side: THREE.DoubleSide }); knit.userData.own = knitC.userData.own = true; this.gm.push(knit, knitC);
+      if (this.capAt && this.hc) {
+        const C2 = knitCap(), cap = new THREE.Mesh(C2.crown, knit), cf = new THREE.Mesh(C2.cuff, knitC);
+        cap.position.set(0, 0.008, 0.006); cap.scale.set(0.9 * 1.04, 0.97, 0.93 * 1.04); cap.rotation.x = 0.1;
+        cf.position.set(0, 0.022, 0.006); cf.scale.set(0.9 * 1.04, 1, 0.93 * 1.04); cf.rotation.x = 0.1;
+        cap.userData.ownGeo = cf.userData.ownGeo = true; cap.castShadow = true; this.hc.add(cap, cf);
+      }
       const ax = (this.ax = makeAxe());
       this.gm.push(...ax.userData.mats);
       this.spine.add(ax);

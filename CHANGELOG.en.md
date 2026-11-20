@@ -1,5 +1,12 @@
 # What's new — Arena Zumbi
 
+## Lumberjack with a new look (11/20/2026)
+- A real full beard, with strands, mustache and sideburns.
+- Knitted wool beanie.
+- Red and black buffalo-check flannel shirt and jeans with texture, dirt and wear.
+- Sun-weathered skin and more natural arms.
+- New axe: curved wooden handle with grain, leather grip and a forged blade with a sharp edge, rust and blood.
+
 ## Prettier Building mode with no dead ends (11/16/2026)
 - The stairs on each floor always arrive inside a room on the floor above.
 - No furniture blocks doors, stairs or the arrival spot anymore.

@@ -216,9 +216,48 @@
     }
 
     // ----------- barba e bigode (cartões que seguem o maxilar) -----------
+    // barbão de lenhador: camadas (base curta e densa + fios longos), bigode cheio caindo sobre a boca, costeletas
+    function beardLumber(seed) {
+      const r = mulberry(seed * 977 + 13), B = new Builder();
+      const strand = (lon, ny, L, w, tint, steps, fwd) => {
+        const p0 = surf(Math.acos(ny), Math.PI - lon * 1.1, 0.004), pts = [p0.slice()];
+        let d = norm3([p0[0] * 2.2, -0.5, p0[2] * 1.6 - 0.15 + (fwd || 0)]), p = p0.slice();   // sai para fora da pele, depois cai
+        for (let i = 0; i < steps; i++) {
+          const t = (i + 1) / steps;
+          d = norm3([d[0] * 0.7 + (r() - 0.5) * 0.16 - p[0] * 0.5 * t, d[1] * 0.7 - 0.45, d[2] * 0.7 + (r() - 0.5) * 0.06]);
+          p = [p[0] + d[0] * L / steps, p[1] + d[1] * L / steps, p[2] + d[2] * L / steps];
+          const zf = -0.035 - 0.18 * Math.max(0, -p[1] - 0.12);                   // repousa sobre o peito, sem virar cortina
+          if (p[1] < -0.12 && p[2] > zf) p[2] = zf;
+          pts.push(p.slice());
+        }
+        B.add(pts, w, tint, 0, 0.75);
+      };
+      for (let i = 0; i < 260; i++) {                                         // base: cobre queixo e mandíbula
+        const lon = (r() * 2 - 1) * 1.22, ny = -0.12 - r() * 0.82;
+        if (Math.abs(lon) < 0.3 && ny > -0.6) continue;                           // boca livre
+        strand(lon, ny, 0.03 + r() * 0.045, 0.026 + r() * 0.016, 0.55 + r() * 0.35, 4, 0);
+      }
+      for (let i = 0; i < 230; i++) {                                         // fios longos: o "barbão" que desce no peito
+        const lon = (r() * 2 - 1) * 1.0, ny = -0.45 - r() * 0.5;
+        if (Math.abs(lon) < 0.28 && ny > -0.62) continue;
+        const L = (0.07 + r() * 0.09) * (1.15 - 0.45 * Math.abs(lon));
+        strand(lon, ny, L, 0.024 + r() * 0.016, 0.6 + r() * 0.6, 6, 0);
+      }
+      for (let i = 0; i < 70; i++) {                                          // costeletas
+        const s = r() < 0.5 ? -1 : 1, lon = s * (0.82 + r() * 0.3), ny = -0.02 - r() * 0.3;
+        strand(lon, ny, 0.03 + r() * 0.03, 0.016 + r() * 0.008, 0.5 + r() * 0.3, 3, 0);
+      }
+      for (let i = 0; i < 90; i++) {                                          // bigode cheio, caindo pelos cantos da boca
+        const s = r() < 0.5 ? -1 : 1, lon = s * (0.02 + r() * 0.34), ny = -0.38 - r() * 0.05;
+        const p0 = surf(Math.acos(ny), Math.PI - lon * 1.1, 0.005);
+        B.add(hangFrom(p0, [s * (0.3 + Math.abs(lon)), -0.6, -0.55], 0.025 + r() * 0.03 + Math.abs(lon) * 0.04, 4, { r, g: 0.55, jit: 0.08, back: -0.05 }), 0.013 + r() * 0.007, 0.7 + r() * 0.4, 0, 0.55);
+      }
+      return B.geometry();
+    }
     function beard(kind, seed) {
       const key = "beard|" + kind + "|" + seed;
       if (cache[key]) return cache[key];
+      if (kind === "lumber") return (cache[key] = beardLumber(seed));
       const r = mulberry(seed * 311 + 5), B = new Builder();
       const N = kind === "full" ? 130 : kind === "goatee" ? 50 : kind === "short" ? 90 : 0;
       for (let i = 0; i < N; i++) {

@@ -1,5 +1,12 @@
 # Novidades — Arena Zumbi
 
+## Lenhador com visual novo (20/11/2026)
+- Barba cheia de verdade, com fios, bigode e costeletas.
+- Gorro de lã tricotado.
+- Camisa de flanela xadrez vermelha e preta e calça jeans com textura, sujeira e desgaste.
+- Pele curtida de sol e braços mais naturais.
+- Machado novo: cabo de madeira curvo com veios, punho de couro e lâmina forjada com fio afiado, ferrugem e sangue.
+
 ## Modo Prédio mais bonito e sem becos (16/11/2026)
 - A escada de cada andar sempre chega dentro de uma sala no andar de cima.
 - Nenhum móvel fica bloqueando portas, escadas ou a chegada.

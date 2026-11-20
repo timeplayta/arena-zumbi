@@ -22,7 +22,7 @@
     const ANIMS = { andar: "walk", ande: "walk", correr: "run", corra: "run", atacar: "attack", ataque: "attack", rastejar: "crawl", rasteje: "crawl", rugir: "roar", ruja: "roar", grite: "roar", gritar: "roar",
       dancar: "dance", danca: "dance", dance: "dance", apanhar: "hit", tiro: "hit", parado: "idle", respirar: "idle", morrer: "die", morra: "die" };
     const PARTS = [["antebraco esquerdo", "foreL"], ["antebraco direito", "foreR"], ["braco esquerdo", "armL"], ["braco direito", "armR"], ["bracos", "arms"], ["perna esquerda", "legL"], ["perna direita", "legR"], ["pernas", "legs"], ["cabeca", "head"]];
-    let ui = null, panel = null, inspect = null, labelsOn = true, slow = 1, sel = null, counter = {}, log = [];
+    let camOv = null, ui = null, panel = null, inspect = null, labelsOn = true, slow = 1, sel = null, counter = {}, log = [];
     const norm = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9 ]+/g, " ").replace(/\s+/g, " ").trim();
     const g = () => game;
     const live = () => (g() ? g().zombies.filter((z) => z.devName) : []);
@@ -302,6 +302,7 @@
       if (!ON || !game || game.gm !== "dev") return;
       const G = game;
       if (G.devAmmo && G.slots) for (const s of G.slots) if (s && s.cfg) { s.mag = s.cfg.magMax; s.reserve = s.cfg.maxRes; }
+      if (camOv) { camera.position.set(camOv.x, camOv.y, camOv.z); camera.lookAt(camOv.tx, camOv.ty, camOv.tz); gunRoot.visible = false; return; }   // câmera fixa (testes de foto)
       // câmera de inspeção: gira em volta do zumbi escolhido (o olhar do jogador vira o ângulo)
       const z = inspect !== null ? G.zombies.find((q) => q.id === inspect) : null;
       if (inspect !== null && !z) inspect = null;
@@ -339,5 +340,5 @@
       const k = document.querySelector(".brand .kicker"); if (k) k.textContent = "Laboratório dos desenvolvedores";
       const p = document.getElementById("btnPlay"); if (p) p.textContent = "Entrar no laboratório";
     }
-    return { ON, start, stopUi, frame, pose, run, ts: () => slow, open: () => !!panel, inspecting: () => inspect !== null, CAT };
+    return { cam: (o) => { camOv = o; }, ON, start, stopUi, frame, pose, run, ts: () => slow, open: () => !!panel, inspecting: () => inspect !== null, CAT };
   })();
