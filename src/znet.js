@@ -226,6 +226,7 @@
     // versão do app: "web" (site), "apk"/"exe" (apps atuais) ou "old" (apps de antes da mudança de serviço: sem online)
     function appShell() {
       try {
+        if (window.AZ_DEV) return "dev";                                     // Zumbi Developer: nunca entra no online
         if (window.AZ && window.AZ.openUrl) return (window.AZ.appBuild && Number(window.AZ.appBuild()) >= 5) ? "apk" : "old";
         if (/Electron\//.test(navigator.userAgent)) return (Number(new URLSearchParams(location.search).get("appv")) || 0) >= 2 ? "exe" : "old";
       } catch (e) {}

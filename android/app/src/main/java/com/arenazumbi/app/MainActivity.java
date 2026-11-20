@@ -57,7 +57,7 @@ public class MainActivity extends Activity {
         }, "AZ");
         web.setBackgroundColor(0xFF07090D);
         splash = new TextView(this);
-        splash.setText("ARENA ZUMBI\n\nProcurando atualização...");
+        splash.setText(BuildConfig.TITLE + "\n\nProcurando atualização...");
         splash.setTextColor(Color.rgb(255, 178, 74));
         splash.setTextSize(22);
         splash.setGravity(Gravity.CENTER);
@@ -91,8 +91,8 @@ public class MainActivity extends Activity {
         try {
             String rv = get(BASE + "version.json", 5000);
             if (ver(rv) > cur) {
-                runOnUiThread(() -> splash.setText("ARENA ZUMBI\n\nBaixando atualização..."));
-                String h = get(BASE + "index-offline.html", 60000);
+                runOnUiThread(() -> splash.setText(BuildConfig.TITLE + "\n\nBaixando atualização..."));
+                String h = get(BASE + BuildConfig.GAME_FILE, 60000);   // o Zumbi Developer baixa a versão com o laboratório
                 if (h.length() > 200000 && h.contains("GAME_VERSION")) {
                     dir.mkdirs(); File tmp = new File(dir, "index.tmp"); write(tmp, h);
                     if (html.exists()) html.delete();

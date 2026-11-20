@@ -59,7 +59,7 @@
     constructor(z) {
       const r = zrng(z.id * 7919 + 13), G = ZG;
       const kind = z.lumber ? "lumber" : z.tank ? "tank" : z.samurai ? "samurai" : z.giant ? "giant" : z.brute ? "brute" : z.runner ? "runner" : "walker";
-      const A = ARCH[pick(r, POOL[kind])];
+      const A = ARCH[z.arch && ARCH[z.arch] ? (pick(r, POOL[kind]), z.arch) : pick(r, POOL[kind])];   // z.arch: aparência escolhida (Zumbi Developer)
       const fem = A.sex === "f" || (A.sex === "mf" && r() < 0.45);
       const buff = !!A.buff, fat = !buff && (!!A.fat || (z.brute && r() < 0.6));
       this.mats = []; this.hot = false;

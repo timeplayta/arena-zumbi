@@ -29,16 +29,18 @@ jobs:
       - name: Conferir assinatura
         run: |
           AS=$(ls -d $ANDROID_HOME/build-tools/*/ | sort -V | tail -1)apksigner
-          $AS verify --print-certs android/app/build/outputs/apk/release/app-release.apk | head -4
-          mkdir -p apk && cp android/app/build/outputs/apk/release/app-release.apk apk/Arena-Zumbi.apk
+          O=android/app/build/outputs/apk
+          $AS verify --print-certs $O/jogo/release/app-jogo-release.apk | head -4
+          $AS verify $O/dev/release/app-dev-release.apk
+          mkdir -p apk && cp $O/jogo/release/app-jogo-release.apk apk/Arena-Zumbi.apk && cp $O/dev/release/app-dev-release.apk apk/Zumbi-Developer.apk
           rm -f "$RUNNER_TEMP/release.keystore"
       - uses: actions/upload-artifact@v4
-        with: { name: Arena-Zumbi-APK, path: apk/Arena-Zumbi.apk }
+        with: { name: Arena-Zumbi-APK, path: "apk/*.apk" }
       - name: Salvar APK no repositório
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898283+github-actions[bot]@users.noreply.github.com"
-          git add apk/Arena-Zumbi.apk
+          git add apk/Arena-Zumbi.apk apk/Zumbi-Developer.apk
           git commit -m "APK gerado automaticamente" || exit 0
           for i in 1 2 3 4 5; do if git pull --rebase -X theirs && git push; then exit 0; fi; git rebase --abort 2>/dev/null || true; sleep 15; done   # o exe assinado pode ser salvo ao mesmo tempo
           exit 1

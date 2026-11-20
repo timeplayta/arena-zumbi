@@ -204,6 +204,7 @@
       let v = zviews.get(z.id);
       if (!v) { v = z.lumber ? new LumberView(z) : z.tank ? new TankView(z) : z.samurai ? new SamuraiView(z) : z.wraith ? new WraithView(z) : new ZombieView(z); if (z.puppet) redSkin(v); zviews.set(z.id, v); }
       v.update(z);
+      if (DevMode.ON) DevMode.pose(v, z);
       if (z.gz && v.root) { v.root.position.y += z.gz; if (v.shadow) v.shadow.position.y += z.gz; }   // morros e escadas (vila da Infecção)
     }
     for (const [id, v] of zviews) if (!seen.has(id)) { v.destroy(); zviews.delete(id); }
@@ -241,7 +242,7 @@
   }
   document.addEventListener("pointerlockchange", () => {
     if (document.pointerLockElement === canvas) lockHeld = true;
-    else if (lockHeld) { lockHeld = false; if (state === "run" && !Rev.open() && !Gore.busy() && !TowerUI.won()) pause(); }
+    else if (lockHeld) { lockHeld = false; if (state === "run" && !Rev.open() && !Gore.busy() && !TowerUI.won() && !DevMode.open() && !DevMode.inspecting()) pause(); }
   });
   let runId = 0;
   function startGame() {
@@ -257,9 +258,10 @@
     const ro = runOpts(); runUsed = ro.used; burnFlash = 0;
     game = new Game({ loadout: loadoutSel(), diff: Coop.inRoom() && !Coop.isHost() ? Coop.st.diff : S.diff, perks: ro.perks, melee: ro.melee });
     clearAllies(); Coop.attach(game); Coop.sendInfo(ro);
-    const twMode = S.mode === "predio" && !Coop.inRoom() && game.gm !== "infect";
+    const twMode = !DevMode.ON && S.mode === "predio" && !Coop.inRoom() && game.gm !== "infect";
     useMap(game.gm === "infect" ? "italia" : twMode ? "predio" : game.diff.big ? "grande" : "arena");   // Infecção: vila italiana; Prédio: andares; Extremo/Apocalipse: mapa grande; resto: arena
     if (twMode) { game.towerStart(Math.min(S.twLevel | 0, S.twUnlocked | 0), 0); TowerUI.start(); } else TowerUI.off();
+    if (DevMode.ON) DevMode.start();
     setMeleeModel(wallet.melee); updateWho();
     vmKey = ""; setViewGun(game.w());
     adsT = 0; sprintBlend = 0; hfov = S.fov; dmgT = 0; $("feed").innerHTML = "";
@@ -288,7 +290,7 @@
   }
   function toMenu() {
     try { document.exitPointerLock(); } catch (e) {}
-    canvas.style.cursor = ""; state = "menu"; Coop.onToMenu(); payRun(game, runUsed); TowerUI.off(); useMap("arena"); clearViews(); resetFx(); menuGame = makeMenuGame(); hfov = 70;
+    canvas.style.cursor = ""; state = "menu"; Coop.onToMenu(); payRun(game, runUsed); TowerUI.off(); if (DevMode.ON) DevMode.stopUi(); useMap("arena"); clearViews(); resetFx(); menuGame = makeMenuGame(); hfov = 70;
     $("menu").hidden = false; $("hud").hidden = true; $("pause").hidden = true; $("dead").hidden = true; $("scope").style.opacity = "0";
     $("view").classList.remove("low"); $("fx-low").style.opacity = "0"; $("fx-hurt").style.opacity = "0";
     applyEnv(); renderAll(); showTab(ui.tab); resetTouch(); applyTouchUI();
@@ -755,6 +757,7 @@
     syncPickups(g); syncCracks(g); updateShocks(dt); syncAllies(g, dt); syncBoosts(g); PotFX.sync(g, g.time);
     fxBlood.update(dt); fxSpark.update(dt); fxBrass.update(dt); fxShell.update(dt); fxSmoke.update(dt); fxTrace.update(dt); updatePools(dt); updateDropped(dt);
     if (twK) TowerView.frame(dt);
+    if (DevMode.ON) { g.zts = DevMode.ts(); DevMode.frame(dt); }
   }
 
   // ---------------- eventos do jogo -> som e efeitos ----------------

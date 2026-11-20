@@ -19,6 +19,24 @@ android {
         }
     }
     buildTypes { release { signingConfig signingConfigs.release; minifyEnabled false; debuggable false } }
+    buildFeatures { buildConfig true; resValues true }
+    // dois apps com o mesmo código: o jogo normal e o "Zumbi Developer" (laboratório para desenvolvedores, instala ao lado do jogo)
+    flavorDimensions 'app'
+    productFlavors {
+        jogo {
+            dimension 'app'
+            resValue 'string', 'app_name', 'Arena Zumbi'
+            buildConfigField 'String', 'GAME_FILE', '"index-offline.html"'
+            buildConfigField 'String', 'TITLE', '"ARENA ZUMBI"'
+        }
+        dev {
+            dimension 'app'
+            applicationIdSuffix '.dev'
+            resValue 'string', 'app_name', 'Zumbi Developer'
+            buildConfigField 'String', 'GAME_FILE', '"dev-offline.html"'
+            buildConfigField 'String', 'TITLE', '"ZUMBI DEVELOPER"'
+        }
+    }
     compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
     aaptOptions { noCompress 'html' }
     lint { checkReleaseBuilds false; abortOnError false }

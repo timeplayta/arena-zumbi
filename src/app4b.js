@@ -128,6 +128,7 @@
   let gateLocked = true;
   const menuEl = $("menu");
   function setGate(on) {
+    if (window.AZ_DEV) { on = false; if (!S.name) S.name = "Desenvolvedor"; }             // Zumbi Developer: sem tela de conta
     gateLocked = on; gate.hidden = !on;
     if (on) { menuEl.setAttribute("inert", ""); menuEl.inert = true; } else { menuEl.removeAttribute("inert"); menuEl.inert = false; }
   }

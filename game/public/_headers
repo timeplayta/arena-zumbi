@@ -4,6 +4,10 @@
 /index-offline.html
   Access-Control-Allow-Origin: *
   Cache-Control: no-cache
+/dev-offline.html
+  Access-Control-Allow-Origin: *
+  Cache-Control: no-cache
+  X-Robots-Tag: noindex
 /index.html
   Cache-Control: no-cache
 /admin.html

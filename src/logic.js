@@ -965,7 +965,7 @@ const Logic = (function () {
 
     hurt(amount, z, o) {
       if (this._tgt) return this.hurtRemote(this._tgt, amount, z, o || {});
-      if (!this.alive || this.invulnT > 0) return;
+      if (!this.alive || this.invulnT > 0 || this.god) return;
       o = o || {};
       if (this.armor > 0 && !o.pierce) {                         // o colete absorve 60% do golpe até acabar
         const ab = Math.min(this.armor, amount * 0.6);
@@ -1485,10 +1485,11 @@ const Logic = (function () {
         }
       }
       for (const z of live) [z.x, z.y] = pushOut(z.x, z.y, ZOMBIE_R * z.s);
-      this.zombies = this.zombies.filter((z) => !(z.state === "dead" && z.deadT > 6));
+      if (this.gm !== "dev") this.zombies = this.zombies.filter((z) => !(z.state === "dead" && z.deadT > 6));   // no laboratório o corpo fica (dá para levantar)
     }
 
     zombieAI(z, dt, base) {
+      if (z.dev && this.devAI && this.devAI(z, dt, base)) return;                // Zumbi Developer: zumbi obedecendo um comando
       if (this.gm === "predio" && this.towerAI) { this.towerAI(z, dt, base); return; }
       const dx = this.px - z.x, dy = this.py - z.y, dist = Math.hypot(dx, dy) || 1e-6;
       if (z.tank) { this.updateTank(z, dt, dist); return; }
@@ -1605,6 +1606,7 @@ const Logic = (function () {
       if (this.gm === "infect") { this.updateInfect(dt); this.updateZombies(dt); this.updatePickups(dt); this.updateBoosts(dt); this.updatePots(dt); }
       else if (this.gm === "explore") { this.updateBoosts(dt); }
       else if (this.gm === "predio") { this.updateTower(dt); this.updateZombies(dt); this.updatePickups(dt); }
+      else if (this.gm === "dev") { this.updateZombies(dt * (this.zts === undefined ? 1 : this.zts)); this.updatePickups(dt); }   // Zumbi Developer: sem ondas
       else { this.updateWaves(dt); this.updateZombies(dt); this.updatePickups(dt); this.updateCracks(dt); }
       if (this.coop && !this.alive && !this.reviveWait && !this.over && !this.others.some((o) => o.alive)) this.over = true;
     }
