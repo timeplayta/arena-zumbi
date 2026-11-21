@@ -448,6 +448,7 @@
         this.sL.rotation.set(0.6 * (1 - f) + 2.6 * f, 0, -0.3 * f); this.sR.rotation.set(0.6 * (1 - f) + 2.2 * f, 0, 0.4 * f);
         this.eL.rotation.x = this.eR.rotation.x = 0.3; this.hL.rotation.x = this.hR.rotation.x = 0.1 * f; this.kL.rotation.x = this.kR.rotation.x = -0.15;
         this.spine.rotation.set(0.15 * f, 0, 0); this.head.rotation.set(0.3 * f, 0.5 * f, 0); this.setJaw(0.4);
+        if (window.ZMIX && this.constructor === ZombieView) ZMIX.drive(this, z);
         return;
       }
       const ph = z.phase, sw = Math.sin(ph), cw = Math.cos(ph), t = ph + this.seed;
@@ -467,6 +468,7 @@
       this.wL.rotation.x = this.wR.rotation.x = 0.25;
       this.head.rotation.set(0.1 + Math.sin(ph * 0.4) * 0.1 + lean * 0.6, Math.sin(ph * 0.5) * 0.2, Math.sin(t * 0.3) * 0.15);
       this.setJaw(z.state === "attack" ? 0.5 : 0.06 + 0.26 * Math.max(0, Math.sin(t * 1.7)));
+      if (window.ZMIX && this.constructor === ZombieView) ZMIX.drive(this, z);
       if (this.guts) { this.guts.rotation.x = Math.sin(t * 2.1) * 0.12; this.guts.rotation.z = Math.sin(t * 1.3) * 0.08; }
     }
     destroy() {

@@ -1,5 +1,11 @@
 # Novedades — Arena Zumbi
 
+## Zombis con animaciones de Mixamo (21/11/2026)
+- Los zombis comunes, corredores y brutos ahora caminan, corren, esperan, atacan y mueren con animaciones reales de captura de movimiento (Mixamo).
+- Dos formas de caminar y dos de esperar, sorteadas por zombi.
+- Nueva muerte: el zombi cae hacia atrás o hacia delante.
+- Los zombis cojos y especiales mantienen sus movimientos antiguos.
+
 ## Leñador con nuevo aspecto (20/11/2026)
 - Barba poblada de verdad, con pelos, bigote y patillas.
 - Gorro de lana tejido.

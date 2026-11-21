@@ -1,5 +1,11 @@
 # What's new — Arena Zumbi
 
+## Zombies with Mixamo animations (11/21/2026)
+- Common zombies, runners and brutes now walk, run, idle, attack and die with real motion-capture animations (Mixamo).
+- Two walk styles and two idle styles, picked per zombie.
+- New death: the zombie falls backward or forward.
+- Limping and special zombies keep their old movements.
+
 ## Lumberjack with a new look (11/20/2026)
 - A real full beard, with strands, mustache and sideburns.
 - Knitted wool beanie.

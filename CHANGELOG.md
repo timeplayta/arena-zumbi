@@ -1,5 +1,11 @@
 # Novidades — Arena Zumbi
 
+## Zumbis com animações do Mixamo (21/11/2026)
+- Zumbis comuns, corredores e brutos agora andam, correm, ficam parados, atacam e morrem com movimentos reais de captura (Mixamo).
+- Dois jeitos de andar e dois de ficar parado, sorteados por zumbi.
+- Morte nova: o zumbi cai para trás ou para a frente, conforme o golpe.
+- Zumbis mancos e especiais mantêm os movimentos antigos.
+
 ## Lenhador com visual novo (20/11/2026)
 - Barba cheia de verdade, com fios, bigode e costeletas.
 - Gorro de lã tricotado.
